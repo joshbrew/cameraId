@@ -2,6 +2,8 @@ Copy of the official wonnx squeeze net test with a test for multithreading the v
 
 It uses the capacitor community CameraPreview API for mobile camera access but the rest is vanilla JS, though the mobile app isn't set up yet with the special permissions and build step requirements. This repo will evolve.
 
+Inference time for the 1000 label squeeze-net averages about 8-10ms for me on an RTX 3070, whatever that means.
+
 # build and run
 `npm i -g tinybuild` then `npm start`
 
