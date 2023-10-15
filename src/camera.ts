@@ -35,7 +35,7 @@ export async function setupCamUI(parentElement=document.body) {
   const TempCanvases = {};
   const TempResults = {};
   const TempCaptureOrder = [] as any[];
-  const TempCaptureLimit = 5;
+  const TempCaptureLimit = 20;
   
 
   const {
@@ -46,6 +46,7 @@ export async function setupCamUI(parentElement=document.body) {
   } = await initVideoProcessingThreads();
   
   classifierThread.addCallback((res)=>{
+    if(!res) return;
     console.timeEnd(`capture and inference ${res.name}`);
     console.log('classifier thread result: ', res);
     TempResults[res.name] = res;
@@ -62,7 +63,7 @@ export async function setupCamUI(parentElement=document.body) {
       if(TempCaptureOrder.length > TempCaptureLimit) {
         delete TempCaptures[TempCaptureOrder[0]];
         delete TempResults[TempCaptureOrder[0]];
-        (TempCanvases[TempCaptureOrder[0]] as HTMLElement).remove()
+        if(TempCanvases[TempCaptureOrder[0]]) (TempCanvases[TempCaptureOrder[0]] as HTMLElement).remove()
         delete TempCanvases[TempCaptureOrder[0]];
         TempCaptureOrder.shift()
       }
@@ -186,8 +187,9 @@ export async function setupCamUI(parentElement=document.body) {
     let threadRunning = false;
 
     let processFrames = async () => { //dont do this while running capture or we'll explode, also workerize it
-      
-      for(let i = 0; i < savedFrames.length; i++) {
+      let savedFramesCpy = [...savedFrames];
+      savedFrames.length = 0;
+      for(let i = 0; i < savedFramesCpy.length; i++) {
         if(prom) await prom; //make sure classifierThread finishes last round.
         
         prom = new Promise((res) => {
@@ -199,8 +201,8 @@ export async function setupCamUI(parentElement=document.body) {
           });
         })
         
-        const frame = savedFrames[i].image;
-        const fileName = savedFrames[i].name;
+        const frame = savedFramesCpy[i].image;
+        const fileName = savedFramesCpy[i].name;
 
         let poolingWait = new Promise((res)=>{
           let id = poolingThread.addCallback((out) => {
@@ -210,7 +212,7 @@ export async function setupCamUI(parentElement=document.body) {
         });
 
         await videoDecoderThread.run(
-          savedFrames[i], 
+          savedFramesCpy[i], 
           [frame]
         );
 
@@ -234,7 +236,6 @@ export async function setupCamUI(parentElement=document.body) {
             hiddenElement.click();
         }
       } 
-      savedFrames.length = 0;
     }
     
     //android / ios only (todo: reimplement our other settings for this from the fishscanner demo)
