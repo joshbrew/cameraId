@@ -5,7 +5,6 @@ import { CameraPreview, CameraPreviewOptions } from '@capacitor-community/camera
 import { downloadMP4URL, isMobile } from './util/utils';
 import { initVideoProcessingThreads } from './camThreads';
 
-//TODO: WEB WORKERS!!!!
 export async function setupCamUI(parentElement=document.body) {
 
   const onMobile = isMobile();
