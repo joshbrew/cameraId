@@ -51,6 +51,7 @@ export async function setupCamUI(parentElement=document.body) {
     TempResults[res.name] = res;
     setCapture(res.name,'image',res);
   });
+
   videoDecoderThread.addCallback((res)=>{console.log('videoDecoderThread thread result: ', res);});
   poolingThread.addCallback((res)=>{console.log('poolingThread result:',res)});
 
@@ -179,89 +180,122 @@ export async function setupCamUI(parentElement=document.body) {
     else flip.style.display = 'none';
 
     //todo: button to press or hold to capture or record ? or maybe better to have two buttons for ease of use
+    let savedFrames = [] as any[];
+    let prom:Promise<any>|undefined;
 
+    let threadRunning = false;
+
+    let processFrames = async () => { //dont do this while running capture or we'll explode, also workerize it
+      
+      for(let i = 0; i < savedFrames.length; i++) {
+        if(prom) await prom; //make sure classifierThread finishes last round.
+        
+        prom = new Promise((res) => {
+          let id = classifierThread.addCallback(() => {
+            classifierThread.removeCallback(id);
+            threadRunning = false;
+            prom = undefined; //dereference for next frame
+            res(true);
+          });
+        })
+        
+        const frame = savedFrames[i].image;
+        const fileName = savedFrames[i].name;
+
+        let poolingWait = new Promise((res)=>{
+          let id = poolingThread.addCallback((out) => {
+            poolingThread.removeCallback(id);
+            res(out);
+          });
+        });
+
+        await videoDecoderThread.run(
+          savedFrames[i], 
+          [frame]
+        );
+
+        await poolingWait;
+
+        poolingThread.run(
+          {command:'get',name:fileName},
+          undefined, 
+          classifierThread.id
+        );
+        
+        if(saveFile.checked) { //ur gonna get a lot of images if you did this on a video < __ <
+            offscreen.width = vid.videoWidth; offscreen.height = vid.videoHeight;
+            ctx?.drawImage(vid,0,0);
+            let blob = await offscreen.convertToBlob();
+            var hiddenElement = document.createElement('a') as HTMLAnchorElement;
+            hiddenElement.href =  URL.createObjectURL(blob);
+            hiddenElement.target = "_blank";
+            hiddenElement.download = fileName;
+            
+            hiddenElement.click();
+        }
+      } 
+      savedFrames.length = 0;
+    }
+    
     //android / ios only (todo: reimplement our other settings for this from the fishscanner demo)
     const recordOnClick = () => {
         let reader = new FileReader() as FileReader;
         let mediaRecorder:MediaRecorder; 
         let chunks = [] as any[];
 
-        let savedFrames = [] as any[];
-        let onstop = () => { //dont do this while running capture or we'll explode, also workerize it
-            savedFrames.forEach((f) => {
-                (setCapture as any)(f);
-                poolingThread.run({command:'get',name:f},undefined,classifierThread.id);
-                //todo: save images
-            })
-        }
         
         let fileName;
         if (fname.value !== "") {
-          fileName = fname.value+'_'+new Date().toISOString()+".png";
+          fileName = fname.value+'_'+new Date().toISOString();
         } else{
-          fileName = new Date().toISOString()+".png";
+          fileName = new Date().toISOString();
         }
 
         let offscreen = new OffscreenCanvas(vid.videoWidth, vid.videoHeight);
         let ctx = offscreen.getContext('2d');
         const setupFrameCallbacks = () => {
           let onframe = async (timestamp) => {
-              
-            let frameName;
-            if (fname.value !== "") {
-                frameName = fname.value+'_'+new Date().toISOString();
-            } else{
-                frameName = new Date().toISOString();
-            }
+            let frameName = fname.value+'_'+new Date().toISOString();
 
-            const frame = new VideoFrame(vid, {timestamp});
             if(saveFrames.checked) {
+              frameName 
 
-              let poolingWait = new Promise((res)=>{
-                let id = poolingThread.addCallback((out) => {
-                  poolingThread.removeCallback(id);
-                  res(out);
-                });
-              });
-      
-              await videoDecoderThread.run(
-                {
-                  image:frame,
-                  name:fileName,
-                  width:vid.videoWidth,
-                  height:vid.videoHeight,
-                  type:'image',
-                  command:'set',
-                  overridePort:true
-                }, 
-                [frame]
-              );
-      
-        
-              await poolingWait;
-
-              poolingThread.run(
-                {command:'get',name:fileName},
-                undefined, 
-                classifierThread.id
-              );
-
-              savedFrames.push(frameName);
-            } else {
-
-              ctx?.drawImage(vid,0,0);
-              let imgData = ctx?.getImageData(0,0,vid.videoWidth,vid.videoHeight) as ImageData;
-              
-              //this will slow down
-              
-              classifierThread.run({
-                image:imgData.data,
-                name:frameName,
+              const image = new VideoFrame(vid, {timestamp});
+              const frame = {
+                image,
+                name:fileName,
                 width:vid.videoWidth,
                 height:vid.videoHeight,
-                type:'image'
-              },[imgData.data.buffer]); //callback will run
-            } 
+                type:'image',
+                command:'set',
+                overridePort:true
+              }
+              savedFrames.push(frame); //process at end of recording to prevent CPU exploding
+            } else if(!threadRunning) {
+              frameName = fname.value+'_'+new Date().toISOString();
+
+              threadRunning = true;
+              
+              let id = classifierThread.addCallback(() => {
+                threadRunning = false;
+                classifierThread.removeCallback(id);
+              });
+
+              //this will slow main thread down
+              ctx?.drawImage(vid,0,0);
+              let imgData = ctx?.getImageData(0,0,vid.videoWidth,vid.videoHeight) as ImageData;
+
+              classifierThread.run(
+                {
+                  image:imgData.data,
+                  name:frameName,
+                  width:vid.videoWidth,
+                  height:vid.videoHeight,
+                  type:'image'
+                },
+                [imgData.data.buffer]
+              ); //callback will run
+            }
           }
           vid.requestVideoFrameCallback(onframe);
         }
@@ -298,7 +332,7 @@ export async function setupCamUI(parentElement=document.body) {
                     reader.readAsDataURL(blob); 
                 }
 
-                onstop();
+                processFrames();
             }
 
             mediaRecorder.start();
@@ -325,60 +359,36 @@ export async function setupCamUI(parentElement=document.body) {
     let offscreen = new OffscreenCanvas(vid.videoWidth, vid.videoHeight);
     let ctx = offscreen.getContext('2d');
     takePic.onclick = async () => {
+      if(!threadRunning) { //throttle
       //Cam.capture({
       //  quality:100
       //}).then(async (result) => {
-        const frame = new VideoFrame(vid);
+          const image = new VideoFrame(vid);
         
-        let fileName;
-        if (fname.value !== "") {
-          fileName = fname.value+'_'+new Date().toISOString()+".png";
-        } else{
-          fileName = new Date().toISOString()+".png";
-        }
-        console.time(`capture and inference ${fileName}`);
-
-        let poolingWait = new Promise((res)=>{
-          let id = poolingThread.addCallback((out) => {
-            poolingThread.removeCallback(id);
-            res(out);
-          });
-        });
-
-        await videoDecoderThread.run(
-          {
-            image:frame,
+          let fileName;
+          if (fname.value !== "") {
+            fileName = fname.value+'_'+new Date().toISOString()+".png";
+          } else{
+            fileName = new Date().toISOString()+".png";
+          }
+          console.time(`capture and inference ${fileName}`);
+  
+          const frame = {
+            image,
             name:fileName,
             width:vid.videoWidth,
             height:vid.videoHeight,
             type:'image',
             command:'set',
             overridePort:true
-          }, 
-          [frame]
-        );
+          };
+          savedFrames.push(frame);
 
-        await poolingWait;
+          processFrames();
 
-        poolingThread.run(
-          {command:'get',name:fileName},
-          undefined, 
-          classifierThread.id
-        );
-        
-        if(saveFile.checked) {
-            offscreen.width = vid.videoWidth; offscreen.height = vid.videoHeight;
-            ctx?.drawImage(vid,0,0);
-            let blob = await offscreen.convertToBlob();
-            var hiddenElement = document.createElement('a') as HTMLAnchorElement;
-            hiddenElement.href =  URL.createObjectURL(blob);
-            hiddenElement.target = "_blank";
-            hiddenElement.download = fileName;
-            
-            hiddenElement.click();
-        }
+        //});
+      }
 
-      //});
     }
   
   });
