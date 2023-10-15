@@ -7,7 +7,7 @@ if(globalThis instanceof WorkerGlobalScope) {
 
     //files go in ./models
     const modelName = 'opt-squeeze.onnx'; //'inception_mnist.onnx' //'single_relu.onnx' //todo: make configurable
-    const labelsName = 'squeeze-labels.txt';
+    const labelsName = 'squeeze-labels.txt'; //'mnist-labels.txt'
 
     //input and output variables, input is Float32Array, output is array or something
     const inputName = 'data';
