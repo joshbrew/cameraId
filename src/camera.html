@@ -1,0 +1,46 @@
+<span id="webcam"></span>
+<template>
+    <ion-app id="app">
+      <ion-router-outlet />
+    </ion-app>
+</template>
+
+<hr/>
+
+Controls:
+<br/>
+Captures:<br/>
+Save to file? <input type="checkbox" id="save"/> <br/>
+Save Captures to cloud? <input type="checkbox" id="cloud"/> <br/>
+<input type="text" id="fname" placeholder="File Name Prefix?" /><br/>
+<button id="rv">Record Video</button><br/>
+Record frames? <input type="checkbox" id="saveframes"/> <br/>
+<button id="tp">Take Picture</button>
+<select id="flashModes"></select>
+<button id="flip">Flip</button>
+
+<hr/>
+Predictions:
+<div>
+  <div>
+    <span>WONNX Average Time (ms): </span>
+    <span id="classTime"></span>
+  </div>
+  <select id="folderSelect">
+    <option id="temp">Temp</option>
+    <option id="files">Files</option>
+  </select>
+  <div id="folderContents"></div>
+</div>
+<!-- 
+<hr/>
+Selected Samples:
+<div>
+
+</div>
+
+<hr/>
+Datasets:
+<div>
+  Images and Videos 
+</div> -->

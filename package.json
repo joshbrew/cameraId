@@ -1,0 +1,48 @@
+{
+  "name": "tinybuildapp5935",
+  "version": "0.0.0",
+  "description": "Barebones esbuild and test node server implementation. For building",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "start": "tinybuild",
+    "build": "tinybuild build",
+    "serve": "tinybuild serve",
+    "init": "node tinybuild/init.js",
+    "concurrent": "concurrently \"npm run python\" \"npm start\"",
+    "dev": "npm run pip && npm i --save-dev concurrently && npm i --save-dev nodemon && npm run concurrent",
+    "startdev": "nodemon --exec \"node tinybuild.js\" -e ejs,js,ts,jsx,tsx,css,html,jpg,png,scss,txt,csv",
+    "python": "python python/server.py",
+    "pip": "pip install quart && pip install websockets",
+    "pwa": "npm i workbox-cli && workbox generateSW node_server/pwa/workbox-config.js && npm run build && npm start"
+  },
+  "keywords": [
+    "esbuild"
+  ],
+  "author": "",
+  "license": "LGPL-3.0-or-later",
+  "dependencies": {
+    "@capacitor-community/camera-preview": "~5.0.0",
+    "@types/node": "^20.8.4",
+    "@webonnx/wonnx-wasm": "^0.5.0",
+    "brainsatplay-math": "^0.0.37",
+    "browserfs": "^1.4.3",
+    "threadop": "^1.5.1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "~5.5.0",
+    "@capacitor/cli": "~5.5.0",
+    "@capacitor/core": "~5.5.0",
+    "@capacitor/ios": "~5.5.0"
+  },
+  "nodemonConfig": {
+    "env": {
+      "NODEMON": true
+    },
+    "ignore": [
+      "dist/",
+      ".temp/"
+    ]
+  }
+}
