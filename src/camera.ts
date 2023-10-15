@@ -101,14 +101,16 @@ export async function setupCamUI(parentElement=document.body) {
 
       const div = document.createElement('div');
       div.appendChild(canvas);
+
+      //spaghetti
       div.insertAdjacentHTML('afterbegin',`
           <div style="position:absolute;">
             <table>
-              <tr>
-                <td><span style='font-weight:bold;'>Image: </span>${classifierResult?.name}</td>
+              <tr style='background-color:blue;'>
+                <td><span style='font-weight:bold; background-color:blue;'>Image: </span>${classifierResult?.name}</td>
               </tr>
-              <tr>
-                <td><span style='font-weight:bold;'>Label: </span>${classifierResult?.label}</td>
+              <tr style='background-color:blue;'>
+                <td><span style='font-weight:bold; background-color:blue;'>Label: </span>${classifierResult?.label}</td>
                 <td><span style='font-weight:bold;'>Likelihood: </span>${classifierResult?.maxProb}</td>
               </tr>
             </table>
@@ -201,7 +203,8 @@ export async function setupCamUI(parentElement=document.body) {
           fileName = new Date().toISOString()+".png";
         }
 
-
+        let offscreen = new OffscreenCanvas(vid.videoWidth, vid.videoHeight);
+        let ctx = offscreen.getContext('2d');
         const setupFrameCallbacks = () => {
           let onframe = async (timestamp) => {
               
@@ -247,14 +250,18 @@ export async function setupCamUI(parentElement=document.body) {
               savedFrames.push(frameName);
             } else {
 
-              //instead of storing in the poolingThread just send straight to classifier
-              // classifierThread.run({
-              //   image:frame,
-              //   name:frameName,
-              //   width:vid.videoWidth,
-              //   height:vid.videoHeight,
-              //   type:'image'
-              // },[frame]); //callback will run
+              ctx?.drawImage(vid,0,0);
+              let imgData = ctx?.getImageData(0,0,vid.videoWidth,vid.videoHeight) as ImageData;
+              
+              //this will slow down
+              
+              classifierThread.run({
+                image:imgData.data,
+                name:frameName,
+                width:vid.videoWidth,
+                height:vid.videoHeight,
+                type:'image'
+              },[imgData.data.buffer]); //callback will run
             } 
           }
           vid.requestVideoFrameCallback(onframe);
