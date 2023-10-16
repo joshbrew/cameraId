@@ -44,6 +44,15 @@ export async function setupCamUI(parentElement=document.body) {
     canvasThread, 
     classifierThread
   } = await initVideoProcessingThreads();
+
+  
+  let savedFrames = [] as any[];
+  let classifierWait:Promise<any>|undefined;
+
+  let threadRunning = false;
+  let poolCt = 0;
+  let poolCtMax = 4; //4 codec threads
+
   
   classifierThread.addCallback((res)=>{
     if(!res) return;
@@ -51,12 +60,75 @@ export async function setupCamUI(parentElement=document.body) {
     console.log('classifier thread result: ', res);
     TempResults[res.name] = res;
     setCapture(res.name,'image',res);
+    poolCt--;
   });
 
   videoDecoderThread.addCallback((res)=>{console.log('videoDecoderThread thread result: ', res);});
   poolingThread.addCallback((res)=>{console.log('poolingThread result:',res)});
 
   
+  let offscreen = new OffscreenCanvas(800, 600);
+  let ctx = offscreen.getContext('2d');
+
+  let processFrames = async () => { //dont do this while running capture or we'll explode, also workerize it
+    let savedFramesCpy = [...savedFrames];
+    savedFrames.length = 0;
+    for(let i = 0; i < savedFramesCpy.length; i++) {
+      
+      if(poolCt === poolCtMax) { //we need to await this last promise;
+        classifierWait = new Promise((res) => {
+          let id = classifierThread.addCallback(() => {
+            classifierThread.removeCallback(id);
+            threadRunning = false;
+            classifierWait = undefined; //dereference for next frame
+            res(true);
+          });
+        });
+      } else if(classifierWait) await classifierWait; //make sure classifierThread finishes last round.
+      
+      
+      const frame = savedFramesCpy[i].image;
+      const fileName = savedFramesCpy[i].name;
+
+      let id = poolingThread.addCallback((out) => {
+        if(out === savedFramesCpy[i].name) {
+          poolingThread.removeCallback(id);
+
+          poolingThread.run(
+            {command:'get',name:fileName},
+            undefined, 
+            classifierThread.id
+          );
+          
+          poolCt--;
+          
+        }
+      });
+
+      poolCt++;
+
+      videoDecoderThread.run(
+        savedFramesCpy[i], 
+        [frame]
+      );
+
+      if(saveFile.checked) { //ur gonna get a lot of images if you did this on a video < __ <
+          offscreen.width = savedFramesCpy[i].width; offscreen.height = savedFramesCpy[i].height;
+          createImageBitmap(savedFramesCpy[i].image as VideoFrame, 0, 0, savedFramesCpy[i].width, savedFramesCpy[i].height).then(async (bmp) => {
+            ctx?.drawImage(bmp,0,0);
+            let blob = await offscreen.convertToBlob();
+            var hiddenElement = document.createElement('a') as HTMLAnchorElement;
+            hiddenElement.href =  URL.createObjectURL(blob);
+            hiddenElement.target = "_blank";
+            hiddenElement.download = fileName;
+            
+            hiddenElement.click();
+          });
+      }
+    } 
+  }
+
+
   function setCapture(name,type,classifierResult) {
     TempCaptureOrder.push(name);
     if(classifierResult) {
@@ -181,62 +253,7 @@ export async function setupCamUI(parentElement=document.body) {
     else flip.style.display = 'none';
 
     //todo: button to press or hold to capture or record ? or maybe better to have two buttons for ease of use
-    let savedFrames = [] as any[];
-    let prom:Promise<any>|undefined;
 
-    let threadRunning = false;
-
-    let processFrames = async () => { //dont do this while running capture or we'll explode, also workerize it
-      let savedFramesCpy = [...savedFrames];
-      savedFrames.length = 0;
-      for(let i = 0; i < savedFramesCpy.length; i++) {
-        if(prom) await prom; //make sure classifierThread finishes last round.
-        
-        prom = new Promise((res) => {
-          let id = classifierThread.addCallback(() => {
-            classifierThread.removeCallback(id);
-            threadRunning = false;
-            prom = undefined; //dereference for next frame
-            res(true);
-          });
-        })
-        
-        const frame = savedFramesCpy[i].image;
-        const fileName = savedFramesCpy[i].name;
-
-        let poolingWait = new Promise((res)=>{
-          let id = poolingThread.addCallback((out) => {
-            poolingThread.removeCallback(id);
-            res(out);
-          });
-        });
-
-        await videoDecoderThread.run(
-          savedFramesCpy[i], 
-          [frame]
-        );
-
-        await poolingWait;
-
-        poolingThread.run(
-          {command:'get',name:fileName},
-          undefined, 
-          classifierThread.id
-        );
-        
-        if(saveFile.checked) { //ur gonna get a lot of images if you did this on a video < __ <
-            offscreen.width = vid.videoWidth; offscreen.height = vid.videoHeight;
-            ctx?.drawImage(vid,0,0);
-            let blob = await offscreen.convertToBlob();
-            var hiddenElement = document.createElement('a') as HTMLAnchorElement;
-            hiddenElement.href =  URL.createObjectURL(blob);
-            hiddenElement.target = "_blank";
-            hiddenElement.download = fileName;
-            
-            hiddenElement.click();
-        }
-      } 
-    }
     
     //android / ios only (todo: reimplement our other settings for this from the fishscanner demo)
     const recordOnClick = () => {
@@ -252,8 +269,6 @@ export async function setupCamUI(parentElement=document.body) {
           fileName = new Date().toISOString();
         }
 
-        let offscreen = new OffscreenCanvas(vid.videoWidth, vid.videoHeight);
-        let ctx = offscreen.getContext('2d');
         const setupFrameCallbacks = () => {
           let onframe = async (timestamp) => {
             let frameName = fname.value+'_'+new Date().toISOString();
