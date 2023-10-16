@@ -83,6 +83,7 @@ export async function setupCamUI(parentElement=document.body) {
             res(true);
           });
         });
+        threadRunning = true;
       } else if(classifierWait) await classifierWait; //make sure classifierThread finishes last round.
       
       
@@ -279,6 +280,7 @@ export async function setupCamUI(parentElement=document.body) {
 
         const setupFrameCallbacks = () => {
           let onframe = async (timestamp) => {
+            if(!threadRunning) { //throttles
               let frameName = fname.value+'_'+new Date().toISOString();
               console.time(`capture and inference ${frameName}`);
 
@@ -298,8 +300,8 @@ export async function setupCamUI(parentElement=document.body) {
               savedFrames.push(frame); //process at end of recording to prevent CPU exploding
               if(savedFrames.length > decoderPool) 
                 processFrames(); 
-
-              frameCb = vid.requestVideoFrameCallback(onframe);
+            }
+            frameCb = vid.requestVideoFrameCallback(onframe);
           }
           frameCb = vid.requestVideoFrameCallback(onframe);
         }
