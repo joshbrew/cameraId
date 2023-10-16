@@ -44,7 +44,7 @@ export async function setupCamUI(parentElement=document.body) {
 
   let threadRunning = false;
   let poolCt = 0;
-  let poolCtMax = 4; //4 codec threads
+  let poolCtMax = decoderPool-2; //4 codec threads
 
   const TempCaptures = {};
   const TempCanvases = {};
@@ -73,7 +73,6 @@ export async function setupCamUI(parentElement=document.body) {
     let savedFramesCpy = [...savedFrames];
     savedFrames.length = 0;
     for(let i = 0; i < savedFramesCpy.length; i++) {
-      
       if(poolCt === poolCtMax) { //we need to await this last promise;
         classifierWait = new Promise((res) => {
           let id = classifierThread.addCallback(() => {
@@ -99,8 +98,6 @@ export async function setupCamUI(parentElement=document.body) {
             undefined, 
             classifierThread.id
           );
-          
-          poolCt--;
           
         }
       });
