@@ -8,8 +8,8 @@ var __create=Object.create;var __defProp=Object.defineProperty;var __getOwnPropD
                 <td><span style='font-weight:bold; background-color:blue;'>Image: </span>${classifierResult?.name}</td>
               </tr>
               <tr style='background-color:blue;'>
-                <td><span style='font-weight:bold; background-color:blue;'>Label: </span>${classifierResult?.label}</td>
-                <td><span style='font-weight:bold;'>Likelihood: </span>${classifierResult?.maxProb}</td>
+                <td><span style='font-weight:bold; background-color:blue;'>Most Likely: </span>${classifierResult?.label}</td>
+                <td><span style='font-weight:bold;'>Probability: </span>${classifierResult?.maxProb.toFixed(3)}%</td>
               </tr>
             </table>
           </div>
