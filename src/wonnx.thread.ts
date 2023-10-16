@@ -38,11 +38,9 @@ if(globalThis instanceof WorkerGlobalScope) {
             height:number
         }) {
 
-            console.log(data);
             if(!data) return;
-            const imageData = new ImageData(data.width,data.height);
+            const imageData = new ImageData(data.image, data.width,data.height);
             const imageTransformed = new Float32Array(squeezeWidth * squeezeHeight * 3);
-            imageData.data.set(data.image);
 
             //this doesn't seem right but this was the official example.
             for (let plane = 0; plane < planes; plane++) {
