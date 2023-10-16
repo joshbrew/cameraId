@@ -286,6 +286,7 @@ export async function setupCamUI(parentElement=document.body) {
               const frame = {
                 image,
                 name:frameName,
+                timestamp,
                 width:vid.videoWidth,
                 height:vid.videoHeight,
                 type:'image',
@@ -321,6 +322,7 @@ export async function setupCamUI(parentElement=document.body) {
               TempCaptures[fileName] = {
                 image:URL.createObjectURL(blob),
                 name:fileName,
+                timestamp:Date.now(),
                 width:vid.videoWidth,
                 height:vid.videoHeight,
                 type:'video',
@@ -370,7 +372,6 @@ export async function setupCamUI(parentElement=document.body) {
       //  quality:100
       //}).then(async (result) => {
           const image = new VideoFrame(vid);
-        
           let fileName;
           if (fname.value !== "") {
             fileName = fname.value+'_'+new Date().toISOString()+".png";
@@ -384,6 +385,7 @@ export async function setupCamUI(parentElement=document.body) {
             name:fileName,
             width:vid.videoWidth,
             height:vid.videoHeight,
+            timestamp:Date.now(),
             type:'image',
             command:'set',
             overridePort:true,

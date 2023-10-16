@@ -35,7 +35,8 @@ if(globalThis instanceof WorkerGlobalScope) {
             name:any,
             type:any,
             width:number,
-            height:number
+            height:number,
+            timestamp:number
         }) {
 
             if(!data) return;

@@ -1,7 +1,7 @@
 import threadop, { WorkerHelper, WorkerPoolHelper } from "threadop";
 
 
-export async function initVideoProcessingThreads() {
+export async function initVideoProcessingThreads(decoderPool=4) {
 
     const classifierThread = await threadop('./dist/esm/src/wonnx.thread.js') as WorkerHelper;
 
@@ -10,7 +10,7 @@ export async function initVideoProcessingThreads() {
     //this thread will handle drawing canvases and creating an image bitmap copy to send to the poolingThread
     const canvasThread = await threadop(
         function (data:{
-            image:ImageBitmap,name:string,width:number,height:number,type:string, 
+            image:ImageBitmap,name:string,width:number,height:number,type:string, timestamp:number,
             canvas?:OffscreenCanvas, draw?:boolean, delete?:boolean
         }) {    
             if(!data) return;
@@ -65,6 +65,7 @@ export async function initVideoProcessingThreads() {
             bmp?:ImageBitmap,
             width?:number,
             height?:number,
+            timestamp:number,
             type?:string
         }) {
             if(!data) return;
@@ -95,8 +96,8 @@ export async function initVideoProcessingThreads() {
                 if(!capture?.image) return;
                 return new Promise((res,rej) => {
                     createImageBitmap(imgData,0,0,capture.width,capture.height).then((bmp) => {
-                    let captureCpy = Object.assign({draw:true},capture,{image:bmp});
-                    res({message:captureCpy,transfer:[bmp]}); 
+                        let captureCpy = Object.assign({draw:true},capture,{image:bmp});
+                        res({message:captureCpy,transfer:[bmp]}); 
                     }).catch(rej);
                 });
             } 
@@ -128,6 +129,7 @@ export async function initVideoProcessingThreads() {
         async function(data:{
             image:VideoFrame|Uint8ClampedArray,
             name:string,
+            timestamp:number,
             //source image dims
             width:number,
             height:number,
