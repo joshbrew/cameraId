@@ -38,6 +38,7 @@ if(globalThis instanceof WorkerGlobalScope) {
             height:number
         }) {
 
+            console.log(data);
             if(!data) return;
             const imageData = new ImageData(data.width,data.height);
             const imageTransformed = new Float32Array(squeezeWidth * squeezeHeight * 3);

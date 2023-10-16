@@ -6,6 +6,24 @@ import { downloadMP4URL, isMobile } from './util/utils';
 import { initVideoProcessingThreads } from './camThreads';
 
 export async function setupCamUI(parentElement=document.body) {
+  
+  //https://github.com/capacitor-community/camera-preview
+  const cameraPreviewOptions: CameraPreviewOptions = {
+    parent:'webcam', //web only
+    position: 'rear', //mobile only
+
+    //previewDims
+    width: 3840, //480,//352,//3840, //should restrict to max available size 
+    height: 2160,  // 360,//240,//
+
+    enableZoom: true
+    //enableOpacity: true //AR-friendly mode
+  };
+  
+  //values set for the squeezeNet result
+  let outputWidth = 244;
+  let outputHeight = 244;
+  
 
   const onMobile = isMobile();
   const Cam = CameraPreview;
@@ -27,25 +45,6 @@ export async function setupCamUI(parentElement=document.body) {
   let poolCt = 0;
   let poolCtMax = 4; //4 codec threads
 
-  
-  //checkboxes
-  const saveFile = parentElement.querySelector('#save') as HTMLInputElement;
-  const cloudSave = parentElement.querySelector('#cloudsave') as HTMLInputElement;
-  const saveFrames = parentElement.querySelector('#saveframes') as HTMLInputElement;
-
-  const fname = parentElement.querySelector('#fname') as HTMLInputElement;
-
-  const takePic = parentElement.querySelector('#tp') as HTMLButtonElement;
-  const recVid = parentElement.querySelector('#rv') as HTMLButtonElement;
-
-  const flashModes = parentElement.querySelector('#flashModes') as HTMLSelectElement;
-  const flip = parentElement.querySelector('#flip') as HTMLButtonElement;
-  //ui
-  const folderSelect = parentElement.querySelector('#folderSelect') as HTMLSelectElement;
-  const folderContents = parentElement.querySelector('#folderContents') as HTMLDivElement;
-
-  const frameTime = parentElement.querySelector('#classTime') as HTMLSpanElement
-
   const TempCaptures = {};
   const TempCanvases = {};
   const TempResults = {};
@@ -65,22 +64,7 @@ export async function setupCamUI(parentElement=document.body) {
   videoDecoderThread.addCallback((res)=>{console.log('videoDecoderThread thread result: ', res);});
   poolingThread.addCallback((res)=>{console.log('poolingThread result:',res)});
 
-  //https://github.com/capacitor-community/camera-preview
-  const cameraPreviewOptions: CameraPreviewOptions = {
-    parent:'webcam', //web only
-    position: 'rear', //mobile only
 
-    //previewDims
-    width: 3840, //480,//352,//3840, //should restrict to max available size 
-    height: 2160,  // 360,//240,//
-
-    enableZoom: true
-    //enableOpacity: true //AR-friendly mode
-  };
-  
-  let outputWidth = 352;
-  let outputHeight = 240;
-  
   let offscreen = new OffscreenCanvas(800, 600);
   let ctx = offscreen.getContext('2d');
 
@@ -141,6 +125,26 @@ export async function setupCamUI(parentElement=document.body) {
       }
     } 
   }
+
+
+  
+  //checkboxes
+  const saveFile = parentElement.querySelector('#save') as HTMLInputElement;
+  const cloudSave = parentElement.querySelector('#cloudsave') as HTMLInputElement;
+  const saveFrames = parentElement.querySelector('#saveframes') as HTMLInputElement;
+
+  const fname = parentElement.querySelector('#fname') as HTMLInputElement;
+
+  const takePic = parentElement.querySelector('#tp') as HTMLButtonElement;
+  const recVid = parentElement.querySelector('#rv') as HTMLButtonElement;
+
+  const flashModes = parentElement.querySelector('#flashModes') as HTMLSelectElement;
+  const flip = parentElement.querySelector('#flip') as HTMLButtonElement;
+  //ui
+  const folderSelect = parentElement.querySelector('#folderSelect') as HTMLSelectElement;
+  const folderContents = parentElement.querySelector('#folderContents') as HTMLDivElement;
+
+  const frameTime = parentElement.querySelector('#classTime') as HTMLSpanElement
 
 
   function setCapture(name,type,classifierResult) {
