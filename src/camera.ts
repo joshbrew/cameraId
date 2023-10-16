@@ -23,6 +23,7 @@ export async function setupCamUI(parentElement=document.body) {
   //values set for the squeezeNet result
   let outputWidth = 244;
   let outputHeight = 244;
+  let decoderPool = 4;
   
 
   const onMobile = isMobile();
@@ -35,7 +36,7 @@ export async function setupCamUI(parentElement=document.body) {
     videoDecoderThread, 
     canvasThread, 
     classifierThread
-  } = await initVideoProcessingThreads();
+  } = await initVideoProcessingThreads(decoderPool);
 
   
   let savedFrames = [] as any[];
@@ -65,7 +66,7 @@ export async function setupCamUI(parentElement=document.body) {
   poolingThread.addCallback((res)=>{console.log('poolingThread result:',res)});
 
 
-  let offscreen = new OffscreenCanvas(800, 600);
+  let offscreen = new OffscreenCanvas(outputWidth, outputHeight);
   let ctx = offscreen.getContext('2d');
 
   let processFrames = async () => { //dont do this while running capture or we'll explode, also workerize it
@@ -274,17 +275,17 @@ export async function setupCamUI(parentElement=document.body) {
           fileName = new Date().toISOString();
         }
 
+        let frameCb;
+
         const setupFrameCallbacks = () => {
           let onframe = async (timestamp) => {
-            let frameName = fname.value+'_'+new Date().toISOString();
-
-            if(saveFrames.checked) {
-              frameName 
+              let frameName = fname.value+'_'+new Date().toISOString();
+              console.time(`capture and inference ${frameName}`);
 
               const image = new VideoFrame(vid, {timestamp});
               const frame = {
                 image,
-                name:fileName,
+                name:frameName,
                 width:vid.videoWidth,
                 height:vid.videoHeight,
                 type:'image',
@@ -294,33 +295,12 @@ export async function setupCamUI(parentElement=document.body) {
                 outputHeight
               }
               savedFrames.push(frame); //process at end of recording to prevent CPU exploding
-            } else if(!threadRunning) {
-              frameName = fname.value+'_'+new Date().toISOString();
+              if(savedFrames.length > decoderPool) 
+                processFrames(); 
 
-              threadRunning = true;
-              
-              let id = classifierThread.addCallback(() => {
-                threadRunning = false;
-                classifierThread.removeCallback(id);
-              });
-
-              //this will slow main thread down
-              ctx?.drawImage(vid,0,0);
-              let imgData = ctx?.getImageData(0,0,vid.videoWidth,vid.videoHeight) as ImageData;
-
-              classifierThread.run(
-                {
-                  image:imgData.data,
-                  name:frameName,
-                  width:vid.videoWidth,
-                  height:vid.videoHeight,
-                  type:'image'
-                },
-                [imgData.data.buffer]
-              ); //callback will run
-            }
+              frameCb = vid.requestVideoFrameCallback(onframe);
           }
-          vid.requestVideoFrameCallback(onframe);
+          frameCb = vid.requestVideoFrameCallback(onframe);
         }
 
         //if(onMobile) {
@@ -335,29 +315,30 @@ export async function setupCamUI(parentElement=document.body) {
                 chunks.push(e.data);
             };
             mediaRecorder.onstop = () => {
-                let blob = new Blob(chunks, {'type':'video/mp4'});
+              vid.cancelVideoFrameCallback(frameCb);
+              let blob = new Blob(chunks, {'type':'video/mp4'});
 
-                TempCaptures[fileName] = {
-                  image:URL.createObjectURL(blob),
-                  name:fileName,
-                  width:vid.videoWidth,
-                  height:vid.videoHeight,
-                  type:'video',
-                  outputWidth,
-                  outputHeight
-                };
-                TempCaptureOrder.push(fileName);
+              TempCaptures[fileName] = {
+                image:URL.createObjectURL(blob),
+                name:fileName,
+                width:vid.videoWidth,
+                height:vid.videoHeight,
+                type:'video',
+                outputWidth,
+                outputHeight
+              };
+              TempCaptureOrder.push(fileName);
 
-                if(saveFile.checked) {
-                    chunks.length = 0;
-                    reader.onload = (ev)=>{
-                        ev.target && downloadMP4URL(ev.target.result, fileName);
-                    };
-                    
-                    reader.readAsDataURL(blob); 
-                }
+              if(saveFile.checked) {
+                  chunks.length = 0;
+                  reader.onload = (ev)=>{
+                      ev.target && downloadMP4URL(ev.target.result, fileName);
+                  };
+                  
+                  reader.readAsDataURL(blob); 
+              }
 
-                processFrames();
+              processFrames();
             }
 
             mediaRecorder.start();
