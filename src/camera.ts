@@ -12,13 +12,28 @@ export async function setupCamUI(parentElement=document.body) {
   parentElement.insertAdjacentHTML('afterbegin',camHTML);
   
   //appended by CameraPreview
+  const {
+    poolingThread, 
+    videoDecoderThread, 
+    canvasThread, 
+    classifierThread
+  } = await initVideoProcessingThreads();
 
+  
+  let savedFrames = [] as any[];
+  let classifierWait:Promise<any>|undefined;
+
+  let threadRunning = false;
+  let poolCt = 0;
+  let poolCtMax = 4; //4 codec threads
+
+  
   //checkboxes
   const saveFile = parentElement.querySelector('#save') as HTMLInputElement;
   const cloudSave = parentElement.querySelector('#cloudsave') as HTMLInputElement;
   const saveFrames = parentElement.querySelector('#saveframes') as HTMLInputElement;
 
-  const fname = (document.querySelector('#fname') as HTMLInputElement);
+  const fname = parentElement.querySelector('#fname') as HTMLInputElement;
 
   const takePic = parentElement.querySelector('#tp') as HTMLButtonElement;
   const recVid = parentElement.querySelector('#rv') as HTMLButtonElement;
@@ -38,22 +53,6 @@ export async function setupCamUI(parentElement=document.body) {
   const TempCaptureLimit = 20;
   
 
-  const {
-    poolingThread, 
-    videoDecoderThread, 
-    canvasThread, 
-    classifierThread
-  } = await initVideoProcessingThreads();
-
-  
-  let savedFrames = [] as any[];
-  let classifierWait:Promise<any>|undefined;
-
-  let threadRunning = false;
-  let poolCt = 0;
-  let poolCtMax = 4; //4 codec threads
-
-  
   classifierThread.addCallback((res)=>{
     if(!res) return;
     console.timeEnd(`capture and inference ${res.name}`);
@@ -66,6 +65,21 @@ export async function setupCamUI(parentElement=document.body) {
   videoDecoderThread.addCallback((res)=>{console.log('videoDecoderThread thread result: ', res);});
   poolingThread.addCallback((res)=>{console.log('poolingThread result:',res)});
 
+  //https://github.com/capacitor-community/camera-preview
+  const cameraPreviewOptions: CameraPreviewOptions = {
+    parent:'webcam', //web only
+    position: 'rear', //mobile only
+
+    //previewDims
+    width: 3840, //480,//352,//3840, //should restrict to max available size 
+    height: 2160,  // 360,//240,//
+
+    enableZoom: true
+    //enableOpacity: true //AR-friendly mode
+  };
+  
+  let outputWidth = 352;
+  let outputHeight = 240;
   
   let offscreen = new OffscreenCanvas(800, 600);
   let ctx = offscreen.getContext('2d');
@@ -160,9 +174,9 @@ export async function setupCamUI(parentElement=document.body) {
   ) {
     if(classifierResult?.avgTimeMs) frameTime.innerText = `${classifierResult.avgTimeMs}`;
 
-    if(type === 'image') {
+    if(type === 'image' && classifierResult) {
       let canvas = document.createElement('canvas');
-      canvas.width = 400; canvas.height = 300;
+      canvas.width = classifierResult.width; canvas.height = classifierResult.height;
       let offscreen = canvas.transferControlToOffscreen();
 
       canvasThread.run(
@@ -214,19 +228,6 @@ export async function setupCamUI(parentElement=document.body) {
   }
 
 
-    //https://github.com/capacitor-community/camera-preview
-    const cameraPreviewOptions: CameraPreviewOptions = {
-        parent:'webcam', //web only
-        position: 'rear', //mobile only
-
-        //previewDims
-        width: 3840, //should restrict to max available size 
-        height: 2160,
-
-        enableZoom: true
-        //enableOpacity: true //AR-friendly mode
-    };
-    
   Cam.start(cameraPreviewOptions).then(() => {
 
     const vid = (parentElement.querySelector('#video') as HTMLVideoElement);
@@ -284,7 +285,9 @@ export async function setupCamUI(parentElement=document.body) {
                 height:vid.videoHeight,
                 type:'image',
                 command:'set',
-                overridePort:true
+                overridePort:true,
+                outputWidth,
+                outputHeight
               }
               savedFrames.push(frame); //process at end of recording to prevent CPU exploding
             } else if(!threadRunning) {
@@ -335,7 +338,9 @@ export async function setupCamUI(parentElement=document.body) {
                   name:fileName,
                   width:vid.videoWidth,
                   height:vid.videoHeight,
-                  type:'video'
+                  type:'video',
+                  outputWidth,
+                  outputHeight
                 };
                 TempCaptureOrder.push(fileName);
 
@@ -396,7 +401,9 @@ export async function setupCamUI(parentElement=document.body) {
             height:vid.videoHeight,
             type:'image',
             command:'set',
-            overridePort:true
+            overridePort:true,
+            outputWidth,
+            outputHeight
           };
           savedFrames.push(frame);
 
