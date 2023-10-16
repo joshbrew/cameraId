@@ -69,7 +69,7 @@ export async function setupCamUI(parentElement=document.body) {
   let offscreen = new OffscreenCanvas(outputWidth, outputHeight);
   let ctx = offscreen.getContext('2d');
 
-  let processFrames = async () => { //dont do this while running capture or we'll explode, also workerize it
+  let processFrames = async (isVideo:boolean) => { //dont do this while running capture or we'll explode, also workerize it
     let savedFramesCpy = [...savedFrames];
     savedFrames.length = 0;
     for(let i = 0; i < savedFramesCpy.length; i++) {
@@ -111,8 +111,9 @@ export async function setupCamUI(parentElement=document.body) {
         savedFramesCpy[i], 
         [frame]
       );
-
-      if(saveFile.checked) { //ur gonna get a lot of images if you did this on a video < __ <
+      
+      //ur gonna get a lot of images if you did this on a video < __ <
+      if((isVideo && saveFrames.checked) || (!isVideo && saveFile.checked)) { 
           offscreen.width = savedFramesCpy[i].width; offscreen.height = savedFramesCpy[i].height;
           createImageBitmap(savedFramesCpy[i].image as VideoFrame, 0, 0, savedFramesCpy[i].width, savedFramesCpy[i].height).then(async (bmp) => {
             ctx?.drawImage(bmp,0,0);
@@ -299,7 +300,7 @@ export async function setupCamUI(parentElement=document.body) {
               }
               savedFrames.push(frame); //process at end of recording to prevent CPU exploding
               if(savedFrames.length > decoderPool) 
-                processFrames(); 
+                processFrames(true); 
             }
             frameCb = vid.requestVideoFrameCallback(onframe);
           }
@@ -342,7 +343,7 @@ export async function setupCamUI(parentElement=document.body) {
                   reader.readAsDataURL(blob); 
               }
 
-              processFrames();
+              processFrames(true);
             }
 
             mediaRecorder.start();
@@ -396,7 +397,7 @@ export async function setupCamUI(parentElement=document.body) {
           };
           savedFrames.push(frame);
 
-          processFrames();
+          processFrames(false);
 
         //});
       }
