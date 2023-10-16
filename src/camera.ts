@@ -50,7 +50,7 @@ export async function setupCamUI(parentElement=document.body) {
   const TempCanvases = {};
   const TempResults = {};
   const TempCaptureOrder = [] as any[];
-  const TempCaptureLimit = 20;
+  const TempCaptureLimit = 25;
   
 
   classifierThread.addCallback((res)=>{
@@ -90,6 +90,9 @@ export async function setupCamUI(parentElement=document.body) {
       const frame = savedFramesCpy[i].image;
       const fileName = savedFramesCpy[i].name;
 
+      let frameCpy;
+      if((isVideo && saveFrames.checked) || (!isVideo && saveFile.checked)) frameCpy = (frame as VideoFrame).clone();
+
       let id = poolingThread.addCallback((out) => {
         if(out === savedFramesCpy[i].name) {
           poolingThread.removeCallback(id);
@@ -113,7 +116,12 @@ export async function setupCamUI(parentElement=document.body) {
       //ur gonna get a lot of images if you did this on a video < __ <
       if((isVideo && saveFrames.checked) || (!isVideo && saveFile.checked)) { 
           offscreen.width = savedFramesCpy[i].width; offscreen.height = savedFramesCpy[i].height;
-          createImageBitmap(savedFramesCpy[i].image as VideoFrame, 0, 0, savedFramesCpy[i].width, savedFramesCpy[i].height).then(async (bmp) => {
+          createImageBitmap(
+            frameCpy as VideoFrame, 
+            0, 0, 
+            savedFramesCpy[i].width, 
+            savedFramesCpy[i].height
+          ).then(async (bmp) => {
             ctx?.drawImage(bmp,0,0);
             let blob = await offscreen.convertToBlob();
             var hiddenElement = document.createElement('a') as HTMLAnchorElement;
