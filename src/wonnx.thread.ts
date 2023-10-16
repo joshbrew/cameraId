@@ -76,13 +76,16 @@ if(globalThis instanceof WorkerGlobalScope) {
             }
 
             const avgFrameTime = inferenceTime / inferenceCount;
+            const avgFrameRate = inferenceCount / (inferenceTime*0.001);
 
             //report back to main thread
             return { 
                 probs, 
                 maxProb, 
                 label:labelsList[maxIndex],
-                avgTimeMs:avgFrameTime,
+                inferenceTime:duration,
+                avgFrameTime,
+                avgFrameRate,
                 name:data.name,
                 width:data.width,
                 height:data.height

@@ -73,6 +73,7 @@ export async function setupCamUI(parentElement=document.body) {
     let savedFramesCpy = [...savedFrames];
     savedFrames.length = 0;
     for(let i = 0; i < savedFramesCpy.length; i++) {
+      
       if(poolCt === poolCtMax) { //we need to await this last promise;
         classifierWait = new Promise((res) => {
           let id = classifierThread.addCallback(() => {
@@ -145,6 +146,7 @@ export async function setupCamUI(parentElement=document.body) {
   const folderContents = parentElement.querySelector('#folderContents') as HTMLDivElement;
 
   const frameTime = parentElement.querySelector('#classTime') as HTMLSpanElement
+  const avgFrameTime = parentElement.querySelector('#classAvgTime') as HTMLSpanElement
 
 
   function setCapture(name,type,classifierResult) {
@@ -167,7 +169,9 @@ export async function setupCamUI(parentElement=document.body) {
     name:string, 
     type='image',
     classifierResult?:{
-      avgTimeMs:number,
+      inferenceTime:number,
+      avgFrameTime:number,
+      avgFrameRate:number,
       height:number,
       width:number,
       name:string,
@@ -176,7 +180,10 @@ export async function setupCamUI(parentElement=document.body) {
       probs:number[]
     }
   ) {
-    if(classifierResult?.avgTimeMs) frameTime.innerText = `${classifierResult.avgTimeMs}`;
+    if(classifierResult?.inferenceTime) {
+      frameTime.innerText = `${classifierResult.inferenceTime.toFixed(2)}`;
+      avgFrameTime.innerText = `${classifierResult.avgFrameRate.toFixed(2)}`;
+    }
 
     if(type === 'image' && classifierResult) {
       let canvas = document.createElement('canvas');

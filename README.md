@@ -4,8 +4,11 @@ It uses the capacitor community CameraPreview API for mobile camera access but t
 
 Inference time for the 1000 label squeeze-net averages about 6-10ms for me on an RTX 3070, whatever that means. I tested on a 4K camera but the squeeze net uses only like a small square of the image. Switching over to an MNIST example next.
 
-I'm getting about 60fps after adding proper frame rescaling but the Squeeze Net results are still weird, it thinks everything is a radiator, a tile roof, a nematode, or a window shade for me >__> so I might still be doing something wrong.
+I'm getting about 120fps on WONNX after adding proper frame rescaling but the Squeeze Net results are still weird, it thinks everything is a radiator, a tile roof, a nematode, or a window shade for me >__> so I might still be doing something wrong. It's not actually 120FPS with the full demo because we're rendering a bunch of offscreen canvases same time but it's still fast, and otherwise throttles itself based on worker load. 
 
 # build and run
 `npm i -g tinybuild` then `npm start`
+
+
+![Capture](./Capture.PNG)
 

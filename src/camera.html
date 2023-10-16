@@ -23,8 +23,11 @@ Record frames? <input type="checkbox" id="saveframes"/> <br/>
 Predictions:
 <div>
   <div>
-    <span>WONNX Average Time (ms): </span>
-    <span id="classTime"></span>
+    <span>WONNX Inference Time (ms): </span>
+    <span id="classTime"></span><br/>
+    <span>WONNX Avg Framerate: </span>
+    <span id="classAvgTime"></span><br/>
+    (It's not actually this fast with the rendering below running simultaneously)
   </div>
   <select id="folderSelect">
     <option id="temp">Temp</option>
