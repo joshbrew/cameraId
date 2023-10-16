@@ -18,7 +18,7 @@ export async function setupCamUI(parentElement=document.body) {
   const cloudSave = parentElement.querySelector('#cloudsave') as HTMLInputElement;
   const saveFrames = parentElement.querySelector('#saveframes') as HTMLInputElement;
 
-  const fname = (document.querySelector('#fname') as HTMLInputElement);
+  const fname = parentElement.querySelector('#fname') as HTMLInputElement;
 
   const takePic = parentElement.querySelector('#tp') as HTMLButtonElement;
   const recVid = parentElement.querySelector('#rv') as HTMLButtonElement;
