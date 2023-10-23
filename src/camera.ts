@@ -26,8 +26,8 @@ export async function setupCamUI(parentElement=document.body) {
   let labelsName = 'squeeze-labels.txt'//'mnist-labels.txt'; //'mnist-labels.txt'
   let inputName = 'data' //'input'
   let outputName = 'squeezenet0_flatten0_reshape0' //'output'
-  let outputWidth=64;
-  let outputHeight=64;
+  let outputWidth=224; //64;
+  let outputHeight=224; //64;
   
 
   const onMobile = isMobile();
