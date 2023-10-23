@@ -1,0 +1,1 @@
+## Visualize onnx models and their i/o requirements with https://netron.app
