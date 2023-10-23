@@ -21,9 +21,13 @@ export async function setupCamUI(parentElement=document.body) {
   };
   
   //values set for the squeezeNet result
-  let outputWidth = 244;
-  let outputHeight = 244;
   let decoderPool = 4;
+  let modelName = 'opt-squeeze.onnx'//'inception-mnist.onnx'; //'opt-squeeze.onnx'
+  let labelsName = 'squeeze-labels.txt'//'mnist-labels.txt'; //'mnist-labels.txt'
+  let inputName = 'data' //'input'
+  let outputName = 'squeezenet0_flatten0_reshape0' //'output'
+  let outputWidth=64;
+  let outputHeight=64;
   
 
   const onMobile = isMobile();
@@ -36,7 +40,15 @@ export async function setupCamUI(parentElement=document.body) {
     videoDecoderThread, 
     canvasThread, 
     classifierThread
-  } = await initVideoProcessingThreads(decoderPool);
+  } = await initVideoProcessingThreads(
+    decoderPool,
+    modelName,
+    labelsName,
+    inputName,
+    outputName,
+    outputWidth,
+    outputHeight
+  );
 
   
   let savedFrames = [] as any[];

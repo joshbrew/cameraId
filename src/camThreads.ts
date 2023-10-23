@@ -1,10 +1,27 @@
 import threadop, { WorkerHelper, WorkerPoolHelper } from "threadop";
 
 
-export async function initVideoProcessingThreads(decoderPool=4) {
+export async function initVideoProcessingThreads(
+    decoderPool = 4, 
+    modelName = 'inception-mnist.onnx',
+    labelsName = 'mnist-labels.txt',
+    inputName = 'input',
+    outputName = 'output',
+    outputWidth=64, 
+    outputHeight=64
+) {
 
     const classifierThread = await threadop('./dist/esm/src/wonnx.thread.js') as WorkerHelper;
 
+    classifierThread.run({
+        command:'configure',
+        modelName,
+        labelsName,
+        inputName,
+        outputName,
+        outputWidth,
+        outputHeight
+    })
 
 
     //this thread will handle drawing canvases and creating an image bitmap copy to send to the poolingThread
@@ -202,7 +219,7 @@ export async function initVideoProcessingThreads(decoderPool=4) {
         },
         {
             port:[poolingThread.worker],//,
-            pool:4 //the imagebitmaps are slow so this keeps the thread from backing up
+            pool:decoderPool //the imagebitmaps are slow so this keeps the thread from backing up
         }
     ) as WorkerPoolHelper;
 

@@ -6,16 +6,16 @@ import {initWorker} from 'threadop'
 if(globalThis instanceof WorkerGlobalScope) {
 
     //files go in ./models
-    const modelName = 'opt-squeeze.onnx'; //'inception_mnist.onnx' //'single_relu.onnx' //todo: make configurable
-    const labelsName = 'squeeze-labels.txt'; //'mnist-labels.txt'
+    let modelName = 'inception-mnist.onnx'; //'opt-squeeze.onnx' //'inception_mnist.onnx' //'single_relu.onnx' //todo: make configurable
+    let labelsName = 'mnist-labels.txt'; //'mnist-labels.txt' //'squeeze-labels.txt'
 
     //input and output variables, input is Float32Array, output is array or something
-    const inputName = 'data';
-    const resultName = 'squeezenet0_flatten0_reshape0';
+    let inputName = 'input'; //'data'
+    let outputName = 'output'; //'output'
 
 
-    const squeezeWidth = 224;
-    const squeezeHeight = 224;
+    let outputWidth = 64;
+    let outputHeight = 64;
 
     let inferenceCount = 0;
     let inferenceTime = 0;
@@ -36,19 +36,67 @@ if(globalThis instanceof WorkerGlobalScope) {
             type:any,
             width:number,
             height:number,
-            timestamp:number
+            timestamp:number,
+            command?:'configure',
+            modelName?:string, //in models/
+            labelsName?:string, //in models/
+            inputName?:string, //input onnx name, todo multiple i/o via a dict
+            outputName?:string, //output onnx variable name,
+            outputWidth?:number, //set image parameters
+            outputHeight?:number
         }) {
+
+            if(data.command) {
+                if(data.command === 'configure') {
+                    if(data.modelName)      modelName = data.modelName;
+                    if(data.labelsName)     labelsName = data.labelsName;
+                    if(data.outputName)     outputName = data.outputName;
+                    if(data.inputName)      inputName = data.inputName;
+                    if(data.outputWidth)    outputWidth = data.outputWidth;
+                    if(data.outputHeight)   outputHeight = data.outputHeight;
+
+                    async function fetchBytes(url) {
+                        const reply = await fetch(url);
+                        const blob = await reply.arrayBuffer();
+                        const arr = new Uint8Array(blob);
+                        return arr;
+                    }
+                
+                    // Load model, labels file and WONNX
+                    const [
+                        modelBytes, 
+                        initResult, 
+                        labelsResult
+                    ] = await Promise.all([
+                        fetchBytes(location.origin+"/models/"+modelName), 
+                        init(), 
+                        fetch(location.origin+"/models/"+labelsName).then(r => r.text())
+                    ]);
+            
+                    //console.log(modelBytes, initResult, labelsResult)
+            
+                    console.log("Initialized", { modelBytes, initResult, Session, labelsResult});
+                    // Start inference session
+                    session = await Session.fromBytes(modelBytes);
+            
+                    // Parse labels
+                    labelsList = labelsResult.split(/\n/g);
+            
+            
+                }
+                return;
+            }
 
             if(!data) return;
             const imageData = new ImageData(data.image, data.width,data.height);
-            const imageTransformed = new Float32Array(squeezeWidth * squeezeHeight * 3);
+            const imageTransformed = new Float32Array(outputWidth * outputHeight * 3);
 
             //this doesn't seem right but this was the official example.
             for (let plane = 0; plane < planes; plane++) {
-                for (let y = 0; y < squeezeHeight; y++) {
-                    for (let x = 0; x < squeezeWidth; x++) {
-                        const v = imageData.data[y * squeezeWidth * valuesPerPixel + x * valuesPerPixel + plane] / 255.0;
-                        imageTransformed[plane * (squeezeWidth * squeezeHeight) + y * squeezeWidth + x] = (v - mean[plane]) / std[plane];
+                for (let y = 0; y < outputHeight; y++) {
+                    for (let x = 0; x < outputWidth; x++) {
+                        const v = imageData.data[y * outputWidth * valuesPerPixel + x * valuesPerPixel + plane] / 255.0;
+                        imageTransformed[plane * (outputWidth * outputHeight) + y * outputWidth + x] = (v - mean[plane]) / std[plane];
                     }
                 }
             }
@@ -64,7 +112,8 @@ if(globalThis instanceof WorkerGlobalScope) {
             input.free();
 
             // Find the label with the highest probability
-            const probs = result.get(resultName);
+            const probs = result.get(outputName);
+            
             let maxProb = -1;
             let maxIndex = -1;
             for (let index = 0; index < probs.length; index++) {
@@ -95,33 +144,6 @@ if(globalThis instanceof WorkerGlobalScope) {
         initWorker(classifyImage); //do this ASAP
         
         
-        async function fetchBytes(url) {
-            const reply = await fetch(url);
-            const blob = await reply.arrayBuffer();
-            const arr = new Uint8Array(blob);
-            return arr;
-        }
-    
-        // Load model, labels file and WONNX
-        const [
-            modelBytes, 
-            initResult, 
-            labelsResult
-        ] = await Promise.all([
-            fetchBytes(location.origin+"/models/"+modelName), 
-            init(), 
-            fetch(location.origin+"/models/"+labelsName).then(r => r.text())
-        ]);
-
-        //console.log(modelBytes, initResult, labelsResult)
-
-        console.log("Initialized", { modelBytes, initResult, Session, labelsResult});
-        // Start inference session
-        session = await Session.fromBytes(modelBytes);
-
-        // Parse labels
-        labelsList = labelsResult.split(/\n/g);
-
 
 
     }
