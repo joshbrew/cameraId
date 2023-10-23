@@ -13,9 +13,8 @@ if(globalThis instanceof WorkerGlobalScope) {
     let inputName = 'input'; //'data'
     let outputName = 'output'; //'output'
 
-
-    let outputWidth = 64;
-    let outputHeight = 64;
+    let outputWidth = 224; //64
+    let outputHeight = 224; //64
 
     let inferenceCount = 0;
     let inferenceTime = 0;
@@ -143,9 +142,6 @@ if(globalThis instanceof WorkerGlobalScope) {
         
         initWorker(classifyImage); //do this ASAP
         
-        
-
-
     }
     
     initClassifier();
