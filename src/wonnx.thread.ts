@@ -31,7 +31,7 @@ if(globalThis instanceof WorkerGlobalScope) {
     }
 
     //from official example
-    function convertRGBAToRGBNormalized(rgbaData:Uint8ClampedArray) {
+    function convertRGBAToRGBPlanar(rgbaData:Uint8ClampedArray) {
         const numPixels = rgbaData.length / 4;
         const rgbData = new Float32Array(numPixels * 3);
 
@@ -137,7 +137,7 @@ if(globalThis instanceof WorkerGlobalScope) {
 
             if(!data) return;
             const imageData = new ImageData(data.image, data.width,data.height);
-            const imageTransformed = convertRGBAToRGBNormalized(imageData.data);//convertRGBAtoRGBFloat32(imageData.data); 
+            const imageTransformed = convertRGBAToRGBPlanar(imageData.data);//convertRGBAtoRGBFloat32(imageData.data); 
 
             // Start inference
             const input = new Input();
