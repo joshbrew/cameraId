@@ -5,6 +5,10 @@ import {initWorker} from 'threadop'
 //@ts-ignore
 if(globalThis instanceof WorkerGlobalScope) {
 
+    // utility function, creates array of numbers from `start` to `stop`, with given `step`:
+    const range = (start, stop, step = 1) =>
+        Array(Math.ceil((stop - start) / step)).fill(start).map((x, y) => x + y * step)
+
     //files go in ./models
     let modelName = 'inception-mnist.onnx'; //'opt-squeeze.onnx' //'inception_mnist.onnx' //'single_relu.onnx' //todo: make configurable
     let labelsName = 'mnist-labels.txt'; //'mnist-labels.txt' //'squeeze-labels.txt'
@@ -44,62 +48,62 @@ if(globalThis instanceof WorkerGlobalScope) {
             outputWidth?:number, //set image parameters
             outputHeight?:number
         }) {
+            
+            if(data.command === 'configure') {
+                if(data.modelName)      modelName = data.modelName;
+                if(data.labelsName)     labelsName = data.labelsName;
+                if(data.outputName)     outputName = data.outputName;
+                if(data.inputName)      inputName = data.inputName;
+                if(data.outputWidth)    outputWidth = data.outputWidth;
+                if(data.outputHeight)   outputHeight = data.outputHeight;
 
-            if(data.command) {
-                if(data.command === 'configure') {
-                    if(data.modelName)      modelName = data.modelName;
-                    if(data.labelsName)     labelsName = data.labelsName;
-                    if(data.outputName)     outputName = data.outputName;
-                    if(data.inputName)      inputName = data.inputName;
-                    if(data.outputWidth)    outputWidth = data.outputWidth;
-                    if(data.outputHeight)   outputHeight = data.outputHeight;
-
-                    async function fetchBytes(url) {
-                        const reply = await fetch(url);
-                        const blob = await reply.arrayBuffer();
-                        const arr = new Uint8Array(blob);
-                        return arr;
-                    }
-                
-                    // Load model, labels file and WONNX
-                    const [
-                        modelBytes, 
-                        initResult, 
-                        labelsResult
-                    ] = await Promise.all([
-                        fetchBytes(location.origin+"/models/"+modelName), 
-                        init(), 
-                        fetch(location.origin+"/models/"+labelsName).then(r => r.text())
-                    ]);
-            
-                    //console.log(modelBytes, initResult, labelsResult)
-            
-                    console.log("Initialized", { modelBytes, initResult, Session, labelsResult});
-                    // Start inference session
-                    session = await Session.fromBytes(modelBytes);
-            
-                    // Parse labels
-                    labelsList = labelsResult.split(/\n/g);
-            
-            
+                async function fetchBytes(url) {
+                    const reply = await fetch(url);
+                    const blob = await reply.arrayBuffer();
+                    const arr = new Uint8Array(blob);
+                    return arr;
                 }
+            
+                // Load model, labels file and WONNX
+                const [
+                    modelBytes, 
+                    initResult, 
+                    labelsResult
+                ] = await Promise.all([
+                    fetchBytes(location.origin+"/models/"+modelName), 
+                    init(), 
+                    fetch(location.origin+"/models/"+labelsName).then(r => r.text())
+                ]);
+        
+                //console.log(modelBytes, initResult, labelsResult)
+        
+                console.log("Initialized", { modelBytes, initResult, Session, labelsResult});
+                // Start inference session
+                session = await Session.fromBytes(modelBytes);
+        
+                // Parse labels
+                labelsList = labelsResult.split(/\n/g);
+            
                 return;
             }
 
             if(!data) return;
             const imageData = new ImageData(data.image, data.width,data.height);
-            const imageTransformed = new Float32Array(outputWidth * outputHeight * 3);
+            // let numberOfFloats = imageData.data.byteLength / 4;
+            // let dataView = new DataView(imageData.data.buffer);
+            // let arrayOfNumbers = range(0, numberOfFloats).map(idx => dataView.getFloat32(idx * 4, false));
+            const imageTransformed = new Float32Array(imageData.data); 
 
-            //this doesn't seem right but this was the official example.
-            for (let plane = 0; plane < planes; plane++) {
-                for (let y = 0; y < outputHeight; y++) {
-                    for (let x = 0; x < outputWidth; x++) {
-                        const v = imageData.data[y * outputWidth * valuesPerPixel + x * valuesPerPixel + plane] / 255.0;
-                        imageTransformed[plane * (outputWidth * outputHeight) + y * outputWidth + x] = (v - mean[plane]) / std[plane];
-                    }
-                }
-            }
-
+            // //this doesn't seem right but this was the official example.
+            // for (let plane = 0; plane < planes; plane++) {
+            //     for (let y = 0; y < outputHeight; y++) {
+            //         for (let x = 0; x < outputWidth; x++) {
+            //             const v = imageData.data[y * outputWidth * valuesPerPixel + x * valuesPerPixel + plane]; /// 255.0;
+            //             imageTransformed[plane * (outputWidth * outputHeight) + y * outputWidth + x] = v;//(v - mean[plane]) / std[plane];
+            //         }
+            //     }
+            // }
+            
             // Start inference
             const input = new Input();
             input.insert(inputName, imageTransformed);
