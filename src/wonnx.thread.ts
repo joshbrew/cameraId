@@ -130,12 +130,20 @@ if(globalThis instanceof WorkerGlobalScope) {
                 }
             }
 
-            console.log(imageData.data, imageTransformed);
+            //console.log(imageData.data, imageTransformed);
             // Start inference
             const input = new Input();
             input.insert(inputName, imageTransformed);
             const start = performance.now();
-            const result = await session.run(input);
+
+            let result;        
+            try {result = await session.run(input); } catch(er) { console.error(er); }
+            if(!result) return {
+                name:data.name,
+                width:data.width,
+                height:data.height
+            };
+
             const duration = performance.now() - start;
             inferenceCount++;
             inferenceTime += duration;

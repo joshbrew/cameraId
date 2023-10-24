@@ -229,7 +229,7 @@ export async function setupCamUI(parentElement=document.body) {
               </tr>
               <tr style='background-color:blue;'>
                 <td><span style='font-weight:bold; background-color:blue;'>Most Likely: </span>${classifierResult?.label}</td>
-                <td><span style='font-weight:bold;'>Probability: </span>${classifierResult?.maxProb.toFixed(3)}</td>
+                <td><span style='font-weight:bold;'>Probability: </span>${classifierResult?.maxProb?.toFixed(3)}</td>
               </tr>
             </table>
           </div>
