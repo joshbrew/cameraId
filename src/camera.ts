@@ -26,8 +26,8 @@ export async function setupCamUI(parentElement=document.body) {
   let labelsName = 'mnist-labels.txt'//'mnist-labels.txt'; //'mnist-labels.txt'
   let inputName = 'data'; //'input'
   let outputName = 'output';//'squeezenet0_flatten0_reshape0' //'output'
-  let outputWidth = 64; //64;
-  let outputHeight = 64; //64;
+  let outputWidth = 32; //64; //244
+  let outputHeight = 32; //64; //244
   
 
   const onMobile = isMobile();
@@ -222,14 +222,14 @@ export async function setupCamUI(parentElement=document.body) {
 
       //spaghetti
       div.insertAdjacentHTML('afterbegin',`
-          <div style="position:absolute;">
+          <div>
             <table>
               <tr style='background-color:blue;'>
                 <td><span style='font-weight:bold; background-color:blue;'>Image: </span>${classifierResult?.name}</td>
               </tr>
               <tr style='background-color:blue;'>
                 <td><span style='font-weight:bold; background-color:blue;'>Most Likely: </span>${classifierResult?.label}</td>
-                <td><span style='font-weight:bold;'>Probability: </span>${classifierResult?.maxProb.toFixed(3)}</td>
+                <td><span style='font-weight:bold;'>Probability: </span>${classifierResult?.maxProb?.toFixed(3)}</td>
               </tr>
             </table>
           </div>

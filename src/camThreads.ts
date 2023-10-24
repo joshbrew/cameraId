@@ -197,6 +197,8 @@ export async function initVideoProcessingThreads(
             ); //rescales
 
             data.bmp = bmp;
+            
+            //this will get the resized image
             data.image = (this.ctx as CanvasRenderingContext2D).getImageData(
                 0,0,
                 this.offscreen.width,
