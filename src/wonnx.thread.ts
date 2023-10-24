@@ -5,6 +5,37 @@ import {initWorker} from 'threadop'
 //@ts-ignore
 if(globalThis instanceof WorkerGlobalScope) {
 
+    //
+    function convertRGBAtoRGBFloat32(rgbaData) {
+
+        // Ensure the length of the input array is a multiple of 4 (RGBA values)
+        if (rgbaData.length % 4 !== 0) {
+          throw new Error('Input array length must be a multiple of 4');
+        }
+      
+        // Create a Float32Array to store the RGB values
+        const numPixels = rgbaData.length / 4;
+        const rgbData = new Float32Array(numPixels * 3);
+      
+        // Loop through the RGBA data and convert to RGB Float32 format
+        for (let i = 0; i < numPixels; i++) {
+          const rgbaIndex = i * 4;
+          const rgbIndex = i * 3;
+      
+          // Convert each channel from Uint8 (0-255) to Float32 (0-1)
+          rgbData[rgbIndex] = rgbaData[rgbaIndex] / 255;
+          rgbData[rgbIndex + 1] = rgbaData[rgbaIndex + 1] / 255;
+          rgbData[rgbIndex + 2] = rgbaData[rgbaIndex + 2] / 255;
+        }
+      
+        return rgbData;
+    }
+    
+    // Example usage
+    // const rgbaData = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]);
+    // const rgbData = convertRGBAtoRGBFloat32(rgbaData);
+    // console.log(rgbData);  // Float32Array(6) [1, 0, 0, 0, 1, 0]
+      
     // utility function, creates array of numbers from `start` to `stop`, with given `step`:
     const range = (start, stop, step = 1) =>
         Array(Math.ceil((stop - start) / step)).fill(start).map((x, y) => x + y * step)
@@ -92,7 +123,7 @@ if(globalThis instanceof WorkerGlobalScope) {
             // let numberOfFloats = imageData.data.byteLength / 4;
             // let dataView = new DataView(imageData.data.buffer);
             // let arrayOfNumbers = range(0, numberOfFloats).map(idx => dataView.getFloat32(idx * 4, false));
-            const imageTransformed = new Float32Array(imageData.data); 
+            const imageTransformed = convertRGBAtoRGBFloat32(imageData.data); 
 
             // //this doesn't seem right but this was the official example.
             // for (let plane = 0; plane < planes; plane++) {

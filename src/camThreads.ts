@@ -21,8 +21,7 @@ export async function initVideoProcessingThreads(
         outputName,
         outputWidth,
         outputHeight
-    })
-
+    });
 
     //this thread will handle drawing canvases and creating an image bitmap copy to send to the poolingThread
     const canvasThread = await threadop(
