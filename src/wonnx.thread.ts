@@ -5,6 +5,32 @@ import {initWorker} from 'threadop'
 //@ts-ignore
 if(globalThis instanceof WorkerGlobalScope) {
 
+    //
+    function convertRGBAtoRGBFloat32(rgbaData) {
+
+        // Ensure the length of the input array is a multiple of 4 (RGBA values)
+        if (rgbaData.length % 4 !== 0) {
+          throw new Error('Input array length must be a multiple of 4');
+        }
+      
+        // Create a Float32Array to store the RGB values
+        const numPixels = rgbaData.length / 4;
+        const rgbData = new Float32Array(numPixels * 3);
+      
+        // Loop through the RGBA data and convert to RGB Float32 format
+        for (let i = 0; i < numPixels; i++) {
+          const rgbaIndex = i * 4;
+          const rgbIndex = i * 3;
+      
+          // Convert each channel from Uint8 (0-255) to Float32 (0-1)
+          rgbData[rgbIndex] = rgbaData[rgbaIndex] / 255;
+          rgbData[rgbIndex + 1] = rgbaData[rgbaIndex + 1] / 255;
+          rgbData[rgbIndex + 2] = rgbaData[rgbaIndex + 2] / 255;
+        }
+      
+        return rgbData;
+    }
+
     // utility function, creates array of numbers from `start` to `stop`, with given `step`:
     const range = (start, stop, step = 1) =>
         Array(Math.ceil((stop - start) / step)).fill(start).map((x, y) => x + y * step)
@@ -92,18 +118,19 @@ if(globalThis instanceof WorkerGlobalScope) {
             // let numberOfFloats = imageData.data.byteLength / 4;
             // let dataView = new DataView(imageData.data.buffer);
             // let arrayOfNumbers = range(0, numberOfFloats).map(idx => dataView.getFloat32(idx * 4, false));
-            const imageTransformed = new Float32Array(outputWidth * outputHeight * 3); 
+            const imageTransformed = new Float32Array(outputWidth*outputHeight*3);//convertRGBAtoRGBFloat32(imageData.data); 
 
             //this doesn't seem right but this was the official example.
             for (let plane = 0; plane < planes; plane++) {
                 for (let y = 0; y < outputHeight; y++) {
                     for (let x = 0; x < outputWidth; x++) {
-                        const v = imageData.data[y * outputWidth * valuesPerPixel + x * valuesPerPixel + plane]; /// 255.0;
-                        imageTransformed[plane * (outputWidth * outputHeight) + y * outputWidth + x] = v;//(v - mean[plane]) / std[plane];
+                        const v = imageData.data[y * outputWidth * valuesPerPixel + x * valuesPerPixel + plane] / 255.0;
+                        imageTransformed[plane * (outputWidth * outputHeight) + y * outputWidth + x] = (v - mean[plane]) / std[plane];
                     }
                 }
             }
 
+            console.log(imageData.data, imageTransformed);
             // Start inference
             const input = new Input();
             input.insert(inputName, imageTransformed);
