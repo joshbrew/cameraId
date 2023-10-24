@@ -92,18 +92,18 @@ if(globalThis instanceof WorkerGlobalScope) {
             // let numberOfFloats = imageData.data.byteLength / 4;
             // let dataView = new DataView(imageData.data.buffer);
             // let arrayOfNumbers = range(0, numberOfFloats).map(idx => dataView.getFloat32(idx * 4, false));
-            const imageTransformed = new Float32Array(imageData.data); 
+            const imageTransformed = new Float32Array(outputWidth * outputHeight * 3); 
 
-            // //this doesn't seem right but this was the official example.
-            // for (let plane = 0; plane < planes; plane++) {
-            //     for (let y = 0; y < outputHeight; y++) {
-            //         for (let x = 0; x < outputWidth; x++) {
-            //             const v = imageData.data[y * outputWidth * valuesPerPixel + x * valuesPerPixel + plane]; /// 255.0;
-            //             imageTransformed[plane * (outputWidth * outputHeight) + y * outputWidth + x] = v;//(v - mean[plane]) / std[plane];
-            //         }
-            //     }
-            // }
-            
+            //this doesn't seem right but this was the official example.
+            for (let plane = 0; plane < planes; plane++) {
+                for (let y = 0; y < outputHeight; y++) {
+                    for (let x = 0; x < outputWidth; x++) {
+                        const v = imageData.data[y * outputWidth * valuesPerPixel + x * valuesPerPixel + plane]; /// 255.0;
+                        imageTransformed[plane * (outputWidth * outputHeight) + y * outputWidth + x] = v;//(v - mean[plane]) / std[plane];
+                    }
+                }
+            }
+
             // Start inference
             const input = new Input();
             input.insert(inputName, imageTransformed);
