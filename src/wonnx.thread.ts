@@ -5,7 +5,6 @@ import {initWorker} from 'threadop'
 //@ts-ignore
 if(globalThis instanceof WorkerGlobalScope) {
 
-    //
     function convertRGBAtoRGBFloat32(rgbaData) {
 
         // Ensure the length of the input array is a multiple of 4 (RGBA values)
@@ -31,6 +30,33 @@ if(globalThis instanceof WorkerGlobalScope) {
         return rgbData;
     }
 
+    //from official example
+    function convertRGBAToRGBNormalized(rgbaData:Uint8ClampedArray) {
+        const numPixels = rgbaData.length / 4;
+        const rgbData = new Float32Array(numPixels * 3);
+
+        const planes = 3; // SqueezeNet expects RGB
+        const valuesPerPixel = 4; // source data is RGBA
+        const mean = [0.485, 0.456, 0.406];
+        const std = [0.229, 0.224, 0.225];
+
+        for (let plane = 0; plane < planes; plane++) {
+            for (let y = 0; y < outputHeight; y++) {
+                for (let x = 0; x < outputWidth; x++) {
+                    const v = rgbaData[y * outputWidth * valuesPerPixel + x * valuesPerPixel + plane] / 255.0;
+                    rgbData[plane * (outputWidth * outputHeight) + y * outputWidth + x] = (v - mean[plane]) / std[plane];
+                }
+            }
+        }
+
+        return rgbData;
+    }
+
+    // Example usage
+    // const rgbaData = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]);
+    // const rgbData = convertRGBAtoRGBFloat32(rgbaData);
+    // console.log(rgbData);  // Float32Array(6) [1, 0, 0, 0, 1, 0]
+      
     // utility function, creates array of numbers from `start` to `stop`, with given `step`:
     const range = (start, stop, step = 1) =>
         Array(Math.ceil((stop - start) / step)).fill(start).map((x, y) => x + y * step)
@@ -49,10 +75,6 @@ if(globalThis instanceof WorkerGlobalScope) {
     let inferenceCount = 0;
     let inferenceTime = 0;
     // Transform the image data in the format expected by SqueezeNet
-    const planes = 3; // SqueezeNet expects RGB
-    const valuesPerPixel = 4; // source data is RGBA
-    let mean = [0.485, 0.456, 0.406];
-    let std = [0.229, 0.224, 0.225];
 
     const initClassifier = async () => {
 
@@ -115,35 +137,19 @@ if(globalThis instanceof WorkerGlobalScope) {
 
             if(!data) return;
             const imageData = new ImageData(data.image, data.width,data.height);
-            // let numberOfFloats = imageData.data.byteLength / 4;
-            // let dataView = new DataView(imageData.data.buffer);
-            // let arrayOfNumbers = range(0, numberOfFloats).map(idx => dataView.getFloat32(idx * 4, false));
-            const imageTransformed = new Float32Array(outputWidth*outputHeight*3);//convertRGBAtoRGBFloat32(imageData.data); 
+            const imageTransformed = convertRGBAToRGBNormalized(imageData.data);//convertRGBAtoRGBFloat32(imageData.data); 
 
-            //this doesn't seem right but this was the official example.
-            for (let plane = 0; plane < planes; plane++) {
-                for (let y = 0; y < outputHeight; y++) {
-                    for (let x = 0; x < outputWidth; x++) {
-                        const v = imageData.data[y * outputWidth * valuesPerPixel + x * valuesPerPixel + plane] / 255.0;
-                        imageTransformed[plane * (outputWidth * outputHeight) + y * outputWidth + x] = (v - mean[plane]) / std[plane];
-                    }
-                }
-            }
-
-            //console.log(imageData.data, imageTransformed);
             // Start inference
             const input = new Input();
             input.insert(inputName, imageTransformed);
             const start = performance.now();
-
-            let result;        
+            let result;
             try {result = await session.run(input); } catch(er) { console.error(er); }
             if(!result) return {
                 name:data.name,
                 width:data.width,
                 height:data.height
             };
-
             const duration = performance.now() - start;
             inferenceCount++;
             inferenceTime += duration;
