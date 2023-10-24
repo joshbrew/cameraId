@@ -22,12 +22,12 @@ export async function setupCamUI(parentElement=document.body) {
   
   //values set for the squeezeNet result
   let decoderPool = 4;
-  let modelName = 'opt-squeeze.onnx'//'inception-mnist.onnx'; //'opt-squeeze.onnx'
-  let labelsName = 'squeeze-labels.txt'//'mnist-labels.txt'; //'mnist-labels.txt'
-  let inputName = 'data' //'input'
-  let outputName = 'squeezenet0_flatten0_reshape0' //'output'
-  let outputWidth=224; //64;
-  let outputHeight=224; //64;
+  let modelName = 'sononet_simplified.onnx'//'sononet_simplified.onnx'; //'opt-squeeze.onnx'
+  let labelsName = 'mnist-labels.txt'//'mnist-labels.txt'; //'mnist-labels.txt'
+  let inputName = 'data'; //'input'
+  let outputName = 'output';//'squeezenet0_flatten0_reshape0' //'output'
+  let outputWidth = 64; //64;
+  let outputHeight = 64; //64;
   
 
   const onMobile = isMobile();
