@@ -1,5 +1,9 @@
+import {ImageProcessor} from './src/ImageProcessor'
 
-import './index.css' //compiles with esbuild, just link the stylesheet in your index.html (the boilerplate shows this example)
-import { setupCamUI } from './src/camera';
+import worker from './src/wonnx.worker'
 
-setupCamUI();
+import './index.css'
+
+let p = new ImageProcessor();
+
+worker;
