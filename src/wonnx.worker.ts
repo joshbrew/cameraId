@@ -30,30 +30,26 @@ if(globalThis instanceof WorkerGlobalScope) {
         return rgbData;
     }
 
-    //from official example
-    function convertRGBAToRGBPlanar(rgbaData:Uint8ClampedArray,outputWidth,outputHeight) {
+    function convertRGBAToRGBPlanar(rgbaData:Uint8ClampedArray, outputWidth, outputHeight) {
         console.time('rgbaplanar');
         const numPixels = outputWidth * outputHeight;
         const rgbData = new Float32Array(numPixels * 3);
-        const meanStdInv = [
-            (0.485 - 1 / 0.229),
-            (0.456 - 1 / 0.224),
-            (0.406 - 1 / 0.225)
-        ];
+        let meanStdInv0 = (0.485 - 1 / 0.229),
+            meanStdInv1 = (0.456 - 1 / 0.224),
+            meanStdInv2 = (0.406 - 1 / 0.225);
         
         const uint32View = new Uint32Array(rgbaData.buffer);
         let idxR = 0, idxG = numPixels, idxB = 2 * numPixels;
 
         for (let i = 0; i < numPixels; i++) {
             const rgba = uint32View[i];
-            rgbData[idxR++] = (rgba & 0xFF) * meanStdInv[0];
-            rgbData[idxG++] = ((rgba >> 8) & 0xFF) * meanStdInv[1];
-            rgbData[idxB++] = ((rgba >> 16) & 0xFF) * meanStdInv[2];
+            rgbData[idxR++] = (rgba & 0xFF) * meanStdInv0;
+            rgbData[idxG++] = ((rgba >> 8) & 0xFF) * meanStdInv1;
+            rgbData[idxB++] = ((rgba >> 16) & 0xFF) * meanStdInv2;
         }
 
         console.timeEnd('rgbaplanar');
         return rgbData;
-
     }
     // Example usage
     // const rgbaData = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]);
