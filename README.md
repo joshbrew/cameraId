@@ -9,6 +9,6 @@ I'm getting about 120fps-135FPS on just the WONNX pass. It's not actually 120FPS
 # build and run
 `npm i -g tinybuild` then `npm start`
 
-
+Note, these labels don't include the right species:
 ![Capture](./Capture.PNG)
 
