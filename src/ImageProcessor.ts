@@ -60,12 +60,19 @@ export class ImageProcessor {
                 ondelete: (box, boxes) => { console.log("Deleted", box, boxes); }
             });
             this.clearCanvases();
+
+            setTimeout(()=>{
+                (document.getElementById('mediaDims'+this.id) as HTMLElement).innerText = 
+                `${element.videoWidth || element.naturalWidth || element.width}x${element.videoHeight || element.naturalHeight || element.height}`;
+            },300);
             console.log('Stream target changed with ID or URL:', id);
         };
 
         this.parentElement.insertAdjacentHTML('beforeend',`
             <div id="container${this.id}" class="image-processor-container">
-                <div id="mediaElm${this.id}" class="image-processor-media"></div>
+                <div id="mediaElm${this.id}" class="image-processor-media">
+                    <span id="mediaDims${this.id}" class="image-processor-dimensions-label"></span>
+                </div>
                 <div id="controls${this.id}" class="image-processor-controls">
                     <button id="capture${this.id}" class="image-processor-capture-btn">Capture</button>
                 </div>
