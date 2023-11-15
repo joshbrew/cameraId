@@ -262,6 +262,24 @@ export async function setupCamUI(parentElement=document.body) {
   Cam.start(cameraPreviewOptions).then(() => {
 
     const vid = (parentElement.querySelector('#video') as HTMLVideoElement);
+
+    const videoRect = vid.getBoundingClientRect();
+    const canvasElement = document.createElement('canvas');
+    canvasElement.id = 'boundingBoxCanvas';
+    canvasElement.style.position = 'absolute';
+    canvasElement.style.left = videoRect.left + 'px';
+    canvasElement.style.top = videoRect.top + 'px';
+    canvasElement.width = vid.offsetWidth;
+    canvasElement.height = vid.offsetHeight;
+
+    window.addEventListener('resize', () => {
+      const updatedRect = vid.getBoundingClientRect();
+      canvasElement.style.left = updatedRect.left + 'px';
+      canvasElement.style.top = updatedRect.top + 'px';
+      canvasElement.width = vid.offsetWidth;
+      canvasElement.height = vid.offsetHeight;
+    });
+
     //todo:  vid.videoWidth, vid.videoHeight are unsatisfying, we'd rather have direct camera info from the API but this should max out the resolution OK
     setTimeout(()=>{console.log(vid.videoWidth,vid.videoHeight);},300);
 

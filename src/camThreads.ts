@@ -1,6 +1,13 @@
 import threadop, { WorkerHelper, WorkerPoolHelper } from "threadop";
 
 
+export type CamThreads = {
+    canvasThread: WorkerHelper;
+    videoDecoderThread: WorkerPoolHelper;
+    poolingThread: WorkerHelper;
+    classifierThread: WorkerHelper;
+}
+
 export async function initVideoProcessingThreads(
     decoderPool = 4, 
     modelName = 'inception-mnist.onnx',
@@ -11,7 +18,7 @@ export async function initVideoProcessingThreads(
     outputHeight=64
 ) {
 
-    const classifierThread = await threadop('./dist/esm/src/wonnx.thread.js') as WorkerHelper;
+    const classifierThread = await threadop('./dist/wonnx.worker.js') as WorkerHelper;
 
     classifierThread.run({
         command:'configure',
@@ -27,25 +34,40 @@ export async function initVideoProcessingThreads(
     //this thread will handle drawing canvases and creating an image bitmap copy to send to the poolingThread
     const canvasThread = await threadop(
         function (data:{
-            image:ImageBitmap,name:string,width:number,height:number,type:string, timestamp:number,
-            canvas?:OffscreenCanvas, draw?:boolean, delete?:boolean
+            image:ImageBitmap,
+
+            cropIndex:number,
+
+            width:number,height:number, 
+            
+            timestamp:number,
+
+            canvas?:OffscreenCanvas, 
+
+            draw?:boolean, delete?:boolean
         }) {    
             if(!data) return;
             //handle offscreencanvas draws on this thread because why not
             if(data.canvas) {
                 if(!this.canvases) {this.canvases = {}; this.contexts = {};}
-                this.canvases[data.name] = data.canvas;
+                this.canvases[data.cropIndex] = data.canvas;
                 let ctx = data.canvas.getContext('2d');
-                this.contexts[data.name] = ctx;
+                this.contexts[data.cropIndex] = ctx;
             }
 
-            if(data.draw && this.canvases?.[data.name]) {
-                (this.contexts[data.name] as CanvasRenderingContext2D)?.drawImage(
+            if('draw' in data && this.canvases?.[data.cropIndex]) {
+                if(data.width) {
+                    this.canvases[data.cropIndex].width = data.width;
+                }
+                if(data.height) {
+                    this.canvases[data.cropIndex].height = data.height;
+                }
+                (this.contexts[data.cropIndex] as CanvasRenderingContext2D)?.drawImage(
                     data.image,
                     0,
                     0,
-                    this.canvases[data.name].width,
-                    this.canvases[data.name].height
+                    this.canvases[data.cropIndex].width,
+                    this.canvases[data.cropIndex].height
                 ); //ImageBitmap
 
                 // (this.contexts[data.name] as CanvasRenderingContext2D).fillStyle = 'orange';
@@ -55,72 +77,81 @@ export async function initVideoProcessingThreads(
                 //   this.canvases[data.name].width*.4,
                 //   this.canvases[data.name].height*.4
                 // );
-            } else if (data.delete && this.canvases[data.name]) {
-                this.contexts[data.name].clearRect(
+            } else if ('delete' in data && this.canvases[data.cropIndex]) {
+                this.contexts[data.cropIndex].clearRect(
                     0,0,
-                    this.canvases[data.name].width,
-                    this.canvases[data.name].height
+                    this.canvases[data.cropIndex].width,
+                    this.canvases[data.cropIndex].height
                 );
-                delete this.canvases[data.name];
-                delete this.contexts[data.name];
+                delete this.canvases[data.cropIndex];
+                delete this.contexts[data.cropIndex];
             }
-
             return true;
         }
     ) as WorkerHelper;
 
 
-
-
-
     //this thread stores image data and returns copies. Uses transfers for speeeed
     const poolingThread = await threadop( //overridePort to get main thread data back, else get will pass to classifierThread
-        async function(data:{
-            command:string,
-            name:string,
-            image:Uint8ClampedArray, 
-            bmp?:ImageBitmap,
-            width?:number,
-            height?:number,
-            timestamp:number,
-            type?:string
-        }) {
-            if(!data) return;
-            if(data.command?.includes('set')) {
-                if(!this.TempCaptures) {
-                    this.TempCaptures = {}; 
-                    this.TempImageData = {};
-                    this.bufferLimit = 25; //we'll keep e.g. the last 100 results in memory
-                    this.bufferOrder = [];
-                } 
-
-                this.bufferOrder.push(data.name);
-                if(this.bufferOrder.length > this.bufferLimit) {
-                    delete this.TempCaptures[this.bufferOrder[0]];
-                    delete this.TempImageData[this.bufferOrder[0]];
-                    this.bufferOrder.shift();
-                }
-
-                this.TempImageData[data.name] = data.bmp; delete data.bmp;
-                this.TempCaptures[data.name] = data;
-
+        async function(
+            input:{
+                command:string,
+                name?:string,
+                id?:string,
+                cropIndex?:string,
+                data?:{ //when setting
+                    name:string,
+                    image:Uint8ClampedArray, 
+                    bmp?:ImageBitmap,
+                    width?:number,
+                    height?:number,
+                    cropIndex:number,
+                    timestamp:number,
+                    type?:string
+                }[]
             }
-
-
-            if(data.command?.includes('getbmp')) { //e.g. overrRide poolingThread that talks to canvasThread 
-                const capture = this.TempCaptures[data.name];
-                const imgData = this.TempImageData[data.name] as ImageBitmap;
+        ) {
+            if(input.command?.includes('set') && input.data) {
+                input.data.forEach((imgData) => {
+                    if(!imgData) return;
+                    if(!this.TempCaptures) {
+                        this.TempCaptures = {}; 
+                        this.TempImageData = {};
+                        this.bufferLimit = 100; //we'll keep e.g. the last 100 results in memory
+                        this.bufferOrder = [];
+                    } 
+    
+                    this.bufferOrder.push(imgData.name);
+                    if(this.bufferOrder.length > this.bufferLimit) {
+                        delete this.TempCaptures[this.bufferOrder[0]];
+                        delete this.TempImageData[this.bufferOrder[0]];
+                        this.bufferOrder.shift();
+                    }
+    
+                    this.TempImageData[imgData.name] = imgData.bmp; delete imgData.bmp;
+                    this.TempCaptures[imgData.name] = imgData;
+                });
+                return input.id;
+            } else if(input.command?.includes('getbmp') && input.name) { //e.g. overrRide poolingThread that talks to canvasThread 
+                
+                const capture = this.TempCaptures[input.name];
+                const imgData = this.TempImageData[input.name] as ImageBitmap;
                 if(!capture?.image) return;
-                return new Promise((res,rej) => {
+                return await new Promise((res,rej) => {
                     createImageBitmap(imgData,0,0,capture.width,capture.height).then((bmp) => {
-                        let captureCpy = Object.assign({draw:true},capture,{image:bmp});
-                        res({message:captureCpy,transfer:[bmp]}); 
+                        let captureCpy = Object.assign({
+                            draw:true
+                        },capture,{
+                            image:bmp
+                        });
+                        res({
+                            message:captureCpy,
+                            transfer:[bmp]
+                        }); 
                     }).catch(rej);
                 });
-            } 
-
-            else if(data.command?.includes('get')) { //e.g. overrRide poolingThread that talks to classifierThread to report data back to main thread
-                const capture = Object.assign({},this.TempCaptures[data.name]);
+            } else if(input.command?.includes('get') && input.name) { //e.g. overrRide poolingThread that talks to classifierThread to report data back to main thread
+                const capture = Object.assign({},this.TempCaptures[input.name]);
                 if(!capture?.image) return;
                 let clone = new Uint8ClampedArray((capture.image as Uint8ClampedArray).length);
                 clone.set(capture.image as Uint8ClampedArray);
@@ -132,7 +163,6 @@ export async function initVideoProcessingThreads(
                 };
             }
 
-            return data.name;
         },
         {
             port:[classifierThread.worker,canvasThread.worker] //be sure to use overridePort to specify main thread or classifierThread or canvasThread as transfers only work once
@@ -143,45 +173,56 @@ export async function initVideoProcessingThreads(
 
     //turn VideoFrames into raw image data
     const videoDecoderThread = await threadop(
-        async function(data:{
-            image:VideoFrame|Uint8ClampedArray,
-            name:string,
-            timestamp:number,
+        async function(input:{
+            image:VideoFrame|Uint8ClampedArray, //source image
             //source image dims
             width:number,
             height:number,
-            //output image dims allows image rescaling with offscreen canvases
-            outputWidth?:number,
-            outputHeight?:number,
-
-            //for next thread
-            type:string,
             command?:string, 
-            bmp?:ImageBitmap, 
-            overridePort?:any
+            id:string,
+            data:{ //and these are all the resulting outputs we want
+                name:string,
+                timestamp:number,
+                //output image dims allows image rescaling with offscreen canvases
+                cropX?:number, //crop rect x0,y0,width,height
+                cropY?:number, 
+                cropW?:number,
+                cropH?:number, 
+                cropIndex?:number,
+                outputWidth?:number, //resize output? defaults to crop or main width/height dims
+                outputHeight?:number,
+                //for next thread
+                type:string
+            }[],
+            overridePort?:string;
         }) {
+            let image:ImageData|VideoFrame;
+            if((input.image as Uint8ClampedArray)?.buffer) {
+                image = new ImageData(input.image as Uint8ClampedArray, input.width, input.height);
+            } else image = input.image as VideoFrame;
  
-
-            if(!data) return;
-            if(!this.offscreen) {
-                this.offscreen = new OffscreenCanvas(
-                    data.outputWidth ? data.outputWidth : data.width,
-                    data.outputHeight ? data.outputHeight : data.height
-                );
-                this.ctx = this.offscreen.getContext('2d',{ willReadFrequently: true });
-                (this.ctx as CanvasRenderingContext2D)
-            }
-                
-            let image:any = data.image;
-            let bmp:ImageBitmap|undefined;
-
-            let options = {} as ImageBitmapOptions; 
-            if (data.outputWidth) options.resizeWidth = data.outputWidth; 
-            if(data.outputHeight) options.resizeHeight = data.outputHeight;
-            if((image as Uint8ClampedArray)?.buffer) {
-                image = new ImageData(data.image as Uint8ClampedArray, data.width, data.height);
-                bmp = await createImageBitmap(image as ImageData, options); //this is the only way to convert the video YUV planes to RGB data officially
+            //process multiple image bounding boxes
+            let result = [] as any; 
+            for(let i = 0; i < input.data.length; i++) {
+                const data = input.data[i];
+                if(!data) return;
+                if(!this.offscreen) {
+                    this.offscreen = new OffscreenCanvas(
+                        data.outputWidth || data.cropW || input.width,
+                        data.outputHeight || data.cropH || input.height
+                    );
+                    this.backupOffscreen = new OffscreenCanvas(
+                        input.width,
+                        input.height
+                    )
+                    this.ctx = this.offscreen.getContext('2d',{ willReadFrequently: true });
+                    this.bctx = this.backupOffscreen.getContext('2d',{ willReadFrequently: true });
+                } else {
+                    this.offscreen.width = data.outputWidth || data.cropW || input.width; 
+                    this.offscreen.height = data.outputHeight || data.cropH || input.height;
+                }
                     
+<<<<<<< Updated upstream
             } else {
                 bmp = await createImageBitmap(image as VideoFrame, options); //this is the only way to convert the video YUV planes to RGB data officially   
                 (image as VideoFrame).close();
@@ -203,19 +244,86 @@ export async function initVideoProcessingThreads(
                 this.offscreen.width,
                 this.offscreen.height
             ).data;
+=======
+                let bmp:ImageBitmap|undefined;
+>>>>>>> Stashed changes
                         
-            //allow image rescaling
-            if(data.outputWidth) {
-                data.width = data.outputWidth;
-                delete data.outputWidth;
-            }
-            if(data.outputHeight) {
-                data.height = data.outputHeight;
-                delete data.outputHeight;
+                if(image instanceof VideoFrame) {       
+                    console.log(
+                        'x',(data.cropX || 0),
+                        'y',(data.cropY || 0),
+                        'w',data.cropW || input.width,
+                        'h',data.cropH || input.height,
+                        0,
+                        0,
+                        this.offscreen.width,
+                        this.offscreen.height
+                    );
+                    //crop the image
+                    (this.ctx as CanvasRenderingContext2D).drawImage(
+                        image as VideoFrame,
+                        data.cropX || 0,
+                        data.cropY || 0,
+                        data.cropW || input.width,
+                        data.cropH || input.height,
+                        0,
+                        0,
+                        this.offscreen.width,
+                        this.offscreen.height
+                    ); //rescales
+
+                    if(i === input.data.length-1) (image as VideoFrame).close();
+                } else {
+                    this.backupOffscreen.width = input.width;
+                    this.backupOffscreen.height = input.height;
+
+                    (this.bctx as CanvasRenderingContext2D).putImageData(image,0,0); 
+                    (this.ctx as CanvasRenderingContext2D).drawImage(
+                        this.backupOffscreen as OffscreenCanvas,
+                        data.cropX || 0,
+                        data.cropY || 0,
+                        data.cropW || input.width,
+                        data.cropH || input.height,
+                        0,
+                        0,
+                        this.offscreen.width,
+                        this.offscreen.height
+                    ); //rescales   
+                }
+
+                //create a bmp for future rendering purposes
+                bmp = await createImageBitmap(this.offscreen as OffscreenCanvas); //this is the only way to convert the video YUV planes to RGB data officially   
+                //if we've made all the crops we want, close the source frame
+         
+                let crop = {
+                    ...data,
+                    bmp,
+                    image:(this.ctx as CanvasRenderingContext2D).getImageData(
+                        0,0,
+                        this.offscreen.width,
+                        this.offscreen.height
+                    ).data,
+                    width: this.offscreen.width,
+                    height: this.offscreen.height
+                };
+                          
+                result.push({message:crop, transfer:[crop.image.buffer, bmp] as Transferable[]});
+
             }
 
-            return {message:data, transfer:[data.image.buffer, bmp], overridePort:data.overridePort};
-       
+            let output = {
+                    message:{data:[] as any[], 
+                    command:input.command,
+                    id:input.id
+            }, transfer:[] as any[], overridePort:input.overridePort};
+
+            result.forEach((value) => {
+                if(!value) return;
+                output.message.data.push(value.message);
+                output.transfer.push(...value.transfer);
+            })
+
+            return output;
         },
         {
             port:[poolingThread.worker],//,
