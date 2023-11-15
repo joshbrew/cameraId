@@ -28,8 +28,7 @@ export async function initVideoProcessingThreads(
         outputName,
         outputWidth,
         outputHeight
-    })
-
+    });
 
     //this thread will handle drawing canvases and creating an image bitmap copy to send to the poolingThread
     const canvasThread = await threadop(
@@ -204,7 +203,7 @@ export async function initVideoProcessingThreads(
             //process multiple image bounding boxes
             let result = [] as any; 
             for(let i = 0; i < input.data.length; i++) {
-                const data = input.data[i];
+                const data = input.data[i]l
                 if(!data) return;
                 if(!this.offscreen) {
                     this.offscreen = new OffscreenCanvas(
@@ -222,31 +221,7 @@ export async function initVideoProcessingThreads(
                     this.offscreen.height = data.outputHeight || data.cropH || input.height;
                 }
                     
-<<<<<<< Updated upstream
-            } else {
-                bmp = await createImageBitmap(image as VideoFrame, options); //this is the only way to convert the video YUV planes to RGB data officially   
-                (image as VideoFrame).close();
-            }
-
-            this.offscreen.width = data.outputWidth ? data.outputWidth : data.width; 
-            this.offscreen.height = data.outputHeight ? data.outputHeight : data.height;
-            
-            (this.ctx as CanvasRenderingContext2D).drawImage(
-                bmp,
-                0,0,
-                this.offscreen.width,
-                this.offscreen.height
-            ); //rescales
-
-            data.bmp = bmp;
-            data.image = (this.ctx as CanvasRenderingContext2D).getImageData(
-                0,0,
-                this.offscreen.width,
-                this.offscreen.height
-            ).data;
-=======
                 let bmp:ImageBitmap|undefined;
->>>>>>> Stashed changes
                         
                 if(image instanceof VideoFrame) {       
                     console.log(
