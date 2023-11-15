@@ -203,7 +203,7 @@ export async function initVideoProcessingThreads(
             //process multiple image bounding boxes
             let result = [] as any; 
             for(let i = 0; i < input.data.length; i++) {
-                const data = input.data[i]l
+                const data = input.data[i];
                 if(!data) return;
                 if(!this.offscreen) {
                     this.offscreen = new OffscreenCanvas(
