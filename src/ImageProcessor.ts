@@ -3,6 +3,8 @@ import { BoundingBoxTool } from "./BoundingBoxTool";
 import { MediaElementCreator } from "./MediaElementCreator";
 import { CamThreads, initVideoProcessingThreads } from "./camThreads";
 
+import './imageprocessor.css'
+
 export class ImageProcessor {
 
     id;
@@ -62,12 +64,12 @@ export class ImageProcessor {
         };
 
         this.parentElement.insertAdjacentHTML('beforeend',`
-            <div id="container${this.id}">
-                <div id="mediaElm${this.id}"></div>
-                <div id="controls${this.id}" style="height:10vw;">
-                    <button id="capture${this.id}" style="position:absolute; cursor:pointer; left: 50%; transform: translateX(-50%); border-radius: 50%; width: 10vw; height: 10vw; text-align: center;">Capture</button>
+            <div id="container${this.id}" class="image-processor-container">
+                <div id="mediaElm${this.id}" class="image-processor-media"></div>
+                <div id="controls${this.id}" class="image-processor-controls">
+                    <button id="capture${this.id}" class="image-processor-capture-btn">Capture</button>
                 </div>
-                <div id="results${this.id}"></div>
+                <div id="results${this.id}" class="image-processor-results"></div>
             </div>
         `);
 
@@ -89,9 +91,19 @@ export class ImageProcessor {
         this.outputHeight = modelInpHeight;
 
         this.initThreads(modelInpWidth, modelInpHeight);        
-        
-        (document.getElementById('capture'+this.id) as HTMLElement).onclick = () => {
+        const captureButton = (document.getElementById('capture'+this.id) as HTMLElement);
+        captureButton.onclick = () => {
+
+            // Add the active class to trigger the animation
+            captureButton.classList.add('capture-btn-active');
+
             this.processBoundingBoxes();
+
+            // Reattach the click event listener after the animation ends
+            captureButton.addEventListener('animationend', () => {
+                // Remove the active class after the animation
+                captureButton.classList.remove('capture-btn-active');
+            });
         }
     }
 
@@ -314,14 +326,14 @@ export class ImageProcessor {
         if(classifierResult) {
       
             (document.getElementById('output'+classifierResult.cropIndex) as HTMLElement).innerHTML = `
-                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                    <tr style='background-color: #007bff; color: white;'>
-                        <td style='padding: 8px; border: 1px solid #ddd;'><strong>Image:</strong> ${classifierResult?.name}</td>
+                <table class="image-processor-table">
+                    <tr class="image-processor-table-header">
+                        <td colSpan="3" class="image-processor-table-cell"><strong>Image:</strong> ${classifierResult?.name}</td>
                     </tr>
-                    <tr style='background-color: #f8f9fa;'>
-                        <td style='padding: 8px; border: 1px solid #ddd;'><strong>Best Guess:</strong> ${classifierResult?.label}</td>
-                        <td style='padding: 8px; border: 1px solid #ddd;'><strong>Probability:</strong> ${classifierResult?.maxProb?.toFixed(3)}</td>
-                        <td style='padding: 8px; border: 1px solid #ddd;'><strong>Time:</strong> ${classifierResult?.inferenceTime?.toFixed(3)}</td>
+                    <tr class="image-processor-table-row">
+                        <td class="image-processor-table-cell"><strong>Best Guess:</strong> ${classifierResult?.label}</td>
+                        <td class="image-processor-table-cell"><strong>Probability:</strong> ${classifierResult?.maxProb?.toFixed(3)}</td>
+                        <td class="image-processor-table-cell"><strong>Time:</strong> ${classifierResult?.inferenceTime?.toFixed(3)}</td>
                     </tr>
                 </table>
             `

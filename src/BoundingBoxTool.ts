@@ -54,7 +54,7 @@ export class BoundingBoxTool {
         this.overlayCanvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
         this.overlayCanvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.overlayCanvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
-
+        this.overlayCanvas.style.cursor = 'crosshair';
         // Bind the resizeCanvas method to the window resize event
         this.sourceElement.onload = () => {
             this.overlayCanvas.width = this.sourceElement.width;
