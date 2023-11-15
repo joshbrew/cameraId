@@ -32,26 +32,31 @@ if(globalThis instanceof WorkerGlobalScope) {
 
     //from official example
     function convertRGBAToRGBPlanar(rgbaData:Uint8ClampedArray,outputWidth,outputHeight) {
+        console.time('rgbaplanar');
         const numPixels = rgbaData.length / 4;
         const rgbData = new Float32Array(numPixels * 3);
 
-        const planes = 3; // SqueezeNet expects RGB
-        const valuesPerPixel = 4; // source data is RGBA
         const mean = [0.485, 0.456, 0.406];
         const std = [0.229, 0.224, 0.225];
+        const stdInverse = [1 / std[0], 1 / std[1], 1 / std[2]]; // Avoid division in loop
 
-        for (let plane = 0; plane < planes; plane++) {
-            for (let y = 0; y < outputHeight; y++) {
-                for (let x = 0; x < outputWidth; x++) {
-                    const v = rgbaData[y * outputWidth * valuesPerPixel + x * valuesPerPixel + plane] / 255.0;
-                    rgbData[plane * (outputWidth * outputHeight) + y * outputWidth + x] = (v - mean[plane]) / std[plane];
-                }
-            }
+        // Using Uint32Array to access RGBA data
+        const uint32View = new Uint32Array(rgbaData.buffer);
+
+        for (let i = 0; i < numPixels; i++) {
+            const rgba = uint32View[i];
+            const r = (rgba & 0xFF) / 255.0;
+            const g = ((rgba >> 8) & 0xFF) / 255.0;
+            const b = ((rgba >> 16) & 0xFF) / 255.0;
+
+            rgbData[i] = (r - mean[0]) * stdInverse[0];
+            rgbData[numPixels + i] = (g - mean[1]) * stdInverse[1];
+            rgbData[2 * numPixels + i] = (b - mean[2]) * stdInverse[2];
         }
 
+        console.timeEnd('rgbaplanar');
         return rgbData;
     }
-
     // Example usage
     // const rgbaData = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]);
     // const rgbData = convertRGBAtoRGBFloat32(rgbaData);
@@ -89,7 +94,7 @@ if(globalThis instanceof WorkerGlobalScope) {
             height:number,
             timestamp:number,
             cropIndex:number,
-            
+
             command?:'configure',
             modelName?:string, //in models/
             labelsName?:string, //in models/

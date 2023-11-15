@@ -1,4 +1,4 @@
-// VideoProcessor.js
+// ImageProcessor.ts
 import { BoundingBoxTool } from "./BoundingBoxTool";
 import { MediaElementCreator } from "./MediaElementCreator";
 import { CamThreads, initVideoProcessingThreads } from "./camThreads";
@@ -63,10 +63,10 @@ export class ImageProcessor {
 
         this.parentElement.insertAdjacentHTML('beforeend',`
             <div id="container${this.id}">
-                <div id="controls${this.id}">
-                    <button id="capture${this.id}">Capture</button>
-                </div>
                 <div id="mediaElm${this.id}"></div>
+                <div id="controls${this.id}" style="height:10vw;">
+                    <button id="capture${this.id}" style="position:absolute; cursor:pointer; left: 50%; transform: translateX(-50%); border-radius: 50%; width: 10vw; height: 10vw; text-align: center;">Capture</button>
+                </div>
                 <div id="results${this.id}"></div>
             </div>
         `);
@@ -314,14 +314,14 @@ export class ImageProcessor {
         if(classifierResult) {
       
             (document.getElementById('output'+classifierResult.cropIndex) as HTMLElement).innerHTML = `
-                <table>
-                    <tr style='background-color:blue;'>
-                    <td><span style='font-weight:bold; background-color:blue;'>Image: </span>${classifierResult?.name}</td>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                    <tr style='background-color: #007bff; color: white;'>
+                        <td style='padding: 8px; border: 1px solid #ddd;'><strong>Image:</strong> ${classifierResult?.name}</td>
                     </tr>
-                    <tr style='background-color:blue;'>
-                    <td><span style='font-weight:bold; background-color:blue;'>Best Guess: </span>${classifierResult?.label}</td>
-                    <td><span style='font-weight:bold;'>Probability: </span>${classifierResult?.maxProb?.toFixed(3)}</td>
-                    <td><span style='font-weight:bold;'>Time: </span>${classifierResult?.inferenceTime?.toFixed(3)}</td>
+                    <tr style='background-color: #f8f9fa;'>
+                        <td style='padding: 8px; border: 1px solid #ddd;'><strong>Best Guess:</strong> ${classifierResult?.label}</td>
+                        <td style='padding: 8px; border: 1px solid #ddd;'><strong>Probability:</strong> ${classifierResult?.maxProb?.toFixed(3)}</td>
+                        <td style='padding: 8px; border: 1px solid #ddd;'><strong>Time:</strong> ${classifierResult?.inferenceTime?.toFixed(3)}</td>
                     </tr>
                 </table>
             `
@@ -343,9 +343,3 @@ export class ImageProcessor {
 
 export default ImageProcessor;
 
-
-
-
-
-
-///create a grid of image crops through the canvas thread after receiving all the crops
