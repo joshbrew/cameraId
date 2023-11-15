@@ -78,6 +78,14 @@
     border-left: 2px solid black;
 }
 
+.image-processor-dimensions-label {
+    position: absolute;
+    padding: 2px 5px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    font-size: 12px;
+}
 
 @keyframes fadeIn {
     from { opacity: 0; }

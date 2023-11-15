@@ -180,14 +180,21 @@ export class ImageProcessor {
             canvasDiv.innerHTML = `
                 <table>
                 <tr>
-                    <td id="canvas${crop.cropIndex}"></td>
+                    <td id="canvas${crop.cropIndex}">
+                        <span class="image-processor-dimensions-label">${crop.outputWidth}x${crop.outputHeight}</span>
+                    </td>
                     <td id="output${crop.cropIndex}"></td>
                 </tr>
                 </table>
             `;
 
+            let dimensionsLabel = document.createElement('div');
+    
             (document.getElementById(`results${this.id}`) as HTMLElement).appendChild(canvasDiv);
             (document.getElementById(`canvas${crop.cropIndex}`) as HTMLElement).appendChild(canvas);
+            (document.getElementById(`canvas${crop.cropIndex}`) as HTMLElement).appendChild(dimensionsLabel);
+
+
 
             return offscreen;
         }
