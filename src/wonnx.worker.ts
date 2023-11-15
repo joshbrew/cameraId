@@ -33,29 +33,27 @@ if(globalThis instanceof WorkerGlobalScope) {
     //from official example
     function convertRGBAToRGBPlanar(rgbaData:Uint8ClampedArray,outputWidth,outputHeight) {
         console.time('rgbaplanar');
-        const numPixels = rgbaData.length / 4;
+        const numPixels = outputWidth * outputHeight;
         const rgbData = new Float32Array(numPixels * 3);
-
-        const mean = [0.485, 0.456, 0.406];
-        const std = [0.229, 0.224, 0.225];
-        const stdInverse = [1 / std[0], 1 / std[1], 1 / std[2]]; // Avoid division in loop
-
-        // Using Uint32Array to access RGBA data
+        const meanStdInv = [
+            (0.485 - 1 / 0.229),
+            (0.456 - 1 / 0.224),
+            (0.406 - 1 / 0.225)
+        ];
+        
         const uint32View = new Uint32Array(rgbaData.buffer);
+        let idxR = 0, idxG = numPixels, idxB = 2 * numPixels;
 
         for (let i = 0; i < numPixels; i++) {
             const rgba = uint32View[i];
-            const r = (rgba & 0xFF) / 255.0;
-            const g = ((rgba >> 8) & 0xFF) / 255.0;
-            const b = ((rgba >> 16) & 0xFF) / 255.0;
-
-            rgbData[i] = (r - mean[0]) * stdInverse[0];
-            rgbData[numPixels + i] = (g - mean[1]) * stdInverse[1];
-            rgbData[2 * numPixels + i] = (b - mean[2]) * stdInverse[2];
+            rgbData[idxR++] = (rgba & 0xFF) * meanStdInv[0];
+            rgbData[idxG++] = ((rgba >> 8) & 0xFF) * meanStdInv[1];
+            rgbData[idxB++] = ((rgba >> 16) & 0xFF) * meanStdInv[2];
         }
 
         console.timeEnd('rgbaplanar');
         return rgbData;
+
     }
     // Example usage
     // const rgbaData = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]);
