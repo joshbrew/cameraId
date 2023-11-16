@@ -75,24 +75,52 @@ export class BoundingBoxTool {
 
         this.sourceElement.addEventListener('click',()=>{this.resizeCanvas();})//just to be sure as it should be over the top
 
-        this.overlayCanvas.style.position = `absolute`;
         this.updateCanvasSize();
     
     }
 
     updateCanvasSize = () => {
-        this.overlayCanvas.width = this.sourceElement.clientWidth;
-        this.overlayCanvas.height = this.sourceElement.clientHeight;
-        this.overlayCanvas.style.width = `${this.sourceElement.clientWidth}`;
-        this.overlayCanvas.style.height = `${this.sourceElement.clientHeight}`;
-        this.updateCanvasPosition();
-    }
+        // Get the intrinsic dimensions of the source element
+        const naturalWidth = (this.sourceElement instanceof HTMLVideoElement && this.sourceElement.videoWidth) || 
+                             (this.sourceElement instanceof HTMLImageElement && this.sourceElement.naturalWidth) || 
+                             this.sourceElement.width;
 
+        const naturalHeight = (this.sourceElement instanceof HTMLVideoElement && this.sourceElement.videoHeight) || 
+                              (this.sourceElement instanceof HTMLImageElement && this.sourceElement.naturalHeight) || 
+                              this.sourceElement.height;
+
+        // Get the layout dimensions
+        const layoutWidth = this.sourceElement.clientWidth;
+        const layoutHeight = this.sourceElement.clientHeight;
+    
+        // Calculate the scale factor
+        const scaleX = layoutWidth / naturalWidth;
+        const scaleY = layoutHeight / naturalHeight;
+
+        // Choose the smaller scale to fit the canvas within the layout size
+        const scale = Math.min(scaleX, scaleY); 
+
+        // Scale canvas dimensions
+        const scaleWidth = naturalWidth * scale;
+        const scaleHeight = naturalHeight * scale;
+    
+        // Update canvas dimensions
+        this.overlayCanvas.width = scaleWidth;
+        this.overlayCanvas.height = scaleHeight;
+    
+        // Update canvas style dimensions to match the calculated size
+        this.overlayCanvas.style.width = `${scaleWidth}px`;
+        this.overlayCanvas.style.height = `${scaleHeight}px`;
+    
+        this.updateCanvasPosition();
+    };
+    
     updateCanvasPosition = () => {
-        // Adjust the canvas position to match the video element's current position
-        const rect = this.sourceElement.getBoundingClientRect();
-        this.overlayCanvas.style.left = `${rect.left}px`;
-        this.overlayCanvas.style.top = `${rect.top}px`;
+    
+        // Position the canvas absolutely within the viewport to align with the source element
+        this.overlayCanvas.style.position = 'absolute';
+        this.overlayCanvas.style.left = '50%';
+        this.overlayCanvas.style.transform = 'translateX(-50%)';
     };
 
     updateBoxesAndLabels = () => {
@@ -210,7 +238,7 @@ export class BoundingBoxTool {
                 const newBox = {
                     rect: this.getBoundingBoxRect(this.startX, this.startY, endX, endY),
                     label: '',
-                    id: Math.floor(Math.random()*1000000000000000)
+                    id: `${Math.floor(Math.random()*1000000000000000)}`
                 };
                 this.boxes.push(newBox);
                 this.createLabelInput(newBox);

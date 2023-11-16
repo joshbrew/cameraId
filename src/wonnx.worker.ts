@@ -1,56 +1,11 @@
 import init, { main, Session, Input } from "@webonnx/wonnx-wasm";
-
+import { convertRGBAToRGBPlanar, convertRGBAtoRGBFloat32 } from "./lib/imagemanip"
 import {initWorker} from 'threadop'
 
 //@ts-ignore
 if(globalThis instanceof WorkerGlobalScope) {
 
-    function convertRGBAtoRGBFloat32(rgbaData) {
 
-        // Ensure the length of the input array is a multiple of 4 (RGBA values)
-        if (rgbaData.length % 4 !== 0) {
-          throw new Error('Input array length must be a multiple of 4');
-        }
-      
-        // Create a Float32Array to store the RGB values
-        const numPixels = rgbaData.length / 4;
-        const rgbData = new Float32Array(numPixels * 3);
-      
-        // Loop through the RGBA data and convert to RGB Float32 format
-        for (let i = 0; i < numPixels; i++) {
-          const rgbaIndex = i * 4;
-          const rgbIndex = i * 3;
-      
-          // Convert each channel from Uint8 (0-255) to Float32 (0-1)
-          rgbData[rgbIndex] = rgbaData[rgbaIndex] / 255;
-          rgbData[rgbIndex + 1] = rgbaData[rgbaIndex + 1] / 255;
-          rgbData[rgbIndex + 2] = rgbaData[rgbaIndex + 2] / 255;
-        }
-      
-        return rgbData;
-    }
-
-    function convertRGBAToRGBPlanar(rgbaData:Uint8ClampedArray, outputWidth, outputHeight) {
-        console.time('rgbaplanar');
-        const numPixels = outputWidth * outputHeight;
-        const rgbData = new Float32Array(numPixels * 3);
-        let meanStdInv0 = (0.485 - 1 / 0.229),
-            meanStdInv1 = (0.456 - 1 / 0.224),
-            meanStdInv2 = (0.406 - 1 / 0.225);
-        
-        const uint32View = new Uint32Array(rgbaData.buffer);
-        let idxR = 0, idxG = numPixels, idxB = 2 * numPixels;
-
-        for (let i = 0; i < numPixels; i++) {
-            const rgba = uint32View[i];
-            rgbData[idxR++] = (rgba & 0xFF) * meanStdInv0;
-            rgbData[idxG++] = ((rgba >> 8) & 0xFF) * meanStdInv1;
-            rgbData[idxB++] = ((rgba >> 16) & 0xFF) * meanStdInv2;
-        }
-
-        console.timeEnd('rgbaplanar');
-        return rgbData;
-    }
     // Example usage
     // const rgbaData = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]);
     // const rgbData = convertRGBAtoRGBFloat32(rgbaData);
@@ -97,7 +52,7 @@ if(globalThis instanceof WorkerGlobalScope) {
             outputWidth?:number, //set image parameters
             outputHeight?:number
         }) {
-            console.log('wonnx input', data);
+            //console.log('wonnx input', data);
             if(data.command === 'configure') {
                 if(data.modelName)      modelName = data.modelName;
                 if(data.labelsName)     labelsName = data.labelsName;

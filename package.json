@@ -28,7 +28,7 @@
     "@webonnx/wonnx-wasm": "~0.5.0",
     "brainsatplay-math": "~0.0.37",
     "browserfs": "~1.4.3",
-    "threadop": "~1.5.1"
+    "threadop": "~1.5.3"
   },
   "devDependencies": {
     "@capacitor/android": "~5.5.0",

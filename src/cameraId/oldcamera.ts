@@ -3,7 +3,7 @@
 import camHTML from './camera.html'
 import { CameraPreview, CameraPreviewOptions } from '@capacitor-community/camera-preview'
 import { downloadMP4URL, isMobile } from './util/utils';
-import { initVideoProcessingThreads } from './camThreads';
+import { initVideoProcessingThreads } from './CamThreads';
 
 export async function setupCamUI(parentElement=document.body) {
   

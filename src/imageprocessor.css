@@ -1,11 +1,19 @@
+.video-element {
+    max-height:500px;
+}
+
 .image-processor-container {}
 
-.image-processor-media {
+.image-processor-camera {
     position: relative; /* Ensure that absolute positioning is relative to this container */
+    justify-content:center;
 }
 
 .image-processor-controls {
-    height: 10vw;
+    display: flex; /* Use flexbox for layout */
+    align-items: center; /* Align items vertically */
+    justify-content: center; /* Center items horizontally */
+    height:10vw;
 }
 
 .image-processor-capture-btn {
@@ -22,7 +30,16 @@
     background-color: white; /* Red inner circle */
     box-shadow: 0 0 0 4px white; /* Outer ring */
     transition: all 0.3s ease-in-out; /* Transition for smooth effect */
+    margin-right: 20px;
 }
+
+.image-processor-checkboxes {
+    position:absolute;
+    display: flex; /* Use flexbox for layout */
+    flex-direction: column; /* Stack checkboxes vertically */
+    left:65%;
+}
+
 
 .image-processor-capture-btn:hover {
     border: 6px solid black; 
@@ -59,10 +76,26 @@
 
 .image-processor-table {
     animation: fadeIn 0.2s ease-in;
-    width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
-    color:black;
+    color: black;
+    width: 100%; /* Ensure the outer table takes the full width */
+    table-layout: fixed; /* This helps in maintaining the width */
+}
+
+/* Set fixed width for the canvas container cell */
+.image-processor-media {
+    position:relative;
+    width: 150px; /* Adjust this width as needed */
+}
+
+/* Let the output cell take the remaining width */
+.image-processor-table td:not(.image-processor-media) {
+    width: auto;
+}
+
+.image-processor-table .image-processor-table {
+    width: 100%; /* Make the inner table take full width of its container */
 }
 
 .image-processor-table-header {

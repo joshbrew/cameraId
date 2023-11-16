@@ -1,5 +1,5 @@
 import threadop, { WorkerHelper, WorkerPoolHelper } from "threadop";
-
+import { graphXIntensities, autocorrelateImageThreaded, mapBitmapXIntensities } from "./lib/imagemanip";
 
 export type CamThreads = {
     canvasThread: WorkerHelper;
@@ -33,7 +33,13 @@ export async function initVideoProcessingThreads(
     //this thread will handle drawing canvases and creating an image bitmap copy to send to the poolingThread
     const canvasThread = await threadop(
         function (data:{
-            image:ImageBitmap,
+            image:ImageBitmap, 
+            spectral?:{
+                intensities:{r:number,g:number,b:number,i:number},
+                maxR:number,maxG:number,maxB:number,
+                width:number,
+                height:number
+            }
 
             cropIndex:number,
 
@@ -76,6 +82,21 @@ export async function initVideoProcessingThreads(
                 //   this.canvases[data.name].width*.4,
                 //   this.canvases[data.name].height*.4
                 // );
+            } else if('drawSpectral' in data && this.canvases?.[data.cropIndex] && data.spectral) {
+                if(data.width) {
+                    this.canvases[data.cropIndex].width = data.width;
+                }
+                if(data.height) {
+                    this.canvases[data.cropIndex].height = data.height;
+                }
+                
+                graphXIntensities(
+                    this.contexts[data.cropIndex],
+                    data.spectral?.intensities,
+                    data.width,
+                    data.height
+                );
+
             } else if ('delete' in data && this.canvases[data.cropIndex]) {
                 this.contexts[data.cropIndex].clearRect(
                     0,0,
@@ -86,6 +107,13 @@ export async function initVideoProcessingThreads(
                 delete this.contexts[data.cropIndex];
             }
             return true;
+        },
+        {
+            imports:{
+                ['./src/lib/imagemanip.js']:{
+                    'graphXIntensities':true
+                }
+            }
         }
     ) as WorkerHelper;
 
@@ -102,6 +130,14 @@ export async function initVideoProcessingThreads(
                     name:string,
                     image:Uint8ClampedArray, 
                     bmp?:ImageBitmap,
+                    spectral?:{
+                        intensities:{r:number,g:number,b:number,i:number},
+                        maxR:number,maxG:number,maxB:number,
+                        width:number,
+                        height:number
+                    }
+                    autocor?:Uint8ClampedArray, 
+                    autocorbmp?:ImageBitmap,
                     width?:number,
                     height?:number,
                     cropIndex:number,
@@ -116,6 +152,9 @@ export async function initVideoProcessingThreads(
                     if(!this.TempCaptures) {
                         this.TempCaptures = {}; 
                         this.TempImageData = {};
+                        this.TempACorRawData = {};
+                        this.TempACorImageData = {};
+                        this.TempSpectralData = {};
                         this.bufferLimit = 100; //we'll keep e.g. the last 100 results in memory
                         this.bufferOrder = [];
                     } 
@@ -124,18 +163,24 @@ export async function initVideoProcessingThreads(
                     if(this.bufferOrder.length > this.bufferLimit) {
                         delete this.TempCaptures[this.bufferOrder[0]];
                         delete this.TempImageData[this.bufferOrder[0]];
+                        delete this.TempACorRawData[this.bufferOrder[0]];
+                        delete this.TempACorImageData[this.bufferOrder[0]];
+                        delete this.TempSpectralData[this.bufferOrder[0]];
                         this.bufferOrder.shift();
                     }
     
-                    this.TempImageData[imgData.name] = imgData.bmp; delete imgData.bmp;
+                    this.TempImageData[imgData.name] = imgData.bmp; 
+                    this.TempSpectralData[imgData.name] = imgData.spectral; 
+                    this.TempACorRawData[imgData.name] = imgData.autocor; 
+                    this.TempACorImageData[imgData.name] = imgData.autocorbmp; 
+                    delete imgData.bmp; delete imgData.spectral; delete imgData.autocor; delete imgData.autocorbmp;
                     this.TempCaptures[imgData.name] = imgData;
                 });
                 return input.id;
             } else if(input.command?.includes('getbmp') && input.name) { //e.g. overrRide poolingThread that talks to canvasThread 
-                
                 const capture = this.TempCaptures[input.name];
                 const imgData = this.TempImageData[input.name] as ImageBitmap;
-                if(!capture?.image) return;
+                if(!imgData || !capture) return;
                 return await new Promise((res,rej) => {
                     createImageBitmap(imgData,0,0,capture.width,capture.height).then((bmp) => {
                         let captureCpy = Object.assign({
@@ -149,19 +194,54 @@ export async function initVideoProcessingThreads(
                         }); 
                     }).catch(rej);
                 });
-            } else if(input.command?.includes('get') && input.name) { //e.g. overrRide poolingThread that talks to classifierThread to report data back to main thread
-                const capture = Object.assign({},this.TempCaptures[input.name]);
-                if(!capture?.image) return;
-                let clone = new Uint8ClampedArray((capture.image as Uint8ClampedArray).length);
-                clone.set(capture.image as Uint8ClampedArray);
-                capture.image = clone;
-
+            } else if(input.command?.includes('getautocorbmp') && input.name) { //e.g. overrRide poolingThread that talks to canvasThread 
+                const capture = this.TempCaptures[input.name];
+                const imgData = this.TempACorImageData[input.name] as ImageBitmap;
+                if(!imgData || !capture) return;
+                return await new Promise((res,rej) => {
+                    createImageBitmap(imgData,0,0,capture.width,capture.height).then((bmp) => {
+                        let captureCpy = Object.assign({
+                            draw:true
+                        },capture,{
+                            image:bmp
+                        });
+                        res({
+                            message:captureCpy,
+                            transfer:[bmp]
+                        }); 
+                    }).catch(rej);
+                });
+            } else if(input.command?.includes('getautocor') && input.name) { //e.g. overrRide poolingThread that talks to classifierThread to report data back to main thread
+                const captureCpy = Object.assign({},this.TempCaptures[input.name]);
+                if(!captureCpy || !this.TempACorRawData[input.name]) return;
+                let clone = new Uint8ClampedArray((this.TempACorRawData[input.name] as Uint8ClampedArray).length);
+                clone.set(this.TempACorRawData[input.name] as Uint8ClampedArray);
+                captureCpy.image = clone;
                 return {
-                    message:capture,
-                    transfer:[capture.image?.buffer ? capture.image.buffer : capture.image]
+                    message:captureCpy,
+                    transfer:[captureCpy.image?.buffer ? captureCpy.image.buffer : captureCpy.image]
+                };
+            } else if(input.command?.includes('getspectral') && input.name) { //e.g. overrRide poolingThread that talks to classifierThread to report data back to main thread
+                const captureCpy = Object.assign({drawSpectral:true},this.TempCaptures[input.name]);
+                const spectral = this.TempSpectralData[input.name];
+                if(!captureCpy || !spectral) return;
+                captureCpy.spectral = spectral;
+                delete captureCpy.image;
+                captureCpy.cropIndex = captureCpy.cropIndex + 's';
+                return {
+                    message:captureCpy
+                };
+            } else if(input.command?.includes('get') && input.name) { //e.g. overrRide poolingThread that talks to classifierThread to report data back to main thread
+                const captureCpy = Object.assign({},this.TempCaptures[input.name]);
+                if(!captureCpy?.image) return;
+                let clone = new Uint8ClampedArray((captureCpy.image as Uint8ClampedArray).length);
+                clone.set(captureCpy.image as Uint8ClampedArray);
+                captureCpy.image = clone;
+                return {
+                    message:captureCpy,
+                    transfer:[captureCpy.image?.buffer ? captureCpy.image.buffer : captureCpy.image]
                 };
             }
-
         },
         {
             port:[classifierThread.worker,canvasThread.worker] //be sure to use overridePort to specify main thread or classifierThread or canvasThread as transfers only work once
@@ -179,6 +259,8 @@ export async function initVideoProcessingThreads(
             height:number,
             command?:string, 
             id:string,
+            spectral?:boolean, //map x intensity spectrum (digital spectrogram)
+            autocor?:boolean, //image autocorrelation
             data:{ //and these are all the resulting outputs we want
                 name:string,
                 timestamp:number,
@@ -224,16 +306,16 @@ export async function initVideoProcessingThreads(
                 let bmp:ImageBitmap|undefined;
                         
                 if(image instanceof VideoFrame) {       
-                    console.log(
-                        'x',(data.cropX || 0),
-                        'y',(data.cropY || 0),
-                        'w',data.cropW || input.width,
-                        'h',data.cropH || input.height,
-                        0,
-                        0,
-                        this.offscreen.width,
-                        this.offscreen.height
-                    );
+                    // console.log(
+                    //     'x',(data.cropX || 0),
+                    //     'y',(data.cropY || 0),
+                    //     'w',data.cropW || input.width,
+                    //     'h',data.cropH || input.height,
+                    //     0,
+                    //     0,
+                    //     this.offscreen.width,
+                    //     this.offscreen.height
+                    // );
                     //crop the image
                     (this.ctx as CanvasRenderingContext2D).drawImage(
                         image as VideoFrame,
@@ -266,30 +348,67 @@ export async function initVideoProcessingThreads(
                     ); //rescales   
                 }
 
+               
                 //create a bmp for future rendering purposes
-                bmp = await createImageBitmap(this.offscreen as OffscreenCanvas); //this is the only way to convert the video YUV planes to RGB data officially   
+                let prom = createImageBitmap(this.offscreen as OffscreenCanvas);
+
+                let scaledData = (this.ctx as CanvasRenderingContext2D).getImageData(
+                    0, 0,
+                    this.offscreen.width,
+                    this.offscreen.height
+                ).data
+
+                //autocorrelation
+                let acor;
+                if(input.autocor) { //this is VERY slow
+                    acor = autocorrelateImageThreaded(
+                        scaledData, 
+                        this.offscreen.width, 
+                        this.offscreen.height
+                    );
+                }
+
+                bmp = await prom; //this is the only way to convert the video YUV planes to RGB data officially   
                 //if we've made all the crops we want, close the source frame
          
                 let crop = {
                     ...data,
                     bmp,
-                    image:(this.ctx as CanvasRenderingContext2D).getImageData(
-                        0,0,
-                        this.offscreen.width,
-                        this.offscreen.height
-                    ).data,
+                    image:scaledData,
                     width: this.offscreen.width,
                     height: this.offscreen.height
-                };
-                          
-                result.push({message:crop, transfer:[crop.image.buffer, bmp] as Transferable[]});
+                } as any;
+
+                let transfer = [crop.image.buffer, bmp];
+                
+                if(input.autocor) {
+                    crop.autocor = await acor;
+                    crop.autocorbmp = await createImageBitmap(
+                        new ImageData(
+                            crop.autocor,
+                            this.offscreen.width,
+                            this.offscreen.height
+                        )
+                    )
+                    transfer.push(crop.autocor.buffer, crop.autocorbmp);
+                }
+
+                if(input.spectral) {
+                    crop.spectral = mapBitmapXIntensities(
+                        scaledData,
+                        this.offscreen.width,
+                        this.offscreen.height
+                    );
+                }
+
+                result.push({message:crop, transfer});
 
             }
 
             let output = {
-                    message:{data:[] as any[], 
-                    command:input.command,
-                    id:input.id
+                message:{data:[] as any[], 
+                command:input.command,
+                id:input.id
             }, transfer:[] as any[], overridePort:input.overridePort};
 
             result.forEach((value) => {
@@ -301,6 +420,13 @@ export async function initVideoProcessingThreads(
             return output;
         },
         {
+            imports:{ //this can be tricky, but the main thing is you need distributable js files, no node imports
+                ['./src/lib/imagemanip.js']:{
+                    'autocorrelateImageThreaded':true,
+                    'autocorrelateImage':true,
+                    'mapBitmapXIntensities':true
+                }
+            },
             port:[poolingThread.worker],//,
             pool:decoderPool //the imagebitmaps are slow so this keeps the thread from backing up
         }
@@ -314,3 +440,8 @@ export async function initVideoProcessingThreads(
     };
 
 }
+
+
+
+
+
