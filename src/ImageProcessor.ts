@@ -371,13 +371,13 @@ export class ImageProcessor {
     }
 
     getBoundingBoxData = () => {
-        if(this.canvasPool.length > this.BBTool.boxes.length) {
-            for(let i = this.BBTool.boxes.length; i < this.canvasPool.length; i++) {
+        if(this.canvasPool.length > this.BBTool.boxes.length+1) {
+            for(let i = this.BBTool.boxes.length+1; i < this.canvasPool.length; i++) {
                 this.threads.canvasThread.run({cropIndex:i, delete:true});
                 this.threads.canvasThread.run({cropIndex:i+'s', delete:true});
                 document.getElementById('div'+i)?.remove(); //clear the control div
             }
-            this.canvasPool.length = this.BBTool.boxes.length;
+            this.canvasPool.length = this.BBTool.boxes.length+1;
         }
         
         return this.BBTool.boxes.map((box,i) => {
