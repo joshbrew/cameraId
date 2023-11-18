@@ -124,9 +124,10 @@ export class BoundingBoxTool {
     };
 
     updateBoxesAndLabels = () => {
-        const newWidth = this.sourceElement.offsetWidth;
-        const newHeight = this.sourceElement.offsetHeight;
+        const newWidth = this.overlayCanvas.offsetWidth;
+        const newHeight = this.overlayCanvas.offsetHeight;
 
+        let scale = this.getInverseScale();
         // Calculate scale based on the new dimensions
         const scaleX = newWidth / this.originalWidth;
         const scaleY = newHeight / this.originalHeight;
@@ -139,7 +140,7 @@ export class BoundingBoxTool {
             const scaledHeight = box.rect.height * scaleY;
 
             // Update label positions
-            this.updateLabelPosition(box);
+            this.updateLabelPosition(box,scaledX,scaledY);
 
             // Return the updated box
             return {
@@ -409,19 +410,21 @@ export class BoundingBoxTool {
     
         if (labelContainer) {
             const scale = this.getInverseScale();
-            let labelX = box.rect.x * scale.x;
-            let labelY = (box.rect.y * scale.y); // Initially position above the box
+            const canvasOffset = this.overlayCanvas.getBoundingClientRect(); // Get canvas position relative to viewport
+    
+            let labelX = (box.rect.x * scale.x) + canvasOffset.left; // Position relative to canvas
+            let labelY = (box.rect.y * scale.y) + canvasOffset.top - 35;  // Initially position above the box
     
             // Adjust if label goes above the canvas
-            if (labelY < 20) {
-                labelY = (box.rect.y * scale.y) + box.rect.height * scale.y + 10;
+            if (labelY < canvasOffset.top + 20) {
+                labelY = (box.rect.y * scale.y) + box.rect.height * scale.y + canvasOffset.top + 10;
             }
     
             // Ensure label stays within the horizontal bounds of the canvas
-            labelX = Math.max(0, Math.min(labelX, this.overlayCanvas.width - labelContainer.offsetWidth + labelContainer.offsetLeft));
+            labelX = Math.max(canvasOffset.left, Math.min(labelX, canvasOffset.left + this.overlayCanvas.width - labelContainer.offsetWidth));
     
             labelContainer.style.left = `${labelX}px`;
-            labelContainer.style.top = `${labelY}px`; // Position above the box
+            labelContainer.style.top = `${labelY}px`; // Adjusted position above or below the box
         }
     };
 
