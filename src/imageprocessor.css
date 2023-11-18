@@ -1,3 +1,18 @@
+button {
+    border-radius:25%;
+    padding:4px;
+    background-color: royalblue;
+    color:white;
+}
+
+
+input::file-selector-button {
+    border-radius:25%;
+    padding:4px;
+    background-color: royalblue;
+    color:white;
+}
+
 .video-element {
     max-height:500px;
 }
@@ -83,6 +98,19 @@
     table-layout: fixed; /* This helps in maintaining the width */
 }
 
+.image-processor-table button {
+    background-color: ghostwhite;
+}
+
+.image-processor-table th {
+    background-color: ghostwhite;
+    border-right: 2px solid black;
+    border-left: 2px solid black;
+    border-bottom: 2px solid darkgray;
+    text-align: left;
+    padding:4px;
+}
+
 /* Set fixed width for the canvas container cell */
 .image-processor-media {
     position:relative;
@@ -99,7 +127,7 @@
 }
 
 .image-processor-table-header {
-    background-color: #007bff;
+    background-color: #135076;
     color: white;
 }
 

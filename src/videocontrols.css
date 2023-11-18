@@ -16,11 +16,25 @@
     opacity: 0;
     transition: opacity 0.3s ease;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     padding: 5px;
+    z-index: 100;
 }
 
-.video-controls button,
+.video-controls button {
+    cursor: pointer;
+    padding:0;
+    font-size:large;
+    background-color: transparent;
+    border:none;
+    transition: 1s ease-in-out;
+}
+
+.video-controls button:active {
+    opacity:0.5;
+}
+
 .video-controls input {
+    min-width:50%;
     cursor: pointer;
 }

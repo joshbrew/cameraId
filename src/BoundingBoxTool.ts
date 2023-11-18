@@ -534,7 +534,7 @@ export class BoundingBoxTool {
     updateLabelProgrammatically = (boxId, newLabel) => {
         const labelContainer = document.getElementById(`label_container_${boxId}`);
         if (!labelContainer) {
-            console.warn(`Label container for box ID ${boxId} not found.`);
+            //console.warn(`Label container for box ID ${boxId} not found.`);
             return;
         }
     

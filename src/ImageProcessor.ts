@@ -73,7 +73,7 @@ export class ImageProcessor {
                     //console.log("Edited", box, boxes); 
                 },
                 ondelete: (box, boxes) => { 
-                    console.log("Deleted", box, boxes); 
+                    console.log("Deleted", box, boxes);  
                 }
             });
             this.clearCanvases();
@@ -134,17 +134,25 @@ export class ImageProcessor {
         }
 
         this.useSpectralAnalysis.onchange = () => {
+            if(!(document.getElementById('savespectrum'+0) as HTMLElement)) return;
             if(this.useSpectralAnalysis.checked) {
                 (document.getElementById('savespectrum'+0) as HTMLElement).style.display = '';
+                (document.getElementById('savespectrumcsv'+0) as HTMLElement).style.display = '';
+                (document.getElementById('canvas2'+0) as HTMLElement).style.display = '';
                 this.BBTool.boxes.forEach((b,i) => {
+                    if(i===0) return;
                     (document.getElementById('savespectrum'+i) as HTMLElement).style.display = '';
                     (document.getElementById('savespectrumcsv'+i) as HTMLElement).style.display = '';
+                    (document.getElementById('canvas2'+i) as HTMLElement).style.display = '';
                 })
             } else {
                 (document.getElementById('savespectrum'+0) as HTMLElement).style.display = 'none';
+                (document.getElementById('savespectrumcsv'+0) as HTMLElement).style.display = 'none';
+                (document.getElementById('canvas2'+0) as HTMLElement).style.display = 'none';
                 this.BBTool.boxes.forEach((b,i) => {
                     (document.getElementById('savespectrum'+i) as HTMLElement).style.display = 'none';
                     (document.getElementById('savespectrumcsv'+i) as HTMLElement).style.display = 'none';
+                    (document.getElementById('canvas2'+i) as HTMLElement).style.display = 'none';
                 })
             }
         };
@@ -211,8 +219,12 @@ export class ImageProcessor {
             this.poolCt--;
         });
 
-        this.threads.videoDecoderThread.addCallback((res)=>{console.log('videoDecoderThread thread result: ', res);});
-        this.threads.poolingThread.addCallback((res)=>{console.log('poolingThread result:',res)});
+        this.threads.videoDecoderThread.addCallback((res)=>{
+            //console.log('videoDecoderThread thread result: ', res);
+        });
+        this.threads.poolingThread.addCallback((res)=>{
+            //console.log('poolingThread result:',res)
+        });
       
     }
 
@@ -287,7 +299,7 @@ export class ImageProcessor {
                                 <tr>
                                     <th>Best Guess:</th>
                                     <th>Probability:</th>
-                                    <th>Time:</th>
+                                    <th>ONNX Time (ms):</th>
                                 </tr>
                                 <tr class="image-processor-table-row">
                                     <td id="label${crop.cropIndex}" class="image-processor-table-cell"></td>
@@ -307,6 +319,7 @@ export class ImageProcessor {
             (document.getElementById(`canvasContainer${crop.cropIndex}`) as HTMLElement).appendChild(dimensionsLabel);
 
             canvas2.style.left = 0+'px';
+            canvas2.style.display = this.useSpectralAnalysis.checked ? '' : 'none';
             let appendTo = (document.getElementById('imgheadercell'+crop.cropIndex) as HTMLElement);
 
             // Button for downloading the base canvas
@@ -320,7 +333,7 @@ export class ImageProcessor {
             // Button for downloading the spectrum canvas
             let downloadSpectrumBtn = document.createElement('button');
             downloadSpectrumBtn.id = "savespectrum"+crop.cropIndex;
-            downloadSpectrumBtn.innerHTML = '💾📉'; // Replace with actual icons
+            downloadSpectrumBtn.innerHTML = '💾🌈'; // Replace with actual icons
             downloadSpectrumBtn.addEventListener('click', () => {
                 this.downloadCanvas('canvas2' + crop.cropIndex, crop.cropIndex);
             });
@@ -335,11 +348,12 @@ export class ImageProcessor {
                 downloadSpectrumCSV();
             });
             downloadSpectrumCSVBtn.style.display = this.useSpectralAnalysis.checked ? '' : 'none';
-            downloadSpectrumCSVBtn.title = "Download Spectrum Image";
+            downloadSpectrumCSVBtn.title = "Download Spectrum CSV";
 
             //TODO: Spectrum CSV (pull from poolingThread with getspectral:true and overridePort:true)
             let downloadSpectrumCSV = async () => {
                 let result = await this.threads.poolingThread.run({command:'getspectral', name:crop.name}, undefined, true);
+                if(!result?.spectral) return;
                 const spectralData = result.spectral;
                 let csvName = (document.getElementById(`name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString();
                 let processed = "Intensity,R,G,B\n";
@@ -351,6 +365,7 @@ export class ImageProcessor {
 
             downloadDiv.appendChild(downloadBtn);
             downloadDiv.appendChild(downloadSpectrumBtn);
+            downloadDiv.appendChild(downloadSpectrumCSVBtn);
         
             appendTo.appendChild(downloadDiv);
         }
@@ -370,15 +385,19 @@ export class ImageProcessor {
         }
     }
 
-    getBoundingBoxData = () => {
-        if(this.canvasPool.length > this.BBTool.boxes.length+1) {
-            for(let i = this.BBTool.boxes.length+1; i < this.canvasPool.length; i++) {
+    clearExcessCanvases = () => {
+        if(this.canvasPool.length > (this.BBTool.boxes.length || 1)) { //preserve the first canvas
+            for(let i = (this.BBTool.boxes.length || 1); i < this.canvasPool.length; i++) {
                 this.threads.canvasThread.run({cropIndex:i, delete:true});
                 this.threads.canvasThread.run({cropIndex:i+'s', delete:true});
                 document.getElementById('div'+i)?.remove(); //clear the control div
             }
-            this.canvasPool.length = this.BBTool.boxes.length+1;
+            this.canvasPool.length = (this.BBTool.boxes.length || 1);
         }
+    }
+
+    getBoundingBoxData = () => {
+        this.clearExcessCanvases();
         
         return this.BBTool.boxes.map((box,i) => {
             return {

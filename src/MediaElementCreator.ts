@@ -189,12 +189,14 @@ export class MediaElementCreator {
       controlsDiv.className = 'video-controls';
 
       const playPauseBtn = document.createElement('button');
-      playPauseBtn.innerText = 'Play/Pause';
+      playPauseBtn.innerText = '⏸️';
       playPauseBtn.onclick = () => {
           if (video.paused) {
               video.play();
+              playPauseBtn.innerText = '⏸️';
           } else {
               video.pause();
+              playPauseBtn.innerText = '▶️';
           }
       };
 
