@@ -19,6 +19,7 @@
     justify-content: center;
     padding: 5px;
     z-index: 100;
+    pointer-events: none;
 }
 
 .video-controls button {
@@ -28,6 +29,7 @@
     background-color: transparent;
     border:none;
     transition: 1s ease-in-out;
+    pointer-events:auto;
 }
 
 .video-controls button:active {
@@ -37,4 +39,5 @@
 .video-controls input {
     min-width:50%;
     cursor: pointer;
+    pointer-events:auto;
 }
