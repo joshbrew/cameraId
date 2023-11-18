@@ -140,7 +140,7 @@ export class BoundingBoxTool {
             const scaledHeight = box.rect.height * scaleY;
 
             // Update label positions
-            this.updateLabelPosition(box,scaledX,scaledY);
+            this.updateLabelPosition(box);
 
             // Return the updated box
             return {
