@@ -174,7 +174,7 @@ export class ImageProcessor {
         this.initThreads(modelInpWidth, modelInpHeight, threadSettings); 
                
         const captureButton = (document.getElementById('capture'+this.id) as HTMLElement);
-        
+        captureButton.title = "Take Snapshot";
         captureButton.onclick = () => {
 
             // Add the active class to trigger the animation
