@@ -94,6 +94,7 @@ input::file-selector-button {
     border-collapse: collapse;
     margin-top: 10px;
     color: black;
+    height:140px;
     width: 100%; /* Ensure the outer table takes the full width */
     table-layout: fixed; /* This helps in maintaining the width */
 }

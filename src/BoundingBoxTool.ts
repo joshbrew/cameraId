@@ -139,11 +139,7 @@ export class BoundingBoxTool {
             const scaledHeight = box.rect.height * scaleY;
 
             // Update label positions
-            const labelSpan = document.getElementById(`label_${box.id}`);
-            if (labelSpan) {
-                labelSpan.style.left = `${scaledX}px`;
-                labelSpan.style.top = `${scaledY - 10}px`; // Position above the box
-            }
+            this.updateLabelPosition(box);
 
             // Return the updated box
             return {
@@ -409,12 +405,12 @@ export class BoundingBoxTool {
     }
   
     updateLabelPosition = (box) => {
-        const scale = this.getInverseScale();
         const labelContainer = document.getElementById(`label_container_${box.id}`);
     
         if (labelContainer) {
+            const scale = this.getInverseScale();
             let labelX = box.rect.x * scale.x;
-            let labelY = (box.rect.y * scale.y) + 10; // Initially position above the box
+            let labelY = (box.rect.y * scale.y); // Initially position above the box
     
             // Adjust if label goes above the canvas
             if (labelY < 20) {
@@ -422,10 +418,10 @@ export class BoundingBoxTool {
             }
     
             // Ensure label stays within the horizontal bounds of the canvas
-            labelX = Math.max(0, Math.min(labelX, this.overlayCanvas.width - labelContainer.offsetWidth));
+            labelX = Math.max(0, Math.min(labelX, this.overlayCanvas.width - labelContainer.offsetWidth + labelContainer.offsetLeft));
     
             labelContainer.style.left = `${labelX}px`;
-            labelContainer.style.top = `${labelY}px`;
+            labelContainer.style.top = `${labelY}px`; // Position above the box
         }
     };
 
@@ -450,20 +446,9 @@ export class BoundingBoxTool {
             labelContainer.innerHTML = '';
         }
     
-        const scale = this.getInverseScale();
-        let labelX = box.rect.x * scale.x;
-        let labelY = (box.rect.y * scale.y) + 10; // Initially position above the box
-    
-        // Adjust if label goes above the canvas
-        if (labelY < 20) {
-            labelY = (box.rect.y * scale.y) + box.rect.height * scale.y + 10;
-        }
-    
-        // Ensure label stays within the horizontal bounds of the canvas
-        labelX = Math.max(0, Math.min(labelX, this.overlayCanvas.width - labelContainer.offsetWidth));
-    
-        labelContainer.style.left = `${labelX}px`;
-        labelContainer.style.top = `${labelY}px`;
+       
+        // Update label position based on the scaled and positioned box
+        this.updateLabelPosition(box);
 
         // Create the delete button
         const deleteBtn = document.createElement('button');

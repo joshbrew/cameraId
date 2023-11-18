@@ -101,26 +101,41 @@ export function convertRGBAtoRGBFloat32(rgbaData) {
     return rgbData;
 }
 
+
+
+    //B
 export function convertRGBAToRGBPlanar(rgbaData, outputWidth, outputHeight) {
-    //console.time('rgbaplanar');
-    const numPixels = outputWidth * outputHeight;
-    const rgbData = new Float32Array(numPixels * 3);
-    let meanStdInv0 = (0.485 - 1 / 0.229),
-        meanStdInv1 = (0.456 - 1 / 0.224),
-        meanStdInv2 = (0.406 - 1 / 0.225);
+        // Initialize the number of pixels and the output array
+        const numPixels = outputWidth * outputHeight;
+        const rgbData = new Float32Array(numPixels * 3);
     
-    const uint32View = new Uint32Array(rgbaData.buffer);
-    let idxR = 0, idxG = numPixels, idxB = 2 * numPixels;
-
-    for (let i = 0; i < numPixels; i++) {
-        const rgba = uint32View[i];
-        rgbData[idxR++] = (rgba & 0xFF) * meanStdInv0;
-        rgbData[idxG++] = ((rgba >> 8) & 0xFF) * meanStdInv1;
-        rgbData[idxB++] = ((rgba >> 16) & 0xFF) * meanStdInv2;
-    }
-
-    //console.timeEnd('rgbaplanar');
-    return rgbData;
+        // Define the means and standard deviations for each channel
+        let mean0 = 0.485, std0 = 0.229;
+        let mean1 = 0.456, std1 = 0.224;
+        let mean2 = 0.406, std2 = 0.225;
+        
+        // Create a view of the RGBA data as 32-bit unsigned integers
+        const uint32View = new Uint32Array(rgbaData.buffer);
+    
+        // Initialize indices for the R, G, and B channels in the output array
+        let idxR = 0, idxG = numPixels, idxB = 2 * numPixels;
+    
+        // Loop over each pixel to convert and normalize the RGB values
+        for (let i = 0; i < numPixels; i++) {
+            // Extract the RGBA values using bitwise operations
+            const rgba = uint32View[i];
+            const r = (rgba & 0xFF) / 255.0;
+            const g = ((rgba >> 8) & 0xFF) / 255.0;
+            const b = ((rgba >> 16) & 0xFF) / 255.0;
+    
+            // Apply the normalization (value - mean) / std for each channel
+            rgbData[idxR++] = (r - mean0) / std0;
+            rgbData[idxG++] = (g - mean1) / std1;
+            rgbData[idxB++] = (b - mean2) / std2;
+        }
+    
+        // Return the normalized RGB planar data
+        return rgbData;
 }
 
 export async function autocorrelateImage(ImageDataUint8, imageWidth, imageHeight) {
