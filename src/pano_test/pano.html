@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Texture Copy in Three.js with Camera Control</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        .slider-container {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+        }
+        .slider {
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slider-container">
+        <div>X Rotation: <input type="range" id="xSlider" class="slider" min="-1.8" max="1.8" step="0.01" value="0"></div>
+        <div>Y Rotation: <input type="range" id="ySlider" class="slider" min="-1.8" max="1.8" step="0.01" value="0"></div>
+        <div>Z Rotation: <input type="range" id="zSlider" class="slider" min="-1.8" max="1.8" step="0.01" value="0"></div>
+    </div>
+
+    <script src="https://threejs.org/build/three.js"></script>
+    <script>
+        // Scene Setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 0;
+        camera.rotation.y = Math.PI;
+        const renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true }); // Add preserveDrawingBuffer
+        renderer.autoClear = false;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
+        scene.add(ambientLight);
+
+        // Video Texture Setup
+        const video = document.createElement('video');
+        video.src = 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'; // Online video URL
+        video.crossOrigin = "anonymous"; // Handle CORS
+        video.load();
+        let played = false;
+        document.body.onclick = () => {
+            if(!played) {
+                played = true;
+                video.play();
+            }
+        }
+        video.muted = true;
+        video.loop = true;
+
+
+        const videoTexture = new THREE.VideoTexture(video);
+
+        // Material with Video Texture
+        const videoMaterial = new THREE.MeshBasicMaterial({ map: videoTexture });
+        // Assuming width and height are dimensions of the FOV
+        const fovDegree = 20;
+        const fovRadians = THREE.MathUtils.degToRad(fovDegree);
+
+        // SphereGeometry parameters
+       
+        // Calculate the segment size based on the FOV
+        const phiLength = fovRadians; // 20 degrees in radians for longitude
+        const thetaLength = fovRadians; // 20 degrees in radians for latitude
+
+        // Constants for 16:9 aspect ratio FOV in radians
+        const horizontalFOVDegrees = 20; // For example, a 20-degree horizontal FOV
+        const verticalFOVDegrees = (horizontalFOVDegrees / 16) * 9; // Calculate the vertical FOV based on a 16:9 aspect ratio
+
+        const horizontalFOVRadians = THREE.MathUtils.degToRad(horizontalFOVDegrees);
+        const verticalFOVRadians = THREE.MathUtils.degToRad(verticalFOVDegrees);
+
+        // SphereGeometry parameters for the partial sphere
+        const radius = 5; // Keep the radius the same for both spheres
+        const widthSegments = 50; // Number of horizontal segments
+        const heightSegments = 50; // Number of vertical segments
+
+        // Create the partial sphere geometry with the 16:9 aspect FOV
+        const partialSphereGeometry = new THREE.SphereGeometry(
+            radius, widthSegments, heightSegments,
+            Math.PI / 2 - horizontalFOVRadians / 2, horizontalFOVRadians, // phiStart and phiLength
+            Math.PI / 2 - verticalFOVRadians / 2, verticalFOVRadians // thetaStart and thetaLength
+        );
+
+        // Create the mesh with the partial sphere geometry
+        const partialSphere = new THREE.Mesh(partialSphereGeometry, videoMaterial);
+
+        scene.add(partialSphere);
+        partialSphere.material.side = THREE.DoubleSide;
+
+        // Complete Sphere
+        const completeSphereGeometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
+        const completeSphereMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xcccccc,
+            transparent: true,
+            opacity: 0.0
+        });
+        
+        // const completeSphere = new THREE.Mesh(completeSphereGeometry, completeSphereMaterial);
+        // scene.add(completeSphere);
+        // completeSphere.material.side = THREE.DoubleSide;
+        // // Set the same center for rotation for both spheres
+        // partialSphere.position.set(0, 0, 0);
+        // completeSphere.position.set(0, 0, 0);
+            
+        // // Create an offscreen canvas
+        // const offscreenCanvas = document.createElement('canvas');
+        // offscreenCanvas.width = window.innerWidth;
+        // offscreenCanvas.height = window.innerHeight;
+        // const offscreenContext = offscreenCanvas.getContext('2d');
+
+        // Render Target for capturing partial sphere texture
+        const renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
+
+        // Function to Render Partial Sphere to Texture
+        function renderPartialSphereToTexture() {
+            // Render the partial sphere to the render target
+            renderer.setRenderTarget(renderTarget);
+            // If you want to clear the render target every time you can do it manually here
+            // renderer.clear();
+            renderer.render(scene, camera);
+            renderer.setRenderTarget(null); // Reset to default render target
+        
+
+            // // Update the complete sphere's material with the rendered texture
+            // completeSphere.material.map = renderTarget.texture;
+            // completeSphere.material.needsUpdate = true; // Important to update the material
+        }
+
+        // Use the offscreen canvas as the texture for the complete sphere
+        // const completeSphereTexture = new THREE.CanvasTexture(offscreenCanvas);
+        // completeSphere.material.map = completeSphereTexture;
+
+        // Sliders for Partial Sphere Rotation
+        const xSlider = document.getElementById('xSlider');
+        const ySlider = document.getElementById('ySlider');
+        const zSlider = document.getElementById('zSlider');
+
+        // Update Partial Sphere Rotation based on Sliders
+        function updatePartialSphereRotation() {
+            partialSphere.rotation.x = parseFloat(xSlider.value);
+            partialSphere.rotation.y = parseFloat(ySlider.value);
+            partialSphere.rotation.z = parseFloat(zSlider.value);
+        }
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update partial sphere rotation
+            updatePartialSphereRotation();
+
+            // Render the partial sphere to the texture
+            renderPartialSphereToTexture();
+
+            // Only clear the depth buffer to allow painting over the scene
+            renderer.clearDepth(); 
+            renderer.render(scene, camera);
+        }
+
+        animate(); // Start the animation loop
+    </script>
+</body>
+</html>
