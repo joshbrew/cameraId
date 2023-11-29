@@ -37,8 +37,8 @@ if(globalThis instanceof WorkerGlobalScope) {
 
         async function classifyImage(data:{
             image:Uint8ClampedArray,
-            name:any,
-            type:any,
+            name:string, id:string,
+            type:string,
             width:number,
             height:number,
             timestamp:number,
@@ -102,7 +102,7 @@ if(globalThis instanceof WorkerGlobalScope) {
             let result;
             try {result = await session.run(input); } catch(er) { console.error(er); }
             if(!result) return {
-                name:data.name,
+                name:data.name, id:data.id,
                 width:data.width,
                 height:data.height,
                 cropIndex:data.cropIndex
@@ -137,6 +137,7 @@ if(globalThis instanceof WorkerGlobalScope) {
                 avgFrameTime,
                 avgFrameRate,
                 name:data.name,
+                id:data.id,
                 width:data.width,
                 height:data.height,
                 cropIndex:data.cropIndex

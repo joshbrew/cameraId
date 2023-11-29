@@ -46,7 +46,7 @@ export function mapBitmapXIntensities(ImageDataUint8, width, height) {
         intensities,
         width,
         height,
-        maxR, maxG, maxB
+        maxR, maxG, maxB, maxI: maxR+maxG+maxB
     };
 }
 
@@ -103,7 +103,7 @@ export function convertRGBAtoRGBFloat32(rgbaData) {
 
 
 
-    //B
+//B
 export function convertRGBAToRGBPlanar(rgbaData, outputWidth, outputHeight) {
         // Initialize the number of pixels and the output array
         const numPixels = outputWidth * outputHeight;

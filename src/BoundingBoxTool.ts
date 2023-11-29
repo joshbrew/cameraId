@@ -15,8 +15,8 @@ export type BBOptions = {
         overlay:HTMLCanvasElement|OffscreenCanvas,
         ctx:CanvasRenderingContext2D|OffscreenCanvas
     ) => void,
-    ondelete:( box:Box, boxes:Box[], sourceElement:HTMLImageElement|HTMLCanvasElement|HTMLVideoElement, overlay:HTMLCanvasElement, ctx:CanvasRenderingContext2D|OffscreenCanvas) => void,
-    onedited:( box:Box, boxes:Box[], sourceElement:HTMLImageElement|HTMLCanvasElement|HTMLVideoElement, overlay:HTMLCanvasElement, ctx:CanvasRenderingContext2D|OffscreenCanvas) => void
+    ondelete:( box:Box, boxes:Box[], boxIndex:number, sourceElement:HTMLImageElement|HTMLCanvasElement|HTMLVideoElement, overlay:HTMLCanvasElement, ctx:CanvasRenderingContext2D|OffscreenCanvas) => void,
+    onedited:( box:Box, boxes:Box[], boxIndex:number, sourceElement:HTMLImageElement|HTMLCanvasElement|HTMLVideoElement, overlay:HTMLCanvasElement, ctx:CanvasRenderingContext2D|OffscreenCanvas) => void
 }
 
 export class BoundingBoxTool {
@@ -222,7 +222,7 @@ export class BoundingBoxTool {
         if (this.isResizing) {
             this.isResizing = false;
             if (this.options.onedited) {
-                this.options.onedited(this.currentBox, this.boxes, this.sourceElement, this.overlayCanvas, this.ctx);
+                this.options.onedited(this.currentBox, this.boxes, this.boxes.findIndex((v)=>{if(this.currentBox.id === v.id) return true;}), this.sourceElement, this.overlayCanvas, this.ctx);
             }
         } else if (this.isDrawing) {
             this.isDrawing = false;
@@ -495,7 +495,7 @@ export class BoundingBoxTool {
                 labelContainer.replaceChild(labelSpan, labelInput);
                 this.redrawCanvas();
                 if (prevLabel !== box.label && this.options.onedited) {
-                    this.options.onedited(box, this.boxes, this.sourceElement, this.overlayCanvas, this.ctx);
+                    this.options.onedited(box, this.boxes, this.boxes.findIndex((v)=>{if(box.id === v.id) return true;}), this.sourceElement, this.overlayCanvas, this.ctx);
                 }
             };
 
@@ -547,7 +547,7 @@ export class BoundingBoxTool {
         if (boxIndex !== -1) {
             this.boxes[boxIndex].label = newLabel;
             if (this.options.onedited) {
-                this.options.onedited(this.boxes[boxIndex], this.boxes, this.sourceElement, this.overlayCanvas, this.ctx);
+                this.options.onedited(this.boxes[boxIndex], this.boxes, boxIndex, this.sourceElement, this.overlayCanvas, this.ctx);
             }
         } else {
             console.warn(`Box with ID ${boxId} not found.`);
@@ -561,7 +561,7 @@ export class BoundingBoxTool {
         const labelContainer = document.getElementById(`label_container_${id}`);
         if (labelContainer) document.body.removeChild(labelContainer);
         this.redrawCanvas();
-        if(this.options.ondelete) this.options.ondelete(spliced[0], this.boxes, this.sourceElement, this.overlayCanvas, this.ctx);
+        if(this.options.ondelete) this.options.ondelete(spliced[0], this.boxes, index, this.sourceElement, this.overlayCanvas, this.ctx);
       }
     }
 

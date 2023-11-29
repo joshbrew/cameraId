@@ -17,6 +17,8 @@ export class ImageProcessor {
     streamVideo:HTMLInputElement;
     useSpectralAnalysis:HTMLInputElement;
     useAutocor:HTMLInputElement;
+    usePano:HTMLInputElement;
+    useAveraging:HTMLInputElement;
 
     outputWidth;
     outputHeight;
@@ -68,12 +70,15 @@ export class ImageProcessor {
                 labelColor: 'orange',
                 oncreate: (box, boxes) => { 
                     console.log("Created", box, boxes); 
+                    if(boxes.length === 1) 
+                        this.threads.poolingThread.run({command:'delete', name:`0`},undefined,true);
                 },
-                onedited: (box, boxes) => { 
+                onedited: (box, boxes, boxIndex) => { 
                     //console.log("Edited", box, boxes); 
                 },
-                ondelete: (box, boxes) => { 
+                ondelete: (box, boxes, boxIndex) => { 
                     console.log("Deleted", box, boxes);  
+                    this.threads.poolingThread.run({command:'delete', name:boxIndex},undefined,true);
                 }
             });
             this.clearCanvases();
@@ -101,9 +106,17 @@ export class ImageProcessor {
                             <input type="checkbox" id="spectral${this.id}" name="spectral">
                             Spectral
                         </label>
+                        <label for="average${this.id}">
+                            <input type="checkbox" id="average${this.id}" name="autocorrelate">
+                            Averaging (last 10 per BB)
+                        </label>
+                        <label for="pano${this.id}">
+                            <input type="checkbox" id="pano${this.id}" name="pano">
+                            Panoramic
+                        </label>
                         <label for="autocorrelate${this.id}">
                             <input type="checkbox" id="autocorrelate${this.id}" name="autocorrelate">
-                            Autocorrelated
+                            Autocorrelated (slow!)
                         </label>
                     </div>
                 </div>
@@ -116,7 +129,14 @@ export class ImageProcessor {
         this.streamVideo = document.getElementById(`streamvideo${this.id}`) as HTMLInputElement;
         this.useSpectralAnalysis = document.getElementById(`spectral${this.id}`) as HTMLInputElement;
         this.useAutocor = document.getElementById(`autocorrelate${this.id}`) as HTMLInputElement;
+        this.usePano = document.getElementById(`pano${this.id}`) as HTMLInputElement;
+        this.useAveraging = document.getElementById(`average${this.id}`) as HTMLInputElement;
         let animating = false;
+
+        this.usePano.onchange = () => {
+            if(this.useAveraging.checked) this.useAveraging.click();
+            if(this.useAutocor.checked) this.useAutocor.click();
+        }
 
         this.streamVideo.onchange = () => {
             if(this.streamVideo.checked) {
@@ -213,7 +233,7 @@ export class ImageProcessor {
 
         this.threads.classifierThread.addCallback((res) => {
             if(!res) return;
-            console.timeEnd(`capture and inference ${res.name}`);
+            console.timeEnd(`capture and inference ${res.id}`);
             //console.log('classifier thread result: ', res);
             this.visualizeCapture(res);
             this.poolCt--;
@@ -350,6 +370,15 @@ export class ImageProcessor {
             downloadSpectrumCSVBtn.style.display = this.useSpectralAnalysis.checked ? '' : 'none';
             downloadSpectrumCSVBtn.title = "Download Spectrum CSV";
 
+            let setBaselineButton = document.createElement('button');
+            setBaselineButton.id = "setbaseline"+crop.cropIndex;
+            setBaselineButton.innerHTML = '⛳'; // Replace with actual icons
+            setBaselineButton.addEventListener('click', () => {
+                this.threads.poolingThread.run({command:'baseline', name:crop.name},undefined,true);
+            });
+            setBaselineButton.title = "Set as Baseline";
+
+
             //TODO: Spectrum CSV (pull from poolingThread with getspectral:true and overridePort:true)
             let downloadSpectrumCSV = async () => {
                 let result = await this.threads.poolingThread.run({command:'getspectral', name:crop.name}, undefined, true);
@@ -357,12 +386,13 @@ export class ImageProcessor {
                 const spectralData = result.spectral;
                 let csvName = (document.getElementById(`name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString();
                 let processed = "Intensity,R,G,B\n";
-                for(const value of spectralData.i) {
-                    processed += `${spectralData.i},${spectralData.r},${spectralData.g},${spectralData.b}\n`;
+                for(const value of spectralData.intensities) {
+                    processed += `${value.i},${value.r},${value.g},${value.b}\n`;
                 }
                 CSV.saveCSV(processed, csvName);
             }
 
+            downloadDiv.appendChild(setBaselineButton);
             downloadDiv.appendChild(downloadBtn);
             downloadDiv.appendChild(downloadSpectrumBtn);
             downloadDiv.appendChild(downloadSpectrumCSVBtn);
@@ -401,7 +431,8 @@ export class ImageProcessor {
         
         return this.BBTool.boxes.map((box,i) => {
             return {
-                name:box.id+`_${Math.floor(Math.random()*1000000000000000)}`,
+                name:`${i}`,
+                id:`${Math.floor(Math.random()*1000000000000000)}`,
                 cropX:box.rect.x,
                 cropY:box.rect.y,
                 cropW:box.rect.width,
@@ -428,7 +459,8 @@ export class ImageProcessor {
             const sourceHeight = (this.Media.currentMediaElement as HTMLImageElement).naturalHeight || (this.Media.currentMediaElement as HTMLVideoElement).videoHeight || this.Media.currentMediaElement.height;
         
             data.push({
-                name:`${Math.floor(Math.random()*1000000000000000)}`,
+                name:`0`,
+                id:`${Math.floor(Math.random()*1000000000000000)}`,
                 cropX:0,
                 cropY:0,
                 cropW:sourceWidth,
@@ -439,7 +471,8 @@ export class ImageProcessor {
             });
         }
 
-        if(this.classifierWait) await this.classifierWait; //make sure classifierThread finishes last round.    
+        if(this.classifierWait) 
+            await this.classifierWait; //make sure classifierThread finishes last round.    
         else if(this.poolCt >= this.poolCtMaxIdx) { //we need to await this last promise;
             this.classifierWait = new Promise((res) => {
                 let id = this.threads.classifierThread.addCallback(() => {
@@ -459,16 +492,16 @@ export class ImageProcessor {
             id:`${Math.floor(Math.random()*1000000000000000)}`,
             width:(this.Media.currentMediaElement as HTMLVideoElement).videoWidth || (this.Media.currentMediaElement as HTMLImageElement).naturalWidth || this.Media.currentMediaElement.width,
             height:(this.Media.currentMediaElement as HTMLVideoElement).videoHeight || (this.Media.currentMediaElement as HTMLImageElement).naturalHeight || this.Media.currentMediaElement.height,
-            command:'set',
+            command:this.useAveraging.checked ? 'setaveraged' : 'set',
             timestamp,
             data,
             overridePort:true,
             autocor:this.useAutocor.checked,
             spectral:this.useSpectralAnalysis.checked
-        }
+        };
 
         for(const crop of data) {
-            console.time(`capture and inference ${crop.name}`);
+            console.time(`capture and inference ${crop.id}`);
             this.poolCt++;
                         }
         let id = this.threads.poolingThread.addCallback((out) => {
@@ -525,6 +558,7 @@ export class ImageProcessor {
             height:number,
             width:number,
             name:string,
+            id:string,
             cropIndex:number,
             label:string,
             maxProb:number,
@@ -537,10 +571,12 @@ export class ImageProcessor {
             (document.getElementById('label'+classifierResult.cropIndex) as HTMLElement).innerText = classifierResult?.label;
             (document.getElementById('maxProb'+classifierResult.cropIndex) as HTMLElement).innerText = classifierResult?.maxProb.toFixed(3) as any;
             (document.getElementById('inferenceTime'+classifierResult.cropIndex) as HTMLElement).innerText = classifierResult?.inferenceTime.toFixed(3) as any;
-
-            this.BBTool.updateLabelProgrammatically(
-                classifierResult.name.split('_')[0], classifierResult.label
-            );
+           
+            
+            if(this.BBTool.boxes[parseInt(classifierResult.name)]?.id) 
+                this.BBTool.updateLabelProgrammatically(
+                    this.BBTool.boxes[parseInt(classifierResult.name)].id, classifierResult.label
+                );
       
             //TempCanvases[name] = div;
       
