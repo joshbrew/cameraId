@@ -123,10 +123,10 @@ export class ImageProcessor {
         `);
 
         /**
-         *          <label for="pano${this.id}">
-                            <input type="checkbox" id="pano${this.id}" name="pano">
-                            Panoramic
-                        </label>
+         *  <label for="pano${this.id}">
+                <input type="checkbox" id="pano${this.id}" name="pano">
+                Panoramic
+            </label>
          * 
          */
 
@@ -383,6 +383,16 @@ export class ImageProcessor {
             });
             setBaselineButton.title = "Set as Baseline";
 
+            let clearSampleButton = document.createElement('button');
+            clearSampleButton.id = "clearsample"+crop.cropIndex;
+            clearSampleButton.innerHTML = '🆑'; // Replace with actual icons
+            clearSampleButton.addEventListener('click', () => {
+                //reset the data structures for this crop
+                this.threads.poolingThread.run({command:'delete', name:crop.name},undefined,true);
+                this.threads.canvasThread.run({command:'clear',   cropIndex:crop.cropIndex},undefined,true);
+                this.threads.canvasThread.run({command:'clear',   cropIndex:crop.cropIndex+'s'},undefined,true);
+            });
+            clearSampleButton.title = "Clear Sample Data for Next Pass";
 
             //TODO: Spectrum CSV (pull from poolingThread with getspectral:true and overridePort:true)
             let downloadSpectrumCSV = async () => {
@@ -401,6 +411,7 @@ export class ImageProcessor {
             downloadDiv.appendChild(downloadBtn);
             downloadDiv.appendChild(downloadSpectrumBtn);
             downloadDiv.appendChild(downloadSpectrumCSVBtn);
+            downloadDiv.appendChild(clearSampleButton);
         
             appendTo.appendChild(downloadDiv);
         }

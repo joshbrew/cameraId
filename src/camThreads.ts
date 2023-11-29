@@ -8,6 +8,8 @@ export type CamThreads = {
     classifierThread: WorkerHelper;
 }
 
+//FYI this is not prefectly organized but runs great, some things use cropIndex, some things use name, some things use id. There are various reasons for this while trying different things but it could be cleaned up.
+
 export async function initVideoProcessingThreads(
     decoderPool = 4, 
     modelName = 'inception-mnist.onnx',
@@ -49,7 +51,7 @@ export async function initVideoProcessingThreads(
 
             canvas?:OffscreenCanvas, 
 
-            draw?:boolean, delete?:boolean
+            draw?:boolean, delete?:boolean, clear?:boolean
         }) {    
             if(!data) return;
             //handle offscreencanvas draws on this thread because why not
@@ -105,11 +107,15 @@ export async function initVideoProcessingThreads(
                 );
                 delete this.canvases[data.cropIndex];
                 delete this.contexts[data.cropIndex];
+            } else if ('clear' in data) {
+                if(this.canvases[data.cropIndex]) {
+                    this.contexts[data.cropIndex]
+                }
             }
             return true;
         },
         {
-            imports:{
+            imports: {
                 ['./src/lib/imagemanip.js']:{
                     'graphXIntensities':true
                 }
@@ -154,10 +160,10 @@ export async function initVideoProcessingThreads(
                         this.TempACorRawData = {};
                         this.TempACorImageData = {};
                         this.TempSpectralData = {};
-                        this.bufferLimit = 100; //we'll keep e.g. the last 100 results in memory per name
-                        this.bufferOrder = [];
                         this.TempImageBMP = {};
                         this.TempImageBMPBuffer = {};
+                        this.bufferOrder = [];
+                        this.bufferLimit = 100; //we'll keep e.g. the last 100 results in memory per name
                         this.TempImageBufferLimit = 10; //for averaging samples
                         this.AveragingOffscreen = new OffscreenCanvas(300,300);
                         this.SubtractionOffscreen = new OffscreenCanvas(300,300);
