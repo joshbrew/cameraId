@@ -110,10 +110,7 @@ export class ImageProcessor {
                             <input type="checkbox" id="average${this.id}" name="autocorrelate">
                             Averaging (last 10 per BB)
                         </label>
-                        <label for="pano${this.id}">
-                            <input type="checkbox" id="pano${this.id}" name="pano">
-                            Panoramic
-                        </label>
+               
                         <label for="autocorrelate${this.id}">
                             <input type="checkbox" id="autocorrelate${this.id}" name="autocorrelate">
                             Autocorrelated (slow!)
@@ -125,18 +122,26 @@ export class ImageProcessor {
             </div>
         `);
 
+        /**
+         *          <label for="pano${this.id}">
+                            <input type="checkbox" id="pano${this.id}" name="pano">
+                            Panoramic
+                        </label>
+         * 
+         */
+
         this.container = document.getElementById(`container${this.id}`) as HTMLElement;
         this.streamVideo = document.getElementById(`streamvideo${this.id}`) as HTMLInputElement;
         this.useSpectralAnalysis = document.getElementById(`spectral${this.id}`) as HTMLInputElement;
         this.useAutocor = document.getElementById(`autocorrelate${this.id}`) as HTMLInputElement;
-        this.usePano = document.getElementById(`pano${this.id}`) as HTMLInputElement;
+        //this.usePano = document.getElementById(`pano${this.id}`) as HTMLInputElement;
         this.useAveraging = document.getElementById(`average${this.id}`) as HTMLInputElement;
         let animating = false;
 
-        this.usePano.onchange = () => {
-            if(this.useAveraging.checked) this.useAveraging.click();
-            if(this.useAutocor.checked) this.useAutocor.click();
-        }
+        // this.usePano.onchange = () => {
+        //     if(this.useAveraging.checked) this.useAveraging.click();
+        //     if(this.useAutocor.checked) this.useAutocor.click();
+        // }
 
         this.streamVideo.onchange = () => {
             if(this.streamVideo.checked) {

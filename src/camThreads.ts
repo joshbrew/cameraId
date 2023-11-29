@@ -160,6 +160,9 @@ export async function initVideoProcessingThreads(
                         this.TempImageBMPBuffer = {};
                         this.TempImageBufferLimit = 10; //for averaging samples
                         this.AveragingOffscreen = new OffscreenCanvas(300,300);
+                        this.SubtractionOffscreen = new OffscreenCanvas(300,300);
+                        this.AveragingOffscreenContext = this.AveragingOffscreen.getContext('2d',{ willReadFrequently: true });
+                        this.SubtractionOffscreenContext = this.SubtractionOffscreenContext.getContext('2d',{willReadFrequently:true});
                     }
                 } 
                 this.reset();
@@ -194,7 +197,9 @@ export async function initVideoProcessingThreads(
                             this.TempImageSpectralBuffer = {};
                             this.TempImageBufferLimit = 10; //for averaging
                             this.AveragingOffscreen = new OffscreenCanvas(300,300);
+                            this.SubtractionOffscreen = new OffscreenCanvas(300,300);
                             this.AveragingOffscreenContext = this.AveragingOffscreen.getContext('2d',{ willReadFrequently: true });
+                            this.SubtractionOffscreenContext = this.SubtractionOffscreen.getContext('2d',{willReadFrequently:true});
                         }
                         this.reset();
                     } 
@@ -336,6 +341,16 @@ export async function initVideoProcessingThreads(
                 let imgData = this.TempImageBMP[input.name] as ImageBitmap;
                 if(!imgData || !capture) return;
                 
+                //TODO: IMAGE SUBTRACT
+                if(this.Baseline?.bmp) {
+                    this.SubtractionOffscreen.width = capture.width;
+                    this.SubtractionOffscreen.height = capture.height;
+                    (this.SubtractionOffscreenContext as CanvasRenderingContext2D).globalCompositeOperation = 'difference';
+                    this.SubtractionOffscreenContext.drawImage(this.Baseline.bmp,0,0); 
+                    this.SubtractionOffscreenContext.drawImage(imgData,0,0); //should subtract from the baseline (the brighter image so we shouldn't get a negative)
+                    imgData = this.SubtractionOffscreen; //copy the new canvas now instead of the BMP.
+                } 
+
                 return await new Promise((res,rej) => {
                     createImageBitmap(imgData,0,0,capture.width,capture.height).then((bmp) => {
                         let captureCpy = Object.assign({
