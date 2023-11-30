@@ -119,6 +119,13 @@ export class MediaElementCreator {
     try {
 
       const stream = await navigator.mediaDevices.getUserMedia(options);
+      
+      //no ios
+      //const track = stream.getVideoTracks()[0];
+      //let capture = new ImageCapture(track);
+      //let capabilities = Promise.all([capture.getPhotoCapabilities(), capture.getPhotoSettings()]);
+      //capabilities.then((res)=>{console.log("CAPTURE CAPABILITIES: ",...res);});
+
       this.createVideoElement(stream, (options?.video as any)?.deviceId);
     } catch (error) {
       console.error('Error accessing the webcam', error);
@@ -159,6 +166,8 @@ export class MediaElementCreator {
 
     video.loop = true;
     video.muted = true; // Mute to allow autoplay without user interaction
+    
+
     
     if (typeof src === 'string') {
       video.src = src;
