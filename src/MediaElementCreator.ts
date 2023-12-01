@@ -1,25 +1,30 @@
 import './videocontrols.css'
 
+type CB = (
+  srcOrId?:string|MediaProvider|null, 
+  videoOrImage?:HTMLVideoElement|HTMLImageElement
+)=>void
+
 export class MediaElementCreator {
   fileInput: HTMLInputElement;
   videoSelect: HTMLSelectElement;
   parentElement:HTMLElement;
   mediaOptions: MediaStreamConstraints;
   currentMediaElement: HTMLImageElement | HTMLVideoElement | null = null;
-  oncreate?: Function;
-  onstarted?: Function;
-  ondelete?: Function;
-  onended?: Function;
-  ontargetchanged?: Function;
+  oncreate?: CB;
+  onstarted?: CB;
+  ondelete?: CB;
+  onended?: CB;
+  ontargetchanged?: CB;
 
   constructor(
     parentElement: HTMLElement,
     callbacks?: {
-      oncreate?: Function,
-      onstarted?: Function,
-      ondelete?: Function,
-      onended?: Function,
-      ontargetchanged?: Function
+      oncreate?: CB,
+      onstarted?: CB,
+      ondelete?: CB,
+      onended?: CB,
+      ontargetchanged?: CB
     },
     mediaOptions?: MediaStreamConstraints,
     autostart=true
@@ -134,7 +139,7 @@ export class MediaElementCreator {
 
   createMediaElement(file: File) {
     const url = URL.createObjectURL(file);
-    if(this.oncreate) this.oncreate(file.name, null);
+    if(this.oncreate) this.oncreate(file.name, undefined);
     
     if (file.type.startsWith('image/')) {
       this.createImageElement(url);

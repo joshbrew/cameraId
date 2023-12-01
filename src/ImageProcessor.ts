@@ -65,7 +65,7 @@ export class ImageProcessor {
 
         const ontargetchanged = (id, element) => {
             this.BBTool?.clearBoundingBoxes(true);
-            this.BBTool = new BoundingBoxTool(element, { //replace
+            this.BBTool = new BoundingBoxTool(element, { 
                 color: 'orange',
                 labelColor: 'orange',
                 oncreate: (box, boxes) => { 

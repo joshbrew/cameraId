@@ -1,3 +1,7 @@
+
+//TODO: This doesn't play nice unless the video is centered. Need to fix that
+
+
 export type Box = {
     rect:{x:number,y:number,width:number,height:number}, //coordinates are absolute image dimensions
     label:string,
@@ -8,15 +12,16 @@ export type BBOptions = {
     color:string,
     labelColor:string,
     overlayCanvas?:HTMLCanvasElement, 
-    oncreate:(
+    maxBoxes?:number,
+    oncreate?:(
         box:Box,
         boxes:Box[],
         sourceElement:HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
         overlay:HTMLCanvasElement|OffscreenCanvas,
         ctx:CanvasRenderingContext2D|OffscreenCanvas
     ) => void,
-    ondelete:( box:Box, boxes:Box[], boxIndex:number, sourceElement:HTMLImageElement|HTMLCanvasElement|HTMLVideoElement, overlay:HTMLCanvasElement, ctx:CanvasRenderingContext2D|OffscreenCanvas) => void,
-    onedited:( box:Box, boxes:Box[], boxIndex:number, sourceElement:HTMLImageElement|HTMLCanvasElement|HTMLVideoElement, overlay:HTMLCanvasElement, ctx:CanvasRenderingContext2D|OffscreenCanvas) => void
+    ondelete?:( box:Box, boxes:Box[], boxIndex:number, sourceElement:HTMLImageElement|HTMLCanvasElement|HTMLVideoElement, overlay:HTMLCanvasElement, ctx:CanvasRenderingContext2D|OffscreenCanvas) => void,
+    onedited?:( box:Box, boxes:Box[], boxIndex:number, sourceElement:HTMLImageElement|HTMLCanvasElement|HTMLVideoElement, overlay:HTMLCanvasElement, ctx:CanvasRenderingContext2D|OffscreenCanvas) => void
 }
 
 export class BoundingBoxTool {
@@ -237,6 +242,13 @@ export class BoundingBoxTool {
                     label: '',
                     id: `${Math.floor(Math.random()*1000000000000000)}`
                 };
+
+                if(this.options.maxBoxes) {
+                    if(this.boxes.length > this.options.maxBoxes) {
+                        this.deleteBox(this.boxes[0].id);
+                    }
+                }
+
                 this.boxes.push(newBox);
                 this.createLabelInput(newBox);
                 this.redrawCanvas();
