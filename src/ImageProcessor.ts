@@ -73,9 +73,9 @@ export class ImageProcessor {
                     if(boxes.length === 1) 
                         this.threads.poolingThread.run({command:'delete', name:`0`},undefined,true);
                 },
-                onedited: (box, boxes, boxIndex) => { 
-                    //console.log("Edited", box, boxes); 
-                },
+                // onedited: (box, boxes, boxIndex) => { 
+                //     //console.log("Edited", box, boxes); 
+                // },
                 ondelete: (box, boxes, boxIndex) => { 
                     console.log("Deleted", box, boxes);  
                     this.threads.poolingThread.run({command:'delete', name:boxIndex},undefined,true);
