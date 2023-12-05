@@ -91,6 +91,13 @@ if(globalThis instanceof WorkerGlobalScope) {
                 return;
             }
 
+            // return { //override
+            //     name:data.name, id:data.id,
+            //     width:data.width,
+            //     height:data.height,
+            //     cropIndex:data.cropIndex
+            // };
+
             if(!data) return;
             //this is very slow
             const imageTransformed = convertRGBAToRGBPlanar(data.image, outputWidth, outputHeight);//convertRGBAtoRGBFloat32(imageData.data); 

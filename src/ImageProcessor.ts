@@ -1,7 +1,7 @@
 // ImageProcessor.ts
-import { BoundingBoxTool } from "./BoundingBoxTool";
+import { BoundingBoxTool } from "./boundingBoxTool";
 import { MediaElementCreator } from "./MediaElementCreator";
-import { CamThreads, initVideoProcessingThreads } from "./CamThreads";
+import { CamThreads, initVideoProcessingThreads } from "./camThreads";
 import { CSV } from './util/csv'
 
 import './imageprocessor.css'
@@ -90,6 +90,7 @@ export class ImageProcessor {
             console.log('Stream target changed with ID or URL:', id);
         };
 
+        //MAKE THE SETTINGS A MODAL, ADD FOLDER CONFIG FOR GDRIVE
         this.parentElement.insertAdjacentHTML('beforeend',`
             <div id="container${this.id}" class="image-processor-container">
                 <div id="mediaElm${this.id}" class="image-processor-camera">
@@ -351,7 +352,7 @@ export class ImageProcessor {
             let downloadDiv = document.createElement('div');
             let downloadBtn = document.createElement('button');
             downloadBtn.id = "save"+crop.cropIndex;
-            downloadBtn.innerHTML = '💾'; // Replace with actual save icon
+            downloadBtn.innerHTML = '💾'; 
             downloadBtn.addEventListener('click', () => this.downloadCanvas('canvas' + crop.cropIndex, crop.cropIndex));
             downloadBtn.title = "Download Image";
 
@@ -406,6 +407,14 @@ export class ImageProcessor {
                 }
                 CSV.saveCSV(processed, csvName);
             }
+
+
+
+            //google drive/cloud upload feature. In this example we can specify a subfolder to write to (or add one), then upload the image or other files directly
+            
+
+
+
 
             downloadDiv.appendChild(setBaselineButton);
             downloadDiv.appendChild(downloadBtn);
@@ -583,10 +592,11 @@ export class ImageProcessor {
     ) {
       
         if(classifierResult) {
-            (document.getElementById('name'+classifierResult.cropIndex) as HTMLInputElement).value = classifierResult?.name;
+            //@ts-ignore
+            (document.getElementById('name'+classifierResult.cropIndex) as HTMLInputElement).value = classifierResult?.label ? classifierResult?.label.replaceAll(' ','_') : classifierResult?.name;
             (document.getElementById('label'+classifierResult.cropIndex) as HTMLElement).innerText = classifierResult?.label;
-            (document.getElementById('maxProb'+classifierResult.cropIndex) as HTMLElement).innerText = classifierResult?.maxProb.toFixed(3) as any;
-            (document.getElementById('inferenceTime'+classifierResult.cropIndex) as HTMLElement).innerText = classifierResult?.inferenceTime.toFixed(3) as any;
+            (document.getElementById('maxProb'+classifierResult.cropIndex) as HTMLElement).innerText = classifierResult?.maxProb?.toFixed(3) as any;
+            (document.getElementById('inferenceTime'+classifierResult.cropIndex) as HTMLElement).innerText = classifierResult?.inferenceTime?.toFixed(3) as any;
            
             
             if(this.BBTool.boxes[parseInt(classifierResult.name)]?.id) 
