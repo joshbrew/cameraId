@@ -1,5 +1,5 @@
 
-- Image baseline averaging is a little jank, make sure you compare the same number of averaged images to get good subtraction in the raw image (the CSV is fine).
+- Image baseline averaging is a little jank, make sure you compare the same number of averaged images to get good subtraction in the raw image (the CSV is fine). Basically the canvas averaging method also lowers the final opacity so you need to use the same number of averaged images in the baseline and subtracted sample but this is a coding issue.
 
 - RPi Web Server demo
 - Capacitor mobile integration
