@@ -102,9 +102,37 @@ export function convertRGBAtoRGBFloat32(rgbaData) {
 }
 
 
-
 //B
 export function convertRGBAToRGBPlanar(rgbaData, outputWidth, outputHeight) {
+    // Initialize the number of pixels and the output array
+    const numPixels = outputWidth * outputHeight;
+    const rgbData = new Float32Array(numPixels * 3);
+    // Create a view of the RGBA data as 32-bit unsigned integers
+    const uint32View = new Uint32Array(rgbaData.buffer);
+
+    // Initialize indices for the R, G, and B channels in the output array
+    let idxR = 0, idxG = numPixels, idxB = 2 * numPixels;
+
+    // Loop over each pixel to convert and normalize the RGB values
+    for (let i = 0; i < numPixels; i++) {
+        // Extract the RGBA values using bitwise operations
+        const rgba = uint32View[i];
+        const r = (rgba & 0xFF) / 255.0;
+        const g = ((rgba >> 8) & 0xFF) / 255.0;
+        const b = ((rgba >> 16) & 0xFF) / 255.0;
+
+        // Apply the normalization (value - mean) / std for each channel
+        rgbData[idxR++] = r;
+        rgbData[idxG++] = g;
+        rgbData[idxB++] = b;
+    }
+
+    // Return the normalized RGB planar data
+    return rgbData;
+}
+
+//B
+export function convertRGBAToRGBPlanarNormalized(rgbaData, outputWidth, outputHeight) {
         // Initialize the number of pixels and the output array
         const numPixels = outputWidth * outputHeight;
         const rgbData = new Float32Array(numPixels * 3);

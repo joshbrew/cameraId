@@ -19,3 +19,5 @@ Note, these labels don't include the right species:
 ## TODO:
 
 - Can we implement bounding box or scene segmentation automation?
+- hot reloading the css does not trigger in web components the way it's currently set up just fyi. Not 100% sure why.
+- Wavelength estimation https://www.mdpi.com/1424-8220/23/9/4291

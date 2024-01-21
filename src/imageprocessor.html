@@ -1,0 +1,115 @@
+<div id="container" class="image-processor-container">
+    <div id="mediaElm" class="image-processor-camera">
+        <span id="mediaDims" class="image-processor-dimensions-label"></span>
+    </div>
+    <br/>
+    <div class="image-processor-controlbar">
+        <span style="float:right;">
+            <modal-button id="settingsModal1">
+                <span slot="modal-button">Settings</span>
+                <div slot="modal-content">
+                    Video Feed Settings
+                    <div class="image-processor-checkboxes">
+                        <label for="streamvideo">
+                            <input type="checkbox" id="streamvideo" name="streamvideo">
+                            Stream Video
+                        </label>
+                        <label for="spectral">
+                            <input type="checkbox" id="spectral" name="spectral" checked>
+                            Spectral Analysis
+                        </label>
+                        <label for="average">
+                            <input type="checkbox" id="average" name="averaging" checked>
+                            Averaging (last 10 images)
+                        </label>
+                    </div>
+                    <br/>
+                    <br/>
+                    <br/>
+                    <div id="controls" class="image-processor-controls">
+                        <div class="image-processor-model-checkboxes">
+                            <span>Classifiers</span>
+                            <label for="classifier">
+                                <input type="radio" id="spectralclassifier" name="classifier"/>
+                                Spectral
+                            </label>
+                            <label for="classifier">
+                                <input type="radio" id="imageclassifier" name="classifier"/>
+                                Image
+                            </label>
+                            <label for="classifier">
+                                <input type="radio" id="defaultclassifier" name="classifier"/>
+                                Squeeze (sample)
+                            </label>
+                            <label for="classifier">
+                                <input type="radio" id="customclassifier" name="classifier"/>
+                                Custom
+                            </label>
+                        </div>
+                        <table id="customtable">
+                            <tr>
+                                <td width="20%"></td>
+                                <td>
+                                    <span>Custom WONNX binaries <br/>(see wonnx.thread.ts for expected I/O structure)</span>
+                                    <br/>
+                                    <form>
+                                        <label for="input">
+                                            Input Name:
+                                            <input name="input" id="input" value="input" required/>
+                                        </label>
+                                        <br/>
+                                        <label for="output">
+                                            Output Name:
+                                            <input name="output" id="output" value="output" required/>
+                                        </label>
+                                        <br/>
+                                        <label for="width">
+                                            Input Width:
+                                            <input min="1" type="number" name="width" id="width" required/>
+                                        </label>
+                                        <br/>
+                                        <label for="height">
+                                            Input Height:
+                                            <input min="1" type="number" name="height" id="height" required/>
+                                        </label>
+                                        <br/>
+                                        <label for="model">
+                                            Model:
+                                            <input type="file" name="model" id="model" required/>
+                                        </label>
+                                        <br/>
+                                        <label for="labels">
+                                            Labels:
+                                            <input type="file" name="labels" id="labels" required/>
+                                        </label>
+                                        <span id="custommsg" style="color:gold;"></span>
+                                        <button id="load" style="float:right;">Load Model</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <br/>
+                    <br/>
+                    <h3>Google Drive File Browser</h3>
+                    <button id="auth-button" style="float:right;" >Sign in with Google</button>
+                    <form id="apiForm">
+                        Api Key:
+                        <input type="text" id="apikey" required /> <br/>
+                        Client Id: 
+                        <input type="text" id="clientid" required /> <br/>
+                        Folder Name: 
+                        <input type="text" id="directory" value="Fishazam" required /> 
+                        &nbsp;Using ID: <input type="checkbox" id="useId"/> (for folders on other accounts)
+                        <br/>
+                        <button style="float:right;" type="submit">Setup Drive</button><br/> <br/>
+                    </form>
+                    <br/>
+                </div>
+            </modal-button>
+        </span>
+        <button id="capture" class="image-processor-capture-btn">📷</button>
+    </div>
+</div>
+<div id="results" class="image-processor-results"></div>
+<div id="workspace" class="image-processor-workspace"></div>

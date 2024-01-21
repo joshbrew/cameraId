@@ -19,6 +19,11 @@ input::file-selector-button {
 
 .image-processor-container {}
 
+.image-processor-controlbar {
+    height: 80px;
+    background-color: #202020;
+}
+
 .image-processor-camera {
     position: relative; /* Ensure that absolute positioning is relative to this container */
     justify-content:center;
@@ -49,12 +54,16 @@ input::file-selector-button {
 }
 
 .image-processor-checkboxes {
+    display: flex; /* Use flexbox for layout */
+    flex-direction: column; /* Stack checkboxes vertically */
+}
+
+.image-processor-model-checkboxes {
     position:absolute;
     display: flex; /* Use flexbox for layout */
     flex-direction: column; /* Stack checkboxes vertically */
-    left:65%;
+    left:5%;
 }
-
 
 .image-processor-capture-btn:hover {
     border: 6px solid black; 
@@ -87,20 +96,37 @@ input::file-selector-button {
     }
 }
 
-.image-processor-results {}
 
 .image-processor-table {
     animation: fadeIn 0.2s ease-in;
     border-collapse: collapse;
     margin-top: 10px;
     color: black;
-    height:140px;
+    height:100%;
     width: 100%; /* Ensure the outer table takes the full width */
     table-layout: fixed; /* This helps in maintaining the width */
 }
 
 .image-processor-table button {
     background-color: ghostwhite;
+    font-size:32px;
+    color:black;
+}
+
+.image-processor-table button:hover {
+    background-color: #007BFF;
+}
+
+.image-processor-table button[disabled]{
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
+}
+
+.image-processor-table button[disabled]:hover {
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
 }
 
 .image-processor-table th {
@@ -115,17 +141,18 @@ input::file-selector-button {
 /* Set fixed width for the canvas container cell */
 .image-processor-media {
     position:relative;
-    width: 150px; /* Adjust this width as needed */
 }
 
-/* Let the output cell take the remaining width */
-.image-processor-table td:not(.image-processor-media) {
-    width: auto;
+.image-processor-media canvas {
+    width:48vw;
+    top:0;
 }
+
 
 .image-processor-table .image-processor-table {
     width: 100%; /* Make the inner table take full width of its container */
 }
+
 
 .image-processor-table-header {
     background-color: #135076;
@@ -140,6 +167,7 @@ input::file-selector-button {
     padding: 8px;
     border-right: 2px solid black;
     border-left: 2px solid black;
+    
 }
 
 .image-processor-dimensions-label {
@@ -149,12 +177,117 @@ input::file-selector-button {
     z-index: 10; /* Make sure it's on top of other content */
     padding: 2px 5px;
     color: white;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.75);
     border-radius: 4px;
     font-size: 12px;
+}
+
+.image-processor-label {
+    position: absolute;
+    top: 0; /* Stick to the bottom */
+    left: 0; /* Align to the left */
+    z-index: 10; /* Make sure it's on top of other content */
+    padding: 2px 5px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.75);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.image-processor-table-cell input {
+    width:85%;
+    font-size: 20px;
 }
 
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+
+.modal-button {
+    background-color: #007BFF;
+    color: white;
+    padding: 12px 12px;
+    font-size: 1em;
+    font-weight: bolder;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.modal-dialog {
+    background-color: black;
+    color: white;
+    border-radius: 20px;
+}
+
+.modal-button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.modal-close-button {
+    background-color: #FF4136;
+    color: white;
+    padding: 10px 20px;
+    font-size: 14px;
+    border: none;
+    font-weight: bolder;
+    border-radius: 4px;
+    cursor: pointer;
+    float: right;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.modal-dialog {
+    animation: fade-out 0.7s ease-out;
+}
+
+.modal-dialog[open] {
+    animation: fade-in 0.7s ease-out;
+}
+
+.modal-dialog::backdrop {
+    animation: backdrop-fade-out 0.7s ease-out;
+}
+
+.modal-dialog[open]::backdrop {
+    animation: backdrop-fade-in 0.7s ease-out;
+}
+
+.modal-close-button:hover {
+    background-color: #c22d2d;
+    transform: scale(1.05);
+}
+
+/* Animation keyframes */
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+        transform: scaleY(0);
+        display: none;
+    }
+
+    100% {
+        opacity: 1;
+        transform: scaleY(1);
+        display: block;
+    }
+}
+
+@keyframes fade-out {
+    0% {
+        opacity: 1;
+        transform: scaleY(1);
+        display: block;
+    }
+
+    100% {
+        opacity: 0;
+        transform: scaleY(0);
+        display: none;
+    }
 }

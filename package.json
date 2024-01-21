@@ -28,7 +28,8 @@
     "brainsatplay-math": "~0.0.37",
     "browserfs": "~1.4.3",
     "threadop": "~1.5.3",
-    "three": "^0.158.0"
+    "three": "^0.158.0",
+    "workercanvas": "^1.1.0"
   },
   "devDependencies": {
     "@capacitor/android": "~5.5.0",

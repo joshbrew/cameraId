@@ -1,9 +1,9 @@
 import init, { main, Session, Input } from "@webonnx/wonnx-wasm";
-import { convertRGBAToRGBPlanar, convertRGBAtoRGBFloat32 } from "./lib/imagemanip"
+import { convertRGBAToRGBPlanarNormalized, convertRGBAtoRGBFloat32 } from "./lib/imagemanip"
 import {initWorker} from 'threadop'
 
 //@ts-ignore
-if(globalThis instanceof WorkerGlobalScope) {
+if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGlobalScope) {
 
 
     // Example usage
@@ -35,8 +35,17 @@ if(globalThis instanceof WorkerGlobalScope) {
 
         let session:Session, labelsList:string[];
 
+        //thread callback
         async function classifyImage(data:{
-            image:Uint8ClampedArray,
+            image?:Uint8ClampedArray,
+            spectral?:{
+                intensities:{r:number,g:number,b:number,i:number}[],
+                maxR:number,maxG:number,maxB:number,
+                width:number,
+                height:number
+            },
+            input?:'imageflattened'|'spectral'|'image',
+
             name:string, id:string,
             type:string,
             width:number,
@@ -46,7 +55,9 @@ if(globalThis instanceof WorkerGlobalScope) {
 
             command?:'configure',
             modelName?:string, //in models/
+            model?:any, //model data buffer
             labelsName?:string, //in models/
+            labels?:any, //label data buffer
             inputName?:string, //input onnx name, todo multiple i/o via a dict
             outputName?:string, //output onnx variable name,
             outputWidth?:number, //set image parameters
@@ -74,9 +85,9 @@ if(globalThis instanceof WorkerGlobalScope) {
                     initResult, 
                     labelsResult
                 ] = await Promise.all([
-                    fetchBytes(location.origin+"/models/"+modelName), 
+                    data.model ? data.model : fetchBytes(location.origin+"/models/"+modelName), 
                     init(), 
-                    fetch(location.origin+"/models/"+labelsName).then(r => r.text())
+                    data.labels ? data.labels : fetch(location.origin+"/models/"+labelsName).then(r => r.text())
                 ]);
         
                 //console.log(modelBytes, initResult, labelsResult)
@@ -100,19 +111,36 @@ if(globalThis instanceof WorkerGlobalScope) {
 
             if(!data) return;
             //this is very slow
-            const imageTransformed = convertRGBAToRGBPlanar(data.image, outputWidth, outputHeight);//convertRGBAtoRGBFloat32(imageData.data); 
-   
+            let inp;
+            if(data.image && data.input === 'imageflattened') {
+                inp = convertRGBAToRGBPlanarNormalized(data.image, outputWidth, outputHeight);//convertRGBAtoRGBFloat32(imageData.data); 
+            } else if (data.spectral && data.input === 'spectral') {
+                const is = data.spectral.intensities;
+                inp = new Float32Array(is.length*4);
+                let startR = is.length;
+                let startG = is.length*2;
+                let startB = is.length*3;
+                is.forEach((intensity,i)=>{
+                    inp[i] = intensity.i;
+                    inp[i+startR] = intensity.r;
+                    inp[i+startB] = intensity.g;
+                    inp[i+startG] = intensity.b;
+                });
+            }
+            
             // Start inference
             const input = new Input();
-            input.insert(inputName, imageTransformed);
+            input.insert(inputName, inp);
             const start = performance.now();
             let result;
             try {result = await session.run(input); } catch(er) { console.error(er); }
             if(!result) return {
-                name:data.name, id:data.id,
+                name:data.name, 
+                id:data.id,
                 width:data.width,
                 height:data.height,
-                cropIndex:data.cropIndex
+                cropIndex:data.cropIndex,
+                input:data.input
             };
             const duration = performance.now() - start;
             inferenceCount++;

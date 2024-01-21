@@ -17,11 +17,16 @@ export async function initVideoProcessingThreads(
     inputName = 'input',
     outputName = 'output',
     outputWidth=64, 
-    outputHeight=64
+    outputHeight=64,
+    model?:Uint8Array,
+    labels?:Uint8Array
 ) {
 
     const classifierThread = await threadop('./dist/wonnx.worker.js') as WorkerHelper;
 
+    let transfer = [] as any;
+    if(model) transfer.push(model);
+    if(labels) transfer.push(labels);
     classifierThread.run({
         command:'configure',
         modelName,
@@ -29,15 +34,17 @@ export async function initVideoProcessingThreads(
         inputName,
         outputName,
         outputWidth,
-        outputHeight
-    });
+        outputHeight,
+        model,
+        labels
+    }, (model || labels) ? transfer : undefined);
 
     //this thread will handle drawing canvases and creating an image bitmap copy to send to the poolingThread
     const canvasThread = await threadop(
         function (data:{
             image:ImageBitmap, 
             spectral?:{
-                intensities:{r:number,g:number,b:number,i:number},
+                intensities:{r:number,g:number,b:number,i:number}[],
                 maxR:number,maxG:number,maxB:number,
                 width:number,
                 height:number
@@ -86,10 +93,10 @@ export async function initVideoProcessingThreads(
                 // );
             } else if('drawSpectral' in data && this.canvases?.[data.cropIndex] && data.spectral) {
                 if(data.width) {
-                    this.canvases[data.cropIndex].width = data.width;
+                    this.canvases[data.cropIndex+'s'].width = data.width;
                 }
                 if(data.height) {
-                    this.canvases[data.cropIndex].height = data.height;
+                    this.canvases[data.cropIndex+'s'].height = data.height;
                 }
                 
                 graphXIntensities(
@@ -109,7 +116,11 @@ export async function initVideoProcessingThreads(
                 delete this.contexts[data.cropIndex];
             } else if ('clear' in data) {
                 if(this.canvases[data.cropIndex]) {
-                    this.contexts[data.cropIndex]
+                    this.contexts[data.cropIndex].clearRect(
+                        0,0,
+                        this.canvases[data.cropIndex].width,
+                        this.canvases[data.cropIndex].height
+                    );
                 }
             }
             return true;
@@ -131,6 +142,7 @@ export async function initVideoProcessingThreads(
                 command:string,
                 name?:string,
                 id?:string,
+                input?:string,
                 cropIndex?:string,
                 data?:{ //when setting
                     name:string,
@@ -332,7 +344,7 @@ export async function initVideoProcessingThreads(
                                     i:v.i/l
                                 }
                             });
-                            console.log('averaged spectrum', averaged, imgData.spectral);
+                            //console.log('averaged spectrum', averaged, imgData.spectral);
                             this.TempSpectralData[imgData.name] = averaged; //replace with averaged result
                         }
                     }
@@ -408,7 +420,8 @@ export async function initVideoProcessingThreads(
                 if(!captureCpy || !spectral) return;
                 captureCpy.spectral = {...spectral};
                 delete captureCpy.image;
-                captureCpy.cropIndex = captureCpy.cropIndex + 's';
+                captureCpy.cropIndex = captureCpy.cropIndex;
+                captureCpy.input = input.input;
                 
                 if(this.Baseline?.spectral) { //correct for baseline
                     const result = captureCpy.spectral.intensities.map((v,i)=> {
@@ -452,6 +465,8 @@ export async function initVideoProcessingThreads(
                     clone.set(captureCpy.image as Uint8ClampedArray);
                     captureCpy.image = clone;
                 }
+                captureCpy.input = input.input;
+
                 return {
                     message:captureCpy,
                     transfer:[captureCpy.image?.buffer ? captureCpy.image.buffer : captureCpy.image]

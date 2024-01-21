@@ -1,0 +1,273 @@
+<html>
+    <head></head>
+    <body>
+        <script>
+            class ModalButton extends HTMLElement {
+                constructor() {
+                    super();
+                    this.shadow = this.attachShadow({mode: 'open'});
+
+                    // Button that opens the modal
+                    const button = document.createElement('button');
+                    button.setAttribute('class', 'modal-button');
+                    button.innerHTML = '<slot name="modal-button">Open Modal</slot>';
+
+                    // Modal dialog
+                    const modal = document.createElement('dialog');
+                    modal.setAttribute('class', 'modal-dialog');
+                    modal.innerHTML = `
+                        <slot name="modal-header"></slot>    
+                        <slot name="modal-content"></slot>
+                        <slot name="modal-footer">
+                            <button id="close" class="modal-close-button">Close</button>
+                        </slot>
+                    `;
+
+                    // Append elements to the shadow DOM
+                    this.shadow.appendChild(button);
+                    this.shadow.appendChild(modal);
+
+
+                    // Default styles
+                    this.defaultStyles = `
+                        .modal-button {
+                            /* Default button styles */
+                        }
+                        .modal-dialog {
+                            /* Default dialog styles */
+                        }
+                        .modal-close-button {
+                            /* Default close button styles */
+                        }
+                    `;
+                }
+
+                connectedCallback() {
+                
+                    const button = this.shadow.querySelector('button');
+                    const modal = this.shadow.querySelector('dialog');
+                    // Event listeners
+                    button.addEventListener('click', () => {
+                        modal.showModal();
+                        this.dispatchEvent(new CustomEvent('open'));
+                    });
+
+                    modal.querySelector('#close').addEventListener('click', () => {
+                        modal.close();
+                        this.dispatchEvent(new CustomEvent('close'));
+                    });
+
+                    // Define your component's class names
+                    const classNames = ['modal-button', 'modal-dialog', 'modal-close-button', 'fade-in', 'fade-out'];
+
+                    // Iterate through each class and apply styles
+                    this._styles = ``;
+
+                    let foundrules = {};
+
+                    classNames.forEach(className => {
+                        const rules = this.getStylesForClass(className, foundrules);
+                        this._styles += (rules.join(' ')) + ' ';
+                    });
+
+                    // Apply default styles or custom styles if they exist
+                    this.updateStyles();
+                }
+
+                getStylesForClass(className) {
+                    const hasClass = new RegExp(`\\.${className}(?:[^\\w-]|$)`);
+                    const rules = [];
+
+
+                    const processRules = (cssRules, foundrules={}) => {
+                        Array.prototype.forEach.call(cssRules, rule => {
+                            if (rule instanceof CSSStyleRule && hasClass.test(rule.selectorText)) {
+                                rules.push(rule.cssText);
+                            } else if (rule.name?.includes(className)) {
+                                rules.push(rule.cssText);
+                            } 
+                        });
+                    };
+
+                    Array.prototype.forEach.call(document.styleSheets, sheet => {
+                        if (sheet.cssRules) {
+                            processRules(sheet.cssRules);
+                        }
+                    });
+
+                    return rules;
+                }
+
+                updateStyles() {
+                    let styleElement = this.shadow.querySelector('style');
+                    if (!styleElement) {
+                        styleElement = document.createElement('style');
+                        this.shadow.prepend(styleElement);
+                    }
+                    styleElement.textContent = this.styles || this.defaultStyles;
+                }
+
+                get styles() {
+                    return this._styles;
+                }
+
+                set styles(val) {
+                    this._styles = val;
+                    this.updateStyles();
+                }
+            }
+
+            customElements.define('modal-button', ModalButton);
+
+        </script>
+
+        <style>
+
+            .modal-button {
+                background-color: #007BFF;
+                color: white;
+                padding: 12px 24px;
+                font-size: 16px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.3s, transform 0.3s;
+            }
+
+            .modal-button:hover {
+                background-color: #0056b3;
+                transform: scale(1.05);
+            }
+
+            .modal-dialog {
+                border: 2px solid #007BFF;
+                border-radius: 8px;
+                padding: 20px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                background-color: white;
+                width: 300px;
+                transition: 
+                    all 0.7s ease-in-out allow-discrete;
+            }
+
+            .modal-dialog::backdrop {
+                background-image: linear-gradient(
+                    45deg,
+                    magenta,
+                    rebeccapurple,
+                    dodgerblue,
+                    green
+                );
+                opacity: 0.75;
+                transition: 
+                    all 0.7s ease-in-out allow-discrete;
+            }
+
+            .modal-close-button {
+                background-color: #FF4136;
+                color: white;
+                padding: 10px 20px;
+                font-size: 14px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                float: right;
+                transition: background-color 0.3s, transform 0.3s;
+            }
+
+            .modal-close-button:hover {
+                background-color: #c22d2d;
+                transform: scale(1.05);
+            }
+
+            .modal-dialog {
+                animation: fade-out 0.7s ease-out;
+            }
+
+            .modal-dialog[open] {
+                animation: fade-in 0.7s ease-out;
+            }
+
+            .modal-dialog::backdrop {
+                animation: backdrop-fade-out 0.7s ease-out;
+            }
+
+            .modal-dialog[open]::backdrop {
+                animation: backdrop-fade-in 0.7s ease-out;
+            }
+
+            /* Animation keyframes */
+
+            @keyframes fade-in {
+                0% {
+                    opacity: 0;
+                    transform: scaleY(0);
+                    display: none;
+                }
+
+                100% {
+                    opacity: 1;
+                    transform: scaleY(1);
+                    display: block;
+                }
+            }
+
+            @keyframes fade-out {
+                0% {
+                    opacity: 1;
+                    transform: scaleY(1);
+                    display: block;
+                }
+
+                100% {
+                    opacity: 0;
+                    transform: scaleY(0);
+                    display: none;
+                }
+            }
+
+            @keyframes backdrop-fade-in {
+                0% {
+                    opacity: 0;
+                }
+
+                100% {
+                    opacity: 0.75;
+                }
+            }
+
+            @keyframes backdrop-fade-out {
+                0% {
+                    opacity: 0.75;
+                }
+
+                100% {
+                    opacity: 0;
+                }
+            }
+
+        </style>
+
+        <modal-button id="myModal">
+            <span slot="modal-button">Open Dialog</span>
+            <div slot="modal-content">
+                <p>This is the content of the modal!</p>
+            </div>
+        </modal-button>
+                
+        <script>
+
+            const modal = document.getElementById('myModal');
+            
+            modal.addEventListener('open', () => {
+                console.log('Modal opened!');
+            });
+
+            modal.addEventListener('close', () => {
+                console.log('Modal closed!');
+            });
+
+        </script>
+
+    </body>
+</html>
