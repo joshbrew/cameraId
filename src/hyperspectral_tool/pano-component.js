@@ -54,7 +54,7 @@ export class SphericalVideoRenderer extends HTMLElement {
 
         //this should automatically transmit orientation information so we should be set
         this.renderThread = Renderer({
-            worker:"./dist/three.worker.js",
+            worker:new Worker("./dist/three.worker.js", {type:'module'}),
             canvas:this.canvas,
             route:'receiveThreeCanvas',
             startFOV:this.startFOV,

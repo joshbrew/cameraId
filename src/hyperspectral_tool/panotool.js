@@ -17,7 +17,7 @@ export function initPanoTool(parentElement=document.body) {
     
     container.insertAdjacentHTML('afterbegin',`
     Draw a box on the Picture-in-Picture to subdivide the image. | Multiple? 
-    <input type="checkbox" id="multiple" checked/><input id="ninp" type="number" value="7"/> Workers? <input id="workers" type="checkbox"/> Note there are performance bugs when toggling<br/>
+    <input type="checkbox" id="multiple" checked/><input id="ninp" type="number" value="7"/> Workers? <input id="workers" type="checkbox" checked/> Note there are performance bugs when toggling<br/>
     `);
 
     parentElement.appendChild(container);
