@@ -184,6 +184,7 @@ export async function initVideoProcessingThreads(
                     }
                 } 
                 this.reset();
+                console.log('reset!')
             } else if (input.command?.includes('delete') && input.name && this.bufferOrder) {
                 let foundIdx = (this.bufferOrder as string[]).findIndex((v) => {if(v === input.name) return true});
                 if(foundIdx > -1) {
@@ -248,13 +249,6 @@ export async function initVideoProcessingThreads(
                             this.TempImgUint8Buffer[imgData.name].shift();    
                     }
 
-                    if(imgData.bmp) {
-                        if(!this.TempImageBMPBuffer[imgData.name]) { this.TempImageBMPBuffer[imgData.name] = []; }
-                        this.TempImageBMPBuffer[imgData.name].push(imgData.bmp);
-                        if(this.TempImageBMPBuffer[imgData.name].length > this.TempImageBufferLimit) 
-                            this.TempImageBMPBuffer[imgData.name].shift();    
-                    }
-
                     if(imgData.spectral) {
                         if(!this.TempImageSpectralBuffer[imgData.name]) { this.TempImageSpectralBuffer[imgData.name] = []; }
                         this.TempImageSpectralBuffer[imgData.name].push(imgData.spectral);
@@ -264,6 +258,13 @@ export async function initVideoProcessingThreads(
                     
                     if(input.command.includes('averaged')) {
                         
+                        if(imgData.bmp) {
+                            if(!this.TempImageBMPBuffer[imgData.name]) { this.TempImageBMPBuffer[imgData.name] = []; }
+                            this.TempImageBMPBuffer[imgData.name].push(imgData.bmp);
+                            if(this.TempImageBMPBuffer[imgData.name].length > this.TempImageBufferLimit) 
+                                this.TempImageBMPBuffer[imgData.name].shift();    
+                        }
+
                         if(imgData.image && this.TempImgUint8Buffer[imgData.name].length > 1) {
                             let result = new Uint8ClampedArray(imgData.image);
                             let lastIdx = this.TempImgUint8Buffer[imgData.name].length - 2;
@@ -271,7 +272,7 @@ export async function initVideoProcessingThreads(
                             for(let i = 0; i < l; i++) {
                                 const ll = this.TempImgUint8Buffer[imgData.name][i].length;
                                 for(let j = 0; j < ll; j++) {
-                                    if((j+1)%4 === 0) continue;
+                                    if((j+1)%4 === 0) this.TempImgUint8Buffer[imgData.name][i][j];
                                     result[j] += this.TempImgUint8Buffer[imgData.name][i][j]; 
                                     if(i === lastIdx) result[j] /= l;
                                 }
@@ -283,10 +284,11 @@ export async function initVideoProcessingThreads(
                             this.AveragingOffscreen.width = imgData.width;
                             this.AveragingOffscreen.height = imgData.height;
                             (this.AveragingOffscreenContext as CanvasRenderingContext2D).globalAlpha = 1/this.TempImageBMPBuffer[imgData.name].length;
-                            
                             for(const bmp of this.TempImageBMPBuffer[imgData.name]) { //assuming all the same size
                                 (this.AveragingOffscreenContext as CanvasRenderingContext2D).drawImage(bmp as ImageBitmap, 0, 0);
                             }
+                            // (this.AveragingOffscreenContext as CanvasRenderingContext2D).globalAlpha = 1;
+                            // (this.AveragingOffscreenContext as CanvasRenderingContext2D).drawImage(this.AveragingOffscreen as ImageBitmap, 0, 0)
                             this.TempImageBMP[imgData.name] = await createImageBitmap((this.AveragingOffscreen as OffscreenCanvas)); //replace with averaged result
                         }
 
@@ -359,11 +361,12 @@ export async function initVideoProcessingThreads(
                 let imgData = this.TempImageBMP[input.name] as ImageBitmap;
                 if(!imgData || !capture) return;
                 
-                //TODO: IMAGE SUBTRACT
+                //TODO: IMAGE SUBTRACTION ALPHA IS A LITTLE JANK
                 if(this.Baseline?.bmp) {
                     this.SubtractionOffscreen.width = capture.width;
                     this.SubtractionOffscreen.height = capture.height;
                     (this.SubtractionOffscreenContext as CanvasRenderingContext2D).globalCompositeOperation = 'difference';
+                    if(this.TempImageBMPBuffer[input.name]?.length > 1) (this.SubtractionOffscreenContext as CanvasRenderingContext2D).globalAlpha = 1/(this.TempImageBMPBuffer[input.name].length);
                     this.SubtractionOffscreenContext.drawImage(this.Baseline.bmp,0,0); 
                     this.SubtractionOffscreenContext.drawImage(imgData,0,0); //should subtract from the baseline (the brighter image so we shouldn't get a negative)
                     imgData = this.SubtractionOffscreen; //copy the new canvas now instead of the BMP.

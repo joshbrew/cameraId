@@ -625,6 +625,19 @@ export class ImageProcessor {
             });
             clearSampleButton.title = "Clear Sample Data for Next Pass";
 
+            let clearBaselineButton = document.createElement('button');
+            clearBaselineButton.id = "clearbaseline"+crop.cropIndex;
+            clearBaselineButton.innerHTML = '🆑⛳'; // Replace with actual icons
+            clearBaselineButton.addEventListener('click', () => {
+                //reset the data structures for this crop
+                this.threads.poolingThread.run({command:'reset', name:crop.name}, undefined, true);
+                this.threads.canvasThread.run({clear:true,   cropIndex:crop.cropIndex},undefined,true);
+                this.threads.canvasThread.run({clear:true,   cropIndex:crop.cropIndex+'s'},undefined,true);
+                (this.root.querySelector('#label'+crop.cropIndex) as HTMLElement).innerText = '';
+            
+            });
+            clearBaselineButton.title = "Clear Baseline Averaging Data";
+
            
             let getSpectralCSV = async () => {
                 let result = await this.threads.poolingThread.run({command:'getspectral', name:crop.name}, undefined, true);
@@ -697,6 +710,7 @@ export class ImageProcessor {
             downloadDiv.appendChild(downloadSpectrumCSVBtn);
             downloadDiv.appendChild(backupToCloud);
             downloadDiv.appendChild(clearSampleButton);
+            downloadDiv.appendChild(clearBaselineButton);
 
             appendTo.appendChild(downloadDiv);
         }
