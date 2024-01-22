@@ -16,8 +16,24 @@ I'm getting about 120fps-135FPS on just the WONNX pass. It's not actually 120FPS
 Note, these labels don't include the right species:
 ![Capture](./screenshot.PNG)
 
+# Mobile Build
+
+For android with the capacitor dependencies installed:
+
+`npx cap sync`
+
+`npx cap run android`
+
+or for ios
+
+`npx cap add ios`
+
+then 
+
+`npx cap sync`
+
+`npx cap run android`
+
 ## TODO:
 
-- Can we implement bounding box or scene segmentation automation?
-- hot reloading the css does not trigger in web components the way it's currently set up just fyi. Not 100% sure why.
-- Wavelength estimation https://www.mdpi.com/1424-8220/23/9/4291
+Fix mobile build dependencies (e.g. the web worker fetch urls are not 1:1)
