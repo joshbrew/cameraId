@@ -361,7 +361,8 @@ export async function initVideoProcessingThreads(
                 let imgData = this.TempImageBMP[input.name] as ImageBitmap;
                 if(!imgData || !capture) return;
                 
-                //TODO: IMAGE SUBTRACTION ALPHA IS A LITTLE JANK
+                //TODO: IMAGE SUBTRACTION ALPHA IS A LITTLE JANK, 
+                // WOULD BE BETTER TO DO DIRECT PIXEL VALUE AVERAGING AND SUBTRACTION BUT WE NEED A GPU IMPLEMENTATION FOR THAT
                 if(this.Baseline?.bmp) {
                     this.SubtractionOffscreen.width = capture.width;
                     this.SubtractionOffscreen.height = capture.height;

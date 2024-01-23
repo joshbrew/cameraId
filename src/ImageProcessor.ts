@@ -29,7 +29,7 @@ export const classifierSettings = {
             //just single i/o for now
             inputName:'data',
             outputName:'squeezenet0_flatten0_reshape0',
-            input:'imageflattened'
+            input:'image'
         }
     },
     spectralclassifier:{

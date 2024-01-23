@@ -33174,9 +33174,12 @@ if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlob
         return;
       let tensor;
       let inp;
-      if (data.image && data.input === "imageflattened") {
+      if (data.image && data.input === "image") {
         inp = convertRGBAToRGBPlanarNormalized(data.image, outputWidth, outputHeight);
         tensor = new ort.Tensor("float32", inp, [1, 3, outputWidth, outputHeight]);
+      } else if (data.image && data.input === "imageflattened") {
+        inp = convertRGBAToRGBPlanarNormalized(data.image, outputWidth, outputHeight);
+        tensor = new ort.Tensor("float32", inp, [1, inp.length]);
       } else if (data.spectral && data.input === "spectral") {
         const is = data.spectral.intensities;
         inp = new Float32Array(is.length * 4);
@@ -33213,7 +33216,8 @@ if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlob
       inferenceTime += duration;
       console.log(result);
       let key = Object.keys(result)[0];
-      const probs = result[key].data;
+      console.log(result);
+      const probs = result[key]?.data || result[key];
       let maxProb = -1;
       let maxIndex = -1;
       for (let index = 0; index < probs.length; index++) {
