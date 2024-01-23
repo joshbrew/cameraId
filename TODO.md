@@ -3,8 +3,10 @@
 
 !! Fix mobile build dependencies so webworkers and onnx are functional
 
+- VideoFrames don't seem to have full support on webviews so that might be an issue.
 
-- Image baseline averaging is a little jank, make sure you compare the same number of averaged images to get good subtraction in the raw image (the CSV is fine). Basically the canvas averaging method also lowers the final opacity so you need to use the same number of averaged images in the baseline and subtracted sample but this is a coding issue.
+- Image baseline averaging is a little jank, make sure you compare the same number of averaged images to get good subtraction in the raw image (the spectral CSV is unaffected by this, only the images themselves being averaged). 
+    - - Basically the canvas averaging method also lowers the final opacity so you need to use the same number of averaged images in the baseline and subtracted sample but this is a coding issue.
 
 
 - Can we implement bounding box or scene segmentation automation?

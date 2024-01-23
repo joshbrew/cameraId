@@ -2,9 +2,11 @@
 
 ### [Live Demo](https://wonnx-cameraid.netlify.app/)
 
-Copy of the official [wonnx wasm](https://github.com/webonnx/wonnx) squeeze net [example](https://github.com/webonnx/wonnx-wasm-example) with a test for multithreading the video codec so I can store recent data in memory and draw image copies to canvases or send to the classifier or do other things. 
+Copy of the official [onnxruntime-web](https://github.com/microsoft/onnxruntime) squeeze net [example](https://github.com/webonnx/wonnx-wasm-example) with a test for multithreading the video codec so I can store recent data in memory and draw image copies to canvases or send to the classifier or do other things. 
 
-You can use capacitor to compile to mobile, we're working on it.
+It is using the full onnxruntime-web package which falls back from webgpu to webgl or wasm SIMD based on what your device supports, and will work out of the box cross platform. We tested webgpu on desktop and webgl on mobile successfully. We are just fixing our custom onnx models to have correct i/o formats
+
+You can use capacitor to compile to mobile, we're working on it. 
 
 Inference time for the 1000 label squeeze-net averages about 6-10ms for me on an RTX 3070, whatever that means. I tested on a 4K camera but the squeeze net uses only like a small square of the image. Switching over to an MNIST example next.
 
