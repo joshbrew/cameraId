@@ -156,6 +156,7 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
                 
                 tensor = new ort.Tensor('float32', inp, [1,inp.length]); 
          
+
             } else if (data.spectral && data.input === 'spectral') {
                 const is = data.spectral.intensities;
                 inp = new Float32Array(is.length*4);
