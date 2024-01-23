@@ -156,6 +156,7 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
             }
             
             // Start inference
+            //console.log(data);
             const input = { [inputName]:tensor };
             //console.log(input);
             const start = performance.now();

@@ -20,17 +20,26 @@ Note, these labels don't include the right species:
 
 # Mobile Build
 
-For android with the capacitor dependencies installed and the latest android studio installation:
+### For android 
+with the capacitor dependencies installed and the latest android studio installation:
+
+`tinybuild bundle`
+
+if you modified the workers, copy them into the nested dist folder (placeholder redundancy)
 
 `npx cap sync`
 
 `npx cap open android`
 
-or for ios
+### or for ios
 
 `npx cap add ios`
 
 then 
+
+`tinybuild bundle`
+
+if you modified the workers, copy them into the nested dist folder (placeholder redundancy)
 
 `npx cap sync`
 
