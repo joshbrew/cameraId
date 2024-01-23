@@ -1,4 +1,9 @@
-import init, { main, Session, Input } from "@webonnx/wonnx-wasm";
+//import init, { main, Session, Input } from "@webonnx/wonnx-wasm";
+
+import * as ort from 'onnxruntime-web'
+import * as wgpuort from 'onnxruntime-web/webgpu'
+//import * as wglort from 'onnxruntime-web/webgpu'
+
 import { convertRGBAToRGBPlanarNormalized, convertRGBAtoRGBFloat32 } from "./lib/imagemanip"
 import {initWorker} from 'threadop'
 
@@ -33,7 +38,7 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
     const initClassifier = async () => {
 
 
-        let session:Session, labelsList:string[];
+        let session:ort.InferenceSession, labelsList:string[];
 
         //thread callback
         async function classifyImage(data:{
@@ -72,30 +77,54 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
                 if(data.outputWidth)    outputWidth = data.outputWidth;
                 if(data.outputHeight)   outputHeight = data.outputHeight;
 
-                async function fetchBytes(url) {
-                    const reply = await fetch(url);
-                    const blob = await reply.arrayBuffer();
-                    const arr = new Uint8Array(blob);
-                    return arr;
-                }
+                // async function fetchBytes(url) {
+                //     const reply = await fetch(url);
+                //     const blob = await reply.arrayBuffer();
+                //     const arr = new Uint8Array(blob);
+                //     return arr;
+                // }
             
-                // Load model, labels file and WONNX
-                const [
-                    modelBytes, 
-                    initResult, 
-                    labelsResult
-                ] = await Promise.all([
-                    data.model ? data.model : fetchBytes(location.origin+"/models/"+modelName), 
-                    init(), 
-                    data.labels ? data.labels : fetch(location.origin+"/models/"+labelsName).then(r => r.text())
-                ]);
+                // // Load model, labels file and WONNX
+                // const [
+                //     modelBytes, 
+                //     initResult, 
+                //     labelsResult
+                // ] = await Promise.all([
+                //     data.model ? data.model : fetchBytes(location.origin+"/models/"+modelName), 
+                //     init(), 
+                //     data.labels ? data.labels : fetch(location.origin+"/models/"+labelsName).then(r => r.text())
+                // ]);
         
-                //console.log(modelBytes, initResult, labelsResult)
+                // //console.log(modelBytes, initResult, labelsResult)
         
-                console.log("Initialized", { modelBytes, initResult, Session, labelsResult});
-                // Start inference session
-                session = await Session.fromBytes(modelBytes);
+                // console.log("Initialized", { modelBytes, initResult, Session, labelsResult});
+                // // Start inference session
+                // session = await Session.fromBytes(modelBytes);
         
+
+                //https://github.com/microsoft/onnxruntime-inference-examples/tree/main/js/api-usage_session-options
+                try{ //WebGPU
+                    session = await wgpuort.InferenceSession.create(location.origin+"/models/"+modelName, {
+                        executionProviders: ['webgpu'] //'wasm' 'webgl' 'webgpu'
+                    });
+                } catch(er) {
+                    console.error("WebGPU ONNX Create Session error:", er);
+                    try{ //WebGL fallback
+                        session = await ort.InferenceSession.create(location.origin+"/models/"+modelName, {
+                            executionProviders: ['webgl'] //'wasm' 'webgl' 'webgpu'
+                        });
+                    } catch(er) {
+                        console.error("WebGL ONNX Create Session error:", er);
+                        try{ //CPU fallback
+                            session = await ort.InferenceSession.create(location.origin+"/models/"+modelName, {
+                                executionProviders: ['wasm'] //'wasm' 'webgl' 'webgpu'
+                            });
+                        } catch(er) {console.error("WASM ONNX Create Session error:", er);}
+                    }
+                }
+
+
+                const labelsResult = await (data.labels ? data.labels : fetch(location.origin+"/models/"+labelsName).then(r => r.text()));
                 // Parse labels
                 labelsList = labelsResult.split(/\n/g);
             
@@ -111,9 +140,13 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
 
             if(!data) return;
             //this is very slow
+            let tensor
             let inp;
+            
             if(data.image && data.input === 'imageflattened') {
                 inp = convertRGBAToRGBPlanarNormalized(data.image, outputWidth, outputHeight);//convertRGBAtoRGBFloat32(imageData.data); 
+                
+                tensor = new ort.Tensor('float32', inp, [1,3,outputWidth,outputHeight]);
             } else if (data.spectral && data.input === 'spectral') {
                 const is = data.spectral.intensities;
                 inp = new Float32Array(is.length*4);
@@ -126,11 +159,14 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
                     inp[i+startB] = intensity.g;
                     inp[i+startG] = intensity.b;
                 });
+
+                tensor = new ort.Tensor('float32', inp, [1,inp.length]); //1d tensor
             }
             
             // Start inference
-            const input = new Input();
-            input.insert(inputName, inp);
+            const input = { [inputName]:tensor };//new Input();
+            //console.log(input);
+            //input.insert(inputName, inp);
             const start = performance.now();
             let result;
             try {result = await session.run(input); } catch(er) { console.error(er); }
@@ -145,10 +181,12 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
             const duration = performance.now() - start;
             inferenceCount++;
             inferenceTime += duration;
-            input.free();
+            //input.free();
 
             // Find the label with the highest probability
-            const probs = result.get(outputName);
+            console.log(result); 
+            let key = Object.keys(result)[0];
+            const probs = result[key].data;//result.get(outputName);
             
             let maxProb = -1;
             let maxIndex = -1;

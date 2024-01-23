@@ -18,11 +18,11 @@ Note, these labels don't include the right species:
 
 # Mobile Build
 
-For android with the capacitor dependencies installed:
+For android with the capacitor dependencies installed and the latest android studio installation:
 
 `npx cap sync`
 
-`npx cap run android`
+`npx cap open android`
 
 or for ios
 
@@ -32,8 +32,6 @@ then
 
 `npx cap sync`
 
-`npx cap run android`
+`npx cap open ios`
 
-## TODO:
-
-Fix mobile build dependencies (e.g. the web worker fetch urls are not 1:1)
+Note the dist has copies necessary for the mobile build to run e.g. the ./dist/models and ./dist/dist to keep the same relative paths as the webapp. This should be cleaned up for production to prevent bloat for the served app.
