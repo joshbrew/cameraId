@@ -33214,7 +33214,6 @@ if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlob
       const duration = performance.now() - start;
       inferenceCount++;
       inferenceTime += duration;
-      console.log(result);
       let key = Object.keys(result)[0];
       console.log(result);
       const probs = result[key]?.data;

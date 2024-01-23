@@ -1,4 +1,3 @@
-//import init, { main, Session, Input } from "@webonnx/wonnx-wasm";
 
 import * as ort from 'onnxruntime-web'
 import * as wgpuort from 'onnxruntime-web/webgpu'
@@ -84,23 +83,6 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
                 //     return arr;
                 // }
             
-                // // Load model, labels file and WONNX
-                // const [
-                //     modelBytes, 
-                //     initResult, 
-                //     labelsResult
-                // ] = await Promise.all([
-                //     data.model ? data.model : fetchBytes(location.origin+"/models/"+modelName), 
-                //     init(), 
-                //     data.labels ? data.labels : fetch(location.origin+"/models/"+labelsName).then(r => r.text())
-                // ]);
-        
-                // //console.log(modelBytes, initResult, labelsResult)
-        
-                // console.log("Initialized", { modelBytes, initResult, Session, labelsResult});
-                // // Start inference session
-                // session = await Session.fromBytes(modelBytes);
-        
 
                 //https://github.com/microsoft/onnxruntime-inference-examples/tree/main/js/api-usage_session-options
                 try{ //WebGPU
@@ -174,9 +156,8 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
             }
             
             // Start inference
-            const input = { [inputName]:tensor };//new Input();
+            const input = { [inputName]:tensor };
             //console.log(input);
-            //input.insert(inputName, inp);
             const start = performance.now();
             let result;
             try {result = await session.run(input); } catch(er) { console.error(er); }
@@ -191,14 +172,12 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
             const duration = performance.now() - start;
             inferenceCount++;
             inferenceTime += duration;
-            //input.free();
 
             // Find the label with the highest probability
-            console.log(result); 
             let key = Object.keys(result)[0];
 
             console.log(result);
-            const probs = result[key]?.data;//result.get(outputName);
+            const probs = result[key]?.data;
             
             let maxProb = -1;
             let maxIndex = -1;
