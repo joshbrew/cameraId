@@ -198,7 +198,7 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
             let key = Object.keys(result)[0];
 
             console.log(result);
-            const probs = result[key]?.data || result[key];//result.get(outputName);
+            const probs = result[key]?.data;//result.get(outputName);
             
             let maxProb = -1;
             let maxIndex = -1;

@@ -33217,7 +33217,7 @@ if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlob
       console.log(result);
       let key = Object.keys(result)[0];
       console.log(result);
-      const probs = result[key]?.data || result[key];
+      const probs = result[key]?.data;
       let maxProb = -1;
       let maxIndex = -1;
       for (let index = 0; index < probs.length; index++) {
