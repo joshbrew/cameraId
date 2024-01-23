@@ -33144,6 +33144,7 @@ if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlob
             executionProviders: ["webgpu"]
             //'wasm' 'webgl' 'webgpu'
           });
+          console.log("Created WebGPU ONNX session");
         } catch (er) {
           console.error("WebGPU ONNX Create Session error:", er);
           try {
@@ -33151,6 +33152,7 @@ if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlob
               executionProviders: ["webgl"]
               //'wasm' 'webgl' 'webgpu'
             });
+            console.log("Created WebGL ONNX session");
           } catch (er2) {
             console.error("WebGL ONNX Create Session error:", er2);
             try {
@@ -33158,6 +33160,7 @@ if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlob
                 executionProviders: ["wasm"]
                 //'wasm' 'webgl' 'webgpu'
               });
+              console.log("Created WASM ONNX session");
             } catch (er3) {
               console.error("WASM ONNX Create Session error:", er3);
             }

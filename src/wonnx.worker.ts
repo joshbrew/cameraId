@@ -107,18 +107,21 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
                     session = await wgpuort.InferenceSession.create(location.origin+"/models/"+modelName, {
                         executionProviders: ['webgpu'] //'wasm' 'webgl' 'webgpu'
                     });
+                    console.log("Created WebGPU ONNX session");
                 } catch(er) {
                     console.error("WebGPU ONNX Create Session error:", er);
                     try{ //WebGL fallback
                         session = await ort.InferenceSession.create(location.origin+"/models/"+modelName, {
                             executionProviders: ['webgl'] //'wasm' 'webgl' 'webgpu'
                         });
+                        console.log("Created WebGL ONNX session");
                     } catch(er) {
                         console.error("WebGL ONNX Create Session error:", er);
                         try{ //CPU fallback
                             session = await ort.InferenceSession.create(location.origin+"/models/"+modelName, {
                                 executionProviders: ['wasm'] //'wasm' 'webgl' 'webgpu'
                             });
+                            console.log("Created WASM ONNX session");
                         } catch(er) {console.error("WASM ONNX Create Session error:", er);}
                     }
                 }
@@ -147,6 +150,7 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
                 inp = convertRGBAToRGBPlanarNormalized(data.image, outputWidth, outputHeight);//convertRGBAtoRGBFloat32(imageData.data); 
                 
                 tensor = new ort.Tensor('float32', inp, [1,3,outputWidth,outputHeight]);
+        
             } else if (data.spectral && data.input === 'spectral') {
                 const is = data.spectral.intensities;
                 inp = new Float32Array(is.length*4);
