@@ -53,7 +53,7 @@ export const classifierSettings = {
             labelsName:'fish-labels.txt',
             //just single i/o for now
             inputName:'input',
-            outputName:'output',
+            outputName:'probabilities',
             input:'imageflattened'
         }
     }

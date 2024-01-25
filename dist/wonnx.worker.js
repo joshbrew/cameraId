@@ -33214,9 +33214,8 @@ if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlob
       const duration = performance.now() - start;
       inferenceCount++;
       inferenceTime += duration;
-      let key = Object.keys(result)[0];
-      console.log(result);
-      const probs = result[key]?.data;
+      let probs;
+      probs = result[outputName]?.data;
       let maxProb = -1;
       let maxIndex = -1;
       for (let index = 0; index < probs.length; index++) {
@@ -33226,6 +33225,7 @@ if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlob
           maxIndex = index;
         }
       }
+      console.log(maxProb);
       const avgFrameTime = inferenceTime / inferenceCount;
       const avgFrameRate = inferenceCount / (inferenceTime * 1e-3);
       return {
