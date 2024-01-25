@@ -40,7 +40,7 @@ export const classifierSettings = {
             modelName:'pipeline_xgboost_spectrum.onnx',
             labelsName:'fish-labels.txt',
             inputName:'input',
-            outputName:'output',
+            outputName:'probabilities',
             input:'spectral'
         }
     },
