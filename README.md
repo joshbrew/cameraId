@@ -1,10 +1,10 @@
-## WONNX Camera & Bounding Box Real-Time Classification Demo
+## ONNX Runtime Camera & Bounding Box Real-Time Classification Demo
 
 ### [Live Demo](https://wonnx-cameraid.netlify.app/)
 
 Copy of the official [onnxruntime-web](https://github.com/microsoft/onnxruntime) squeeze net [example](https://github.com/webonnx/wonnx-wasm-example) with a test for multithreading the video codec so I can store recent data in memory and draw image copies to canvases or send to the classifier or do other things. 
 
-It is using the full onnxruntime-web package which falls back from webgpu to webgl or wasm SIMD based on what your device supports, and will work out of the box cross platform. We tested webgpu on desktop and webgl on mobile successfully. We are just fixing our custom onnx models to have correct i/o formats
+It is using the full onnxruntime-web package which falls back from webgpu to webgl or wasm SIMD based on what your device supports, and will work out of the box cross platform. We tested webgpu on desktop and webgl on mobile successfully. We have two custom models we are testing for spectral and image classification in there alongside the default squeeze net test model. They are not robust, but we will provide the ONNX training workflow with this application. 
 
 You can use capacitor to compile to mobile, we're working on it. 
 
