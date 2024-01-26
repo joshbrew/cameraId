@@ -104,7 +104,8 @@ export class ImageProcessor {
     animation;
 
     selectedClassifier = 'spectralclassifier';
-    selectedInput = 'spectral' //'spectral','imageflattened','image'
+    selectedInput:'spectral'|'imageflattened'|'image' = 'spectral';
+    baselineSet = false;
 
     gdrive:GDrive;
 
@@ -357,19 +358,35 @@ export class ImageProcessor {
                
         const captureButton = (this.root.querySelector('#capture') as HTMLElement);
         captureButton.title = "Take Snapshot";
-        captureButton.onclick = () => {
+
+        //event listener for capture button processes sequences
+        const captureClick = async () => {
+
+            captureButton.onclick = () => {};
 
             // Add the active class to trigger the animation
             captureButton.classList.add('capture-btn-active');
-
-            this.processBoundingBoxes();
 
             // Reattach the click event listener after the animation ends
             captureButton.addEventListener('animationend', () => {
                 // Remove the active class after the animation
                 captureButton.classList.remove('capture-btn-active');
             });
+            
+            if(this.selectedInput === 'spectral') {
+                for(let i = 0; i < 9; i++) {
+                    console.log('awaiting');
+                    await this.processBoundingBoxes(false, false);   
+                }
+                await this.processBoundingBoxes(true, true);   
+            } else {
+                await this.processBoundingBoxes();
+            }
+
+            captureButton.onclick = captureClick; //re-enstate the event listener
         };
+
+        captureButton.onclick = captureClick;
 
 
 
@@ -609,8 +626,10 @@ export class ImageProcessor {
             setBaselineButton.addEventListener('click', () => {
                 this.threads.poolingThread.run({command:'baseline', name:crop.name},undefined,true);
                 setBaselineButton.disabled = true;
+                this.baselineSet = true;
             });
             setBaselineButton.title = "Set as Baseline";
+            if(this.baselineSet) setBaselineButton.disabled = true;
 
             let clearSampleButton = document.createElement('button');
             clearSampleButton.id = "clearsample"+crop.cropIndex;
@@ -634,7 +653,8 @@ export class ImageProcessor {
                 this.threads.canvasThread.run({clear:true,   cropIndex:crop.cropIndex},undefined,true);
                 this.threads.canvasThread.run({clear:true,   cropIndex:crop.cropIndex+'s'},undefined,true);
                 (this.root.querySelector('#label'+crop.cropIndex) as HTMLElement).innerText = '';
-            
+                setBaselineButton.disabled = false;
+                this.baselineSet = false;
             });
             clearBaselineButton.title = "Clear Baseline Averaging Data";
 
@@ -772,9 +792,9 @@ export class ImageProcessor {
     }
 
     processBoundingBoxes = async (
-        data=this.getBoundingBoxData(),
-        render=true,
-        classify=true
+        render=true, //run render thread(s)
+        classify=true, //run classifier thread(s)
+        data=this.getBoundingBoxData()
     ) => {
         // Here we would capture the frame data related to the bounding box
         // However, the specifics of how to capture and process the frame depend on your application's logic
@@ -800,22 +820,25 @@ export class ImageProcessor {
             });
         }
 
-        if(this.classifierWait) 
-            await this.classifierWait; //make sure classifierThread finishes last round.    
-        else if(this.poolCt >= this.poolCtMaxIdx) { //we need to await this last promise;
-            this.classifierWait = new Promise((res) => {
-                let id = this.threads.classifierThread.addCallback(() => {
-                    if(this.poolCt === 0) { //wait for flush
-                        this.threads.classifierThread.removeCallback(id);
-                        this.threadRunning = false;
-                        this.classifierWait = undefined; //dereference for next frame
-                        res(true);
-                    }
+        if(classify) {
+            if(this.threadRunning && this.classifierWait) 
+                await this.classifierWait; //make sure classifierThread finishes last round.    
+            else if(this.poolCt >= this.poolCtMaxIdx) { //we need to await this last promise;
+                this.classifierWait = new Promise((res) => {
+                    let id = this.threads.classifierThread.addCallback(() => {
+                        if(this.poolCt === 0) { //wait for flush
+                            this.threads.classifierThread.removeCallback(id);
+                            this.threadRunning = false;
+                            this.classifierWait = undefined; //dereference for next frame
+                            res(true);
+                        }
+                    });
                 });
-            });
-            this.threadRunning = true;
+                this.threadRunning = true;
+            }
         }
 
+        //we are grabbing the whole frame and then if subframes are specified we process a whole array
         let toDecode = {
             image:frame,
             id:`${Math.floor(Math.random()*1000000000000000)}`,
@@ -831,70 +854,75 @@ export class ImageProcessor {
 
         for(const crop of data) {
             console.time(`capture and inference ${crop.id}`);
-            this.poolCt++;
-                        }
-        let id = this.threads.poolingThread.addCallback((out) => {
-            if(out === toDecode.id) {
-                this.threads.poolingThread.removeCallback(id);
-    
-                for(const crop of data) { //classify each crop
+            if(classify) this.poolCt++;
+        }
 
-                    if(classify) {
-                        this.getOrCreateResultElement(crop);
+        return await new Promise((res,rej) => {
 
-                        if(this.selectedInput === 'spectral') {
-                            this.threads.poolingThread.run(
-                                {
-                                    command:'getspectral', 
-                                    name:crop.name,
-                                    input:this.selectedInput
-                                }, 
-                                undefined, 
-                                this.threads.classifierThread.id
-                            );
-                        } else {
-                            this.threads.poolingThread.run(
-                                {
-                                    command:'get',
-                                    name:crop.name,
-                                    input:this.selectedInput
-                                },
-                                undefined, 
-                                this.threads.classifierThread.id
-                            );
-                        }
-                            
-                    }
-        
-                    if(render) {
-                        this.threads.poolingThread.run(
-                            {
-                                command:'getbmp', //this.useAutocor.checked ? 'getautocorbmp' : 
-                                name:crop.name
-                            }, 
-                            undefined, 
-                            this.threads.canvasThread.id
-                        );
+            let id = this.threads.poolingThread.addCallback((out) => {
+                if(out === toDecode.id) {
+                    this.threads.poolingThread.removeCallback(id);
+                    
+                    for(const crop of data) { //classify each crop
     
-                        if(this.useSpectralAnalysis.checked) {
+                        if(classify) {
+                            this.getOrCreateResultElement(crop);
+    
+                            if(this.selectedInput === 'spectral') {
+                                this.threads.poolingThread.run(
+                                    {
+                                        command:'getspectral', 
+                                        name:crop.name,
+                                        input:this.selectedInput
+                                    }, 
+                                    undefined, 
+                                    this.threads.classifierThread.id
+                                );
+                            } else {
+                                this.threads.poolingThread.run(
+                                    {
+                                        command:'get',
+                                        name:crop.name,
+                                        input:this.selectedInput
+                                    },
+                                    undefined, 
+                                    this.threads.classifierThread.id
+                                );
+                            }
+                                
+                        }
+            
+                        if(render) {
                             this.threads.poolingThread.run(
                                 {
-                                    command:'getspectral', 
+                                    command:'getbmp', //this.useAutocor.checked ? 'getautocorbmp' : 
                                     name:crop.name
                                 }, 
                                 undefined, 
                                 this.threads.canvasThread.id
                             );
+        
+                            if(this.useSpectralAnalysis.checked) {
+                                this.threads.poolingThread.run(
+                                    {
+                                        command:'getspectral', 
+                                        name:crop.name
+                                    }, 
+                                    undefined, 
+                                    this.threads.canvasThread.id
+                                );
+                            }
                         }
                     }
+
+                    res(true);
                 }
-            }
+            });
+                
+            // Send the frame data to the videoDecoderThread for processing
+            this.threads.videoDecoderThread.run(toDecode,[frame]);
+        
         });
-            
-        // Send the frame data to the videoDecoderThread for processing
-        this.threads.videoDecoderThread.run(toDecode,[frame]);
-    
-        return true;
     }
 
     visualizeCapture(
@@ -919,7 +947,7 @@ export class ImageProcessor {
             (this.root.querySelector('#label'+result.cropIndex) as HTMLElement).innerText = result?.label;
             (this.root.querySelector('#maxProb'+result.cropIndex) as HTMLElement).innerText = result?.maxProb?.toFixed(3) as any;
             (this.root.querySelector('#inferenceTime'+result.cropIndex) as HTMLElement).innerText = result?.inferenceTime?.toFixed(3) as any;
-            (this.root.querySelector('#setbaseline'+result.cropIndex) as HTMLButtonElement).disabled = false;
+            //(this.root.querySelector('#setbaseline'+result.cropIndex) as HTMLButtonElement).disabled = false;
             
             if(this.BBTool.boxes[parseInt(result.name)]?.id) 
                 this.BBTool.updateLabelProgrammatically(

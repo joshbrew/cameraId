@@ -257,7 +257,7 @@ export async function initVideoProcessingThreads(
                     }
                     
                     if(input.command.includes('averaged')) {
-                        
+                        //console.log('averaging');
                         if(imgData.bmp) {
                             if(!this.TempImageBMPBuffer[imgData.name]) { this.TempImageBMPBuffer[imgData.name] = []; }
                             this.TempImageBMPBuffer[imgData.name].push(imgData.bmp);
@@ -283,7 +283,8 @@ export async function initVideoProcessingThreads(
                         if(imgData.bmp && this.TempImageBMPBuffer[imgData.name].length > 1) {
                             this.AveragingOffscreen.width = imgData.width;
                             this.AveragingOffscreen.height = imgData.height;
-                            (this.AveragingOffscreenContext as CanvasRenderingContext2D).globalAlpha = 1/this.TempImageBMPBuffer[imgData.name].length;
+                            //(this.AveragingOffscreenContext as CanvasRenderingContext2D).globalCompositeOperation = 'overlay';
+                            (this.AveragingOffscreenContext as CanvasRenderingContext2D).globalAlpha = 0.5;
                             for(const bmp of this.TempImageBMPBuffer[imgData.name]) { //assuming all the same size
                                 (this.AveragingOffscreenContext as CanvasRenderingContext2D).drawImage(bmp as ImageBitmap, 0, 0);
                             }
@@ -367,7 +368,6 @@ export async function initVideoProcessingThreads(
                     this.SubtractionOffscreen.width = capture.width;
                     this.SubtractionOffscreen.height = capture.height;
                     (this.SubtractionOffscreenContext as CanvasRenderingContext2D).globalCompositeOperation = 'difference';
-                    if(this.TempImageBMPBuffer[input.name]?.length > 1) (this.SubtractionOffscreenContext as CanvasRenderingContext2D).globalAlpha = 1/(this.TempImageBMPBuffer[input.name].length);
                     this.SubtractionOffscreenContext.drawImage(this.Baseline.bmp,0,0); 
                     this.SubtractionOffscreenContext.drawImage(imgData,0,0); //should subtract from the baseline (the brighter image so we shouldn't get a negative)
                     imgData = this.SubtractionOffscreen; //copy the new canvas now instead of the BMP.
