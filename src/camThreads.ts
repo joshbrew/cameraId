@@ -100,7 +100,7 @@ export async function initVideoProcessingThreads(
                 }
                 
                 graphXIntensities(
-                    this.contexts[data.cropIndex],
+                    this.contexts[data.cropIndex+'s'],
                     data.spectral?.intensities,
                     data.width,
                     data.height

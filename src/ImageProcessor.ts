@@ -772,7 +772,9 @@ export class ImageProcessor {
     }
 
     processBoundingBoxes = async (
-        data=this.getBoundingBoxData()
+        data=this.getBoundingBoxData(),
+        render=true,
+        classify=true
     ) => {
         // Here we would capture the frame data related to the bounding box
         // However, the specifics of how to capture and process the frame depend on your application's logic
@@ -837,48 +839,53 @@ export class ImageProcessor {
     
                 for(const crop of data) { //classify each crop
 
-                    this.getOrCreateResultElement(crop);
+                    if(classify) {
+                        this.getOrCreateResultElement(crop);
 
-                    if(this.selectedInput === 'spectral') {
-                        this.threads.poolingThread.run(
-                            {
-                                command:'getspectral', 
-                                name:crop.name,
-                                input:this.selectedInput
-                            }, 
-                            undefined, 
-                            this.threads.classifierThread.id
-                        );
-                    } else {
-                        this.threads.poolingThread.run(
-                            {
-                                command:'get',
-                                name:crop.name,
-                                input:this.selectedInput
-                            },
-                            undefined, 
-                            this.threads.classifierThread.id
-                        );
+                        if(this.selectedInput === 'spectral') {
+                            this.threads.poolingThread.run(
+                                {
+                                    command:'getspectral', 
+                                    name:crop.name,
+                                    input:this.selectedInput
+                                }, 
+                                undefined, 
+                                this.threads.classifierThread.id
+                            );
+                        } else {
+                            this.threads.poolingThread.run(
+                                {
+                                    command:'get',
+                                    name:crop.name,
+                                    input:this.selectedInput
+                                },
+                                undefined, 
+                                this.threads.classifierThread.id
+                            );
+                        }
+                            
                     }
         
-                    this.threads.poolingThread.run(
-                        {
-                            command:'getbmp', //this.useAutocor.checked ? 'getautocorbmp' : 
-                            name:crop.name
-                        }, 
-                        undefined, 
-                        this.threads.canvasThread.id
-                    );
-
-                    if(this.useSpectralAnalysis.checked) {
+                    if(render) {
                         this.threads.poolingThread.run(
                             {
-                                command:'getspectral', 
+                                command:'getbmp', //this.useAutocor.checked ? 'getautocorbmp' : 
                                 name:crop.name
                             }, 
                             undefined, 
                             this.threads.canvasThread.id
                         );
+    
+                        if(this.useSpectralAnalysis.checked) {
+                            this.threads.poolingThread.run(
+                                {
+                                    command:'getspectral', 
+                                    name:crop.name
+                                }, 
+                                undefined, 
+                                this.threads.canvasThread.id
+                            );
+                        }
                     }
                 }
             }
