@@ -8,6 +8,8 @@ export type CamThreads = {
     classifierThread: WorkerHelper;
 }
 
+//TODO: Improve compositing and spectral sampling
+
 //FYI this is not prefectly organized but runs great, some things use cropIndex, some things use name, some things use id. There are various reasons for this while trying different things but it could be cleaned up.
 
 export async function initVideoProcessingThreads(
@@ -430,13 +432,18 @@ export async function initVideoProcessingThreads(
                 if(this.Baseline?.spectral) { //correct for baseline
                     const result = captureCpy.spectral.intensities.map((v,i)=> {
 
+                        //with the spectroscopy, the baseline should be the brighter image,
+                        // and we are after the difference, so baseline - sample should give 
+                        //  us a positive difference (representing reflectance of a material), 
+                        //   and we can zero out negatives
                         let datapoint = {
-                            r:v.r - this.Baseline.spectral.intensities[i].r,
-                            g:v.g - this.Baseline.spectral.intensities[i].g,
-                            b:v.b - this.Baseline.spectral.intensities[i].b,
-                            i:v.i - this.Baseline.spectral.intensities[i].i
+                            r:this.Baseline.spectral.intensities[i].r - v.r,
+                            g:this.Baseline.spectral.intensities[i].g - v.g,
+                            b:this.Baseline.spectral.intensities[i].b - v.b,
+                            i:this.Baseline.spectral.intensities[i].i - v.i
                         };
 
+                        //not reflective
                         if(datapoint.r < 0) datapoint.r = 0;
                         if(datapoint.g < 0) datapoint.g = 0;
                         if(datapoint.b < 0) datapoint.b = 0;
