@@ -195,7 +195,7 @@ export class BoundingBoxTool {
     
     // Method to draw a circle
     drawCircle(x, y) {
-        const radius = 10; // You can adjust the size of the circle
+        const radius = 7; // You can adjust the size of the circle
         this.ctx.beginPath();
         this.ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
         this.ctx.fillStyle = 'red'; // Choose the color of the circle
@@ -530,15 +530,14 @@ export class BoundingBoxTool {
                 labelSpan.style.textShadow = '1px 2px red, 0 0 1em blue, 0 0 0.2em blue';
                 
                 labelContainer.replaceChild(labelSpan, labelInput);
-                this.redrawCanvas();
+                //this.redrawCanvas();
                 if (prevLabel !== box.label && this.options.onedited) {
                     this.options.onedited(box, this.boxes, this.boxes.findIndex((v)=>{if(box.id === v.id) return true;}), this.sourceElement, this.overlayCanvas, this.ctx);
                 }
             };
 
-            labelInput.onfocus = () => {
-                
-            };
+            // labelInput.onfocus = () => {
+            // };
             
             labelContainer.replaceChild(labelInput, labelSpan);
             labelInput.focus();
@@ -597,6 +596,8 @@ export class BoundingBoxTool {
         const labelContainer = document.getElementById(`label_container_${id}`);
         if (labelContainer) document.body.removeChild(labelContainer);
         this.redrawCanvas();
+        this.isFirstClick = true;
+        this.isDrawing = false;
         if(this.options.ondelete) this.options.ondelete(spliced[0], this.boxes, index, this.sourceElement, this.overlayCanvas, this.ctx);
       }
     }
