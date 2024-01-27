@@ -452,7 +452,7 @@ export async function initVideoProcessingThreads(
                     captureCpy.spectral.maxI -= this.Baseline.spectral.maxI;
 
                 }
-                
+
                 return {
                     message:captureCpy
                 };
@@ -567,17 +567,7 @@ export async function initVideoProcessingThreads(
                     
                 let bmp:ImageBitmap|undefined;
                         
-                if(image instanceof VideoFrame) {       
-                    // console.log(
-                    //     'x',(data.cropX || 0),
-                    //     'y',(data.cropY || 0),
-                    //     'w',data.cropW || input.width,
-                    //     'h',data.cropH || input.height,
-                    //     0,
-                    //     0,
-                    //     this.offscreen.width,
-                    //     this.offscreen.height
-                    // );
+                if(image instanceof VideoFrame) {     
                     //crop the image
                     (this.ctx as CanvasRenderingContext2D).drawImage(
                         image as VideoFrame,
