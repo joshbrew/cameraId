@@ -838,7 +838,7 @@ export class ImageProcessor {
             }
         }
 
-        //we are grabbing the whole frame and then if subframes are specified we process a whole array
+        //we are grabbing the whole frame and then if subframes are specified we process a whole array as cropped images
         let toDecode = {
             image:frame,
             id:`${Math.floor(Math.random()*1000000000000000)}`,

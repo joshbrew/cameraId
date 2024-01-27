@@ -215,8 +215,8 @@ export async function initVideoProcessingThreads(
                             this.TempImageBMPBuffer = {};
                             this.TempImageSpectralBuffer = {};
                             this.TempImageBufferLimit = 10; //for averaging
-                            this.AveragingOffscreen = new OffscreenCanvas(300,300);
-                            this.SubtractionOffscreen = new OffscreenCanvas(300,300);
+                            this.AveragingOffscreen = new OffscreenCanvas(800,600);
+                            this.SubtractionOffscreen = new OffscreenCanvas(800,600);
                             this.AveragingOffscreenContext = this.AveragingOffscreen.getContext('2d',{ willReadFrequently: true });
                             this.SubtractionOffscreenContext = this.SubtractionOffscreen.getContext('2d',{willReadFrequently:true});
                         }
@@ -256,14 +256,14 @@ export async function initVideoProcessingThreads(
                             this.TempImageSpectralBuffer[imgData.name].shift();
                     }
                     
+                    if(imgData.bmp) {
+                        if(!this.TempImageBMPBuffer[imgData.name]) { this.TempImageBMPBuffer[imgData.name] = []; }
+                        this.TempImageBMPBuffer[imgData.name].push(imgData.bmp);
+                        if(this.TempImageBMPBuffer[imgData.name].length > this.TempImageBufferLimit) 
+                            this.TempImageBMPBuffer[imgData.name].shift();    
+                    }
+                    
                     if(input.command.includes('averaged')) {
-                        //console.log('averaging');
-                        if(imgData.bmp) {
-                            if(!this.TempImageBMPBuffer[imgData.name]) { this.TempImageBMPBuffer[imgData.name] = []; }
-                            this.TempImageBMPBuffer[imgData.name].push(imgData.bmp);
-                            if(this.TempImageBMPBuffer[imgData.name].length > this.TempImageBufferLimit) 
-                                this.TempImageBMPBuffer[imgData.name].shift();    
-                        }
 
                         if(imgData.image && this.TempImgUint8Buffer[imgData.name].length > 1) {
                             let result = new Uint8ClampedArray(imgData.image);
@@ -284,12 +284,12 @@ export async function initVideoProcessingThreads(
                             this.AveragingOffscreen.width = imgData.width;
                             this.AveragingOffscreen.height = imgData.height;
                             //(this.AveragingOffscreenContext as CanvasRenderingContext2D).globalCompositeOperation = 'overlay';
-                            (this.AveragingOffscreenContext as CanvasRenderingContext2D).globalAlpha = 0.5;
+                            (this.AveragingOffscreenContext as CanvasRenderingContext2D).globalAlpha = 1/this.TempImageBMPBuffer[imgData.name].length;
                             for(const bmp of this.TempImageBMPBuffer[imgData.name]) { //assuming all the same size
                                 (this.AveragingOffscreenContext as CanvasRenderingContext2D).drawImage(bmp as ImageBitmap, 0, 0);
                             }
-                            // (this.AveragingOffscreenContext as CanvasRenderingContext2D).globalAlpha = 1;
-                            // (this.AveragingOffscreenContext as CanvasRenderingContext2D).drawImage(this.AveragingOffscreen as ImageBitmap, 0, 0)
+                            (this.AveragingOffscreenContext as CanvasRenderingContext2D).globalAlpha = 1; //redraw image to put alpha to 1
+                            (this.AveragingOffscreenContext as CanvasRenderingContext2D).drawImage(this.AveragingOffscreen as ImageBitmap, 0, 0)
                             this.TempImageBMP[imgData.name] = await createImageBitmap((this.AveragingOffscreen as OffscreenCanvas)); //replace with averaged result
                         }
 
@@ -429,19 +429,30 @@ export async function initVideoProcessingThreads(
                 
                 if(this.Baseline?.spectral) { //correct for baseline
                     const result = captureCpy.spectral.intensities.map((v,i)=> {
-                        return{
-                            r:this.Baseline.spectral.intensities[i].r - v.r,
-                            g:this.Baseline.spectral.intensities[i].b - v.b,
-                            b:this.Baseline.spectral.intensities[i].g - v.g,
-                            i:this.Baseline.spectral.intensities[i].i - v.i
-                        }
+
+                        let datapoint = {
+                            r:v.r - this.Baseline.spectral.intensities[i].r,
+                            g:v.g - this.Baseline.spectral.intensities[i].g,
+                            b:v.b - this.Baseline.spectral.intensities[i].b,
+                            i:v.i - this.Baseline.spectral.intensities[i].i
+                        };
+
+                        if(datapoint.r < 0) datapoint.r = 0;
+                        if(datapoint.g < 0) datapoint.g = 0;
+                        if(datapoint.b < 0) datapoint.b = 0;
+                        if(datapoint.i < 0) datapoint.i = 0;
+
+                        return datapoint;
                     });
+
                     captureCpy.spectral.intensities = result;
                     captureCpy.spectral.maxR -= this.Baseline.spectral.maxR;
                     captureCpy.spectral.maxG -= this.Baseline.spectral.maxG;
                     captureCpy.spectral.maxB -= this.Baseline.spectral.maxB;
                     captureCpy.spectral.maxI -= this.Baseline.spectral.maxI;
+
                 }
+                
                 return {
                     message:captureCpy
                 };
@@ -487,6 +498,7 @@ export async function initVideoProcessingThreads(
                         bmpbuffer: this.TempImageBMPBuffer[input.name],
                         spectalbuffer: this.TempImageSpectralBuffer[input.name]
                     };
+                    this.TempImgUint8Buffer[input.name] = [];
                     this.TempImageBMPBuffer[input.name] = []; //reset so we don't reuse the same images
                     this.TempImageSpectralBuffer[input.name] = []; //reset so we don't reuse the same images
                 }
