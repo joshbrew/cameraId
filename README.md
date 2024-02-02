@@ -7,9 +7,15 @@ Copy of the official [onnxruntime-web](https://github.com/microsoft/onnxruntime)
 - Train your own xgboost image or CSV models with simple python notebooks: https://github.com/joshbrew/XGBoost_ONNX_Training_Conversion
 
 ### App features
-- Frontend uses onnxruntime-web with WebGPU by default with fallback to WebGL or WASM SIMD.
+- Classify images or digital spectrograms (if using a webcam spectrometer)
+- Create bounding boxes and classify multiple parts of the scene.
+- Save data into various formats, optional backup to Drive.
+- Frontend uses onnxruntime-web with WebGPU by default with fallback to WebGL or WASM SIMD. Load custom models.
 - Multithreaded image/video processing. We need to write our own GPU kernels to speed this up any faster, we're just doing simple VideoFrame and canvas manipulation.
 - Capacitor mobile webview app build, the webgpu runtime worked last time we checked. Some of the rendering is bugged. 
+- Janky hyperspectral imaging tool, use sliders or gyroscopes to paint images from subsections of a spectrogram. Needs a lot of work but it's just a hack of ThreeJS.
+
+This is a bunch of tools we're building on top of to explore clientside machine learning applications, and our theme is spectroscopy and image recognition for food identification and quality.
 
 ### Inference times:
 
