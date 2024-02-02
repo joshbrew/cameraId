@@ -31,7 +31,10 @@ On desktop WebGPU (RTX3070 mobile ed, i7-10750H):
 - ~15ms 512x512 Image XGBoost (7.6mb)
 - 4-6ms 244x244 Image squeeze (4.8mb)
 
-# build and run
+# Build and Run
+
+Using the latest nodejs LTS:
+
 `npm i -g tinybuild` then `npm start`
 
 Note, these labels don't include the right species:
