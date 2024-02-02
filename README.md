@@ -15,7 +15,7 @@ Copy of the official [onnxruntime-web](https://github.com/microsoft/onnxruntime)
 - Capacitor mobile webview app build, the webgpu runtime worked last time we checked. Some of the rendering is bugged. 
 - Janky hyperspectral imaging tool, use sliders or gyroscopes to paint images from subsections of a spectrogram. Needs a lot of work but it's just a hack of ThreeJS.
 
-This is a bunch of tools we're building on top of to explore clientside machine learning applications, and our theme is spectroscopy and image recognition for food identification and quality.
+This is a bunch of tools we're building on top of to explore clientside machine learning applications, and our theme is spectroscopy/hyperspectral and image recognition for food identification and quality.
 
 ### Inference times:
 
