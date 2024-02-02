@@ -109,8 +109,6 @@ export class ImageProcessor {
 
     gdrive:GDrive;
 
-
-
     constructor(
         parentElement=document.body,
         modelInpWidth:number=classifierSettings['spectralclassifier'].modelInpWidth, 

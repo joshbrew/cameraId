@@ -29,6 +29,7 @@ export async function initVideoProcessingThreads(
     let transfer = [] as any;
     if(model) transfer.push(model);
     if(labels) transfer.push(labels);
+    
     classifierThread.run({
         command:'configure',
         modelName,
