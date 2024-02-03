@@ -37,14 +37,22 @@ Using the latest nodejs LTS:
 
 `npm i -g tinybuild` then `npm start`
 
-Getting digital spectral images:
-![imaging](https://github.com/joshbrew/cameraId-wonnx-wasm/assets/18196383/bd1f7860-cadd-4080-953d-cb44db532f5e)
-
-Chocolate bar wrapper hyperspectral scan:
-![Capture2](https://github.com/joshbrew/cameraId-wonnx-wasm/assets/18196383/f62e5360-8742-4124-9eb2-8085ab54e5f9)
-
-Squeeze net bounding box classifier. Note, the squeeze net labels don't include the right species:
-![Capture](./screenshot.PNG)
+<table>
+  <tr>
+    <td>
+      Getting digital spectral images:<br>
+      <img src="https://github.com/joshbrew/cameraId-wonnx-wasm/assets/18196383/bd1f7860-cadd-4080-953d-cb44db532f5e" alt="imaging">
+    </td>
+    <td>
+      Chocolate bar wrapper hyperspectral scan:<br>
+      <img src="https://github.com/joshbrew/cameraId-wonnx-wasm/assets/18196383/f62e5360-8742-4124-9eb2-8085ab54e5f9" alt="Capture2">
+    </td>
+    <td>
+      Squeeze net bounding box classifier. Note, the squeeze net labels don't include the right species:<br>
+      <img src="./screenshot.PNG" alt="Capture">
+    </td>
+  </tr>
+</table>
 
 # Mobile Build
 
