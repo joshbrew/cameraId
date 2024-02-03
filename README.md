@@ -40,6 +40,10 @@ Using the latest nodejs LTS:
 Note, these labels don't include the right species:
 ![Capture](./screenshot.PNG)
 
+Chocolate bar wrapper hyperspectral scan
+![Capture2](https://github.com/joshbrew/cameraId-wonnx-wasm/assets/18196383/f62e5360-8742-4124-9eb2-8085ab54e5f9)
+
+
 # Mobile Build
 
 ### For android 
