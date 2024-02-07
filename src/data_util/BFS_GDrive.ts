@@ -122,35 +122,38 @@ export class GDrive {
   }
 
     handleUserSignIn = () => {
-        return new Promise(async (res,rej) => {
-            if(!this.tokenClient) {
-                console.error('Google API not found');
-                return;
+      return new Promise((res,rej) => {
+        if(!this.tokenClient) {
+            console.error('Google API not found');
+            return;
+        }
+        
+        this.tokenClient.callback = async (resp) => {
+          if (resp.error !== undefined) {
+            rej(resp);
+          } else if (resp.access_token) {
+            // Successful sign-in
+            this.isLoggedIn = true;
+            if(this.directory && !this.directoryId) {
+              await this.checkFolder(this.directory); //rerun
             }
-            
-            this.tokenClient.callback = async (resp) => {
-              if (resp.error !== undefined) {
-                rej(resp);
-              } else if (resp.access_token) {
-                // Successful sign-in
-                this.isLoggedIn = true;
-                res(resp);
-              } else {
-                console.error("Sign-in incomplete.")
-                // Handle other scenarios, such as the user closing the consent dialog
-                rej('Sign-in incomplete.');
-              }
-            };
-    
-            if (this.gapi.client.getToken() === null) {
-              // Prompt the user to select a Google Account and ask for consent to share their data
-              // when establishing a new session.
-              this.tokenClient.requestAccessToken({prompt: 'consent'});
-            } else {
-              // Skip display of account chooser and consent dialog for an existing session.
-              this.tokenClient.requestAccessToken({prompt: ''});
-            }
-        });
+            res(resp);
+          } else {
+            console.error("Sign-in incomplete.")
+            // Handle other scenarios, such as the user closing the consent dialog
+            rej('Sign-in incomplete.');
+          }
+        };
+
+        if (this.gapi.client.getToken() === null) {
+          // Prompt the user to select a Google Account and ask for consent to share their data
+          // when establishing a new session.
+          this.tokenClient.requestAccessToken({prompt: 'consent'});
+        } else {
+          // Skip display of account chooser and consent dialog for an existing session.
+          this.tokenClient.requestAccessToken({prompt: ''});
+        }
+      });
     }
 
     checkFolder = (
@@ -201,7 +204,7 @@ export class GDrive {
                 });
             } else {
                 console.error("Sign in with Google first!");
-                this.handleUserSignIn().then(async () => {
+                this.handleUserSignIn().then(async (resp) => {
                     if(this.isLoggedIn) {
                       res(await this.createDriveFolder(name)); //rerun
                     }

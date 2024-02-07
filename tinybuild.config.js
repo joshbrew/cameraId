@@ -37,12 +37,12 @@ const config = {
      },
     server: {  //node server settings, set false to skip server step or add serve:true to config object to only serve (alt methods)
         debug: false,
-        protocol: "http",  //'http' or 'https'. HTTPS required for Nodejs <---> Python sockets. If using http, set production to False in python/server.py as well
+        protocol: "https",  //'http' or 'https'. HTTPS required for Nodejs <---> Python sockets. If using http, set production to False in python/server.py as well
         host: "localhost", //'localhost' or '127.0.0.1' etc.
         port: 8080, //e.g. port 80, 443, 8000
         //redirect: 'http://localhost:8082' //instead of serving the default content, redirect ot another url e.g. another server
         startpage: "index.html", //home page
-        socket_protocol: "ws", //frontend socket protocol, wss for served, ws for localhost
+        socket_protocol: "wss", //frontend socket protocol, wss for served, ws for localhost
         hotreload: 5000,  //hotreload websocket server port
         reloadscripts: false, //hot swap scripts, can break things if script handles initializations, otherwise css, link, srcs all hot swap without page reloading fairly intelligently
         //delay: 50, //millisecond delay on the watch command for hot reloading

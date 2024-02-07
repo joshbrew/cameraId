@@ -430,6 +430,7 @@ export class ImageProcessor {
             if(!gdrive.isLoggedIn) 
                 try {
                     await gdrive.handleUserSignIn();
+                    
                     authButton.disabled = true; // Disable the auth button after sign-in
                 } catch (error) {
                     console.error('Error signing in:', error);
