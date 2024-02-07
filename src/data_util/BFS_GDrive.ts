@@ -199,7 +199,7 @@ export class GDrive {
                 data.name = name;
                 data.mimeType = "application/vnd.google-apps.folder";
                 this.gapi.client.drive.files.create({'resource': data}).then((response)=>{
-                    console.log("Created Folder:",response.result);
+                    //console.log("Created Folder:",response.result);
                     res(response.result as any);
                 });
             } else {
@@ -692,6 +692,16 @@ export class GDrive {
             }
         });
     }
+   
+}
+
+
+export const GDriveRoutes = new GDrive(); //need to call init(apiKey,clientId);
+
+
+
+
+
     
       
     //backup BFS file to drive by name (requires gapi authorization)
@@ -781,8 +791,4 @@ export class GDrive {
     //     });
     // }
 
-        
-}
-
-
-export const GDriveRoutes = new GDrive(); //need to call init(apiKey,clientId);
+     

@@ -693,6 +693,11 @@ export class ImageProcessor {
                     //now do the same for the image file
                     let img = await this.getCanvasBlob(
                         'canvas'+crop.cropIndex
+                    ); //get png//now do the same for the image file
+                    
+                    //this gets the line image
+                    let img2 = await this.getCanvasBlob(
+                        'canvas2'+crop.cropIndex
                     ); //get png
 
                     let imageName = (this.root.querySelector(`#name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString();
@@ -706,6 +711,11 @@ export class ImageProcessor {
                             name:imageName,
                             mimeType:'image/png',
                             data:img
+                        },
+                        {
+                            name:imageName+'_spectral',
+                            mimeType:'image/png',
+                            data:img2
                         }
                     ];
 
