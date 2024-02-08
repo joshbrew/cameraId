@@ -1,0 +1,55 @@
+<table class="image-processor-table">
+    <tr>
+        <td class="image-processor-media" id="canvasContainer">
+            <span id="label" class="image-processor-label"></span>
+            <span class="image-processor-dimensions-label"></span>
+        </td>
+        <td id="output">
+            <table class="image-processor-table">
+                <tr class="image-processor-table-header">
+                    <td colSpan="1" class="image-processor-table-cell">
+                        <input type="text" id="name" placeholder="Image Name">.png
+                        <span id="folderspan">
+                            <select id="folderselect">
+                                <option value="">-</option>
+                                <option value="new">New</option>
+                            </select>
+                            <span id="createfolderspan" style="display:none;">
+                                <input type="text" id="foldername">
+                                <button id="createfolder">Create</button>
+                            </span>
+                        </span>
+                        <hr/>
+                    </td>
+                </tr>
+                <tr class="image-processor-table-header">
+                    <td id="imgheadercell" class="image-processor-table-cell">
+                        <div>
+                            <button id="setbaseline" title="Set as Baseline">⛳</button>
+                            <button id="save" title="Download Image">💾</button>
+                            <button id="savespectrum" title="Download Spectrum Image">💾🌈</button>
+                            <button id="savespectrumcsv" title="Download Spectrum CSV">💾📉</button>
+                            <button id="backuptocloud" title="Backup to Cloud">☁️🔼</button>
+                            <button id="clearsample" title="Clear Sample Data for Next Pass">🆑</button>
+                            <button id="clearbaseline" title="Clear Baseline Averaging Data">🆑⛳</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="image-processor-table-header">
+                    <td class="image-processor-table-cell">
+                        <hr/>
+                        <table>
+                            <tr><td>
+                                Probability: <span id="maxProb"></span>
+                                <hr/>
+                            </td></tr>
+                            <tr><td>
+                                GPU Time (ms): <span id="inferenceTime"></span>
+                            </td></tr>
+                        </table>
+                    </td> 
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>

@@ -159,28 +159,35 @@ export class GDrive {
     checkFolder = (
       nameOrId = this.directory,
       onResponse = (result) => {},
-      useId = false
+      useId = false,
+      parentFolderId?:string
     ) => {
         return new Promise((res, rej) => {
           let q;
           if (useId) {
-              // Query by ID
-              q = `'${nameOrId}' in parents and mimeType='application/vnd.google-apps.folder'`;
+            // If querying by ID, check within the specified parentFolderId or don't specify parent
+            q = `'${nameOrId}' in parents and mimeType='application/vnd.google-apps.folder'` + (parentFolderId ? ` and '${parentFolderId}' in parents` : '');
           } else {
-              // Query by name
-              q = `name='${nameOrId}' and mimeType='application/vnd.google-apps.folder'`;
+            // If querying by name, include parentFolderId in query if provided
+            // Query by name, potentially within a specific parent folder
+            q = `name='${nameOrId}' and mimeType='application/vnd.google-apps.folder'`;
+            if (parentFolderId) {
+              // Add parentFolderId to the query if provided
+              q += ` and '${parentFolderId}' in parents`;
+            }
           }
             this.gapi.client.drive.files.list({
                 q,
             }).then(async (response) => {
+              console.log(response);
                 if (response.result.files.length === 0) {
-                    const result = await this.createDriveFolder(nameOrId); if(typeof result !== 'object') throw new Error(`${result}`);
+                    const result = await this.createDriveFolder(nameOrId, parentFolderId); if(typeof result !== 'object') throw new Error(`${result}`);
                     if (onResponse) onResponse(result);
-                    this.directoryId = (result as any).id; // Make sure this is correctly set
+                    if(!this.directoryId) this.directoryId = (result as any).id; // Make sure this is correctly set
                     res(result);
                 } else {
                     if (onResponse) onResponse(response.result);
-                    this.directoryId = response.result.files[0].id; // Set the directory ID from the response
+                    if(!this.directoryId) this.directoryId = response.result.files[0].id; // Set the directory ID from the response
                     res(response.result);
                 }
             }).catch(error => {
@@ -191,13 +198,15 @@ export class GDrive {
     }
 
     createDriveFolder = (
-        name=this.directory
+        name=this.directory,
+        parentFolderId?:string
     ) => {
         return new Promise((res,rej) => {
             if(this.isLoggedIn) {
-                let data = new Object() as any;
+                let data = {} as any;
                 data.name = name;
                 data.mimeType = "application/vnd.google-apps.folder";
+                if(parentFolderId) data.parents = [parentFolderId];
                 this.gapi.client.drive.files.create({'resource': data}).then((response)=>{
                     //console.log("Created Folder:",response.result);
                     res(response.result as any);
@@ -206,14 +215,14 @@ export class GDrive {
                 console.error("Sign in with Google first!");
                 this.handleUserSignIn().then(async (resp) => {
                     if(this.isLoggedIn) {
-                      res(await this.createDriveFolder(name)); //rerun
+                      res(await this.createDriveFolder(name, parentFolderId)); //rerun
                     }
                 });
             }
         });
     }
 
-    async listFolders(folderId = this.directoryId, parent='parents') {
+    async listFolders(folderId = this.directoryId, parent:string|string[]='parents') {
         try {
           const response = await this.gapi.client.drive.files.list({
             q: `'${folderId}' in ${parent} and mimeType='application/vnd.google-apps.folder'`,
@@ -286,7 +295,7 @@ export class GDrive {
         data:Blob|string='a,b,c,1,2,3\nd,e,f,4,5,6\n', 
         fileName=`${new Date().toISOString()}.csv`, 
         mimeType='application/vnd.google-apps.spreadsheet', 
-        folderId=this.directoryId, 
+        parentFolder:string|string[]=this.directoryId, 
         onProgress:((this: XMLHttpRequest, ev: ProgressEvent<EventTarget>) => any) | null
     ) {
 
@@ -298,7 +307,7 @@ export class GDrive {
         const metadata = {
           'name': fileName,
           'mimeType': mimeType,
-          'parents': [folderId], // upload to the current directory
+          'parents': Array.isArray(parentFolder) ? parentFolder : [parentFolder], // upload to the current directory
         };
     
         const form = new FormData();
@@ -328,7 +337,7 @@ export class GDrive {
       
     // Add this method to your GDrive class
     async uploadFiles(
-        files:{name:string,mimeType:string,data:Blob|string}[], 
+        files:{name:string,mimeType:string,data:Blob|string, parents?:string}[], 
         folderId=this.directoryId,
         uploadProgress?:HTMLProgressElement|HTMLMeterElement|string,
         defaultBrowser=false
@@ -342,7 +351,7 @@ export class GDrive {
                 file.data, 
                 file.name, 
                 file.mimeType, 
-                folderId, 
+                file.parents || folderId, 
                 (progressEvent) => {
                     const progress = (progressEvent.loaded / progressEvent.total) * 100;
                     if(uploadProgress) (uploadProgress as HTMLProgressElement).value = progress;

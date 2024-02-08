@@ -9,6 +9,9 @@ import './lib/modalbutton' //<modal-button></modal-button>
 import './imageprocessor_component'
 import {ImageProcessorComponent} from  './imageprocessor_component'
 
+//@ts-ignore
+import resulthtml from './imageprocessorresult.html'
+
 
         
 import { GDrive } from './data_util/BFS_GDrive';
@@ -410,7 +413,6 @@ export class ImageProcessor {
                 else {
                     gdrive.directory = directory;
                     gdrive.directoryId = '';
-        
                 }
         
                 //this.root.querySelector('#file-browser-container').innerHTML = '';
@@ -430,7 +432,7 @@ export class ImageProcessor {
             if(!gdrive.isLoggedIn) 
                 try {
                     await gdrive.handleUserSignIn();
-                    
+                    this.folderLists.map((v) => {v();});
                     authButton.disabled = true; // Disable the auth button after sign-in
                 } catch (error) {
                     console.error('Error signing in:', error);
@@ -500,6 +502,7 @@ export class ImageProcessor {
         this.canvasPool = [];
     }
 
+    folderLists:Function[] = [];
 
     // Method to get a canvas from the pool or create a new one with the results table to be populated from the thread results
     getOrCreateResultElement(crop) {
@@ -541,98 +544,52 @@ export class ImageProcessor {
             let canvasDiv = document.createElement('div');
             canvasDiv.id = 'div'+crop.cropIndex;
 
-            canvasDiv.innerHTML = `
-                <table class="image-processor-table">
-                    <tr>
-                        <td class="image-processor-media" id="canvasContainer${crop.cropIndex}">
-                            <span id="label${crop.cropIndex}" class="image-processor-label"></span>
-                            <span class="image-processor-dimensions-label">${crop.outputWidth}x${crop.outputHeight}</span>
-                        
-                        </td>
-                        <td id="output${crop.cropIndex}">
-                            <table class="image-processor-table">
-                                <tr class="image-processor-table-header">
-                                    <td colSpan="1" class="image-processor-table-cell">
-                                        <input type="text" id="name${crop.cropIndex}" placeholder="Image Name">.png
-                                        <hr/>
-                                    </td>
-                                </tr>
-                                <tr class="image-processor-table-header">
-                                    <td id="imgheadercell${crop.cropIndex}" class="image-processor-table-cell"></td>
-                                </tr>    
-                                <tr class="image-processor-table-header">
-                                    <td class="image-processor-table-cell">
-                                        <hr/>
-                                        <table>
-                                            <tr><td>
-                                            Probability: <span id="maxProb${crop.cropIndex}" ></span>
-                                            <hr/>
-                                            </td></tr>
-                                            <tr><td>
-                                            GPU Time (ms): <span id="inferenceTime${crop.cropIndex}" ></span>
-                                            </td></tr>
-                                        </table>
-                                    </td> 
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            `;
+            let resultElm = document.createElement('image-processor-result') as ImageProcessorResult;
+            
+            resultElm.cropIndex = crop.cropIndex; //instead of the cropIndex thing we are doing here it would be better to just store the resultElm itself on an object by cropIndex and query the elements that way w/o the convoluted id appending
+            resultElm.outputWidth = crop.outputWidth;
+            resultElm.outputHeight = crop.outputHeight;
+
+            canvasDiv.appendChild(resultElm);
 
             let dimensionsLabel = document.createElement('div');
             (this.root.querySelector('#results') as HTMLElement).appendChild(canvasDiv);
-            (this.root.querySelector(`#canvasContainer${crop.cropIndex}`) as HTMLElement).appendChild(canvas);
-            (this.root.querySelector(`#canvasContainer${crop.cropIndex}`) as HTMLElement).appendChild(canvas2);
-            (this.root.querySelector(`#canvasContainer${crop.cropIndex}`) as HTMLElement).appendChild(dimensionsLabel);
+
+            (resultElm.querySelector(`#canvasContainer${crop.cropIndex}`) as HTMLElement).appendChild(canvas);
+            (resultElm.querySelector(`#canvasContainer${crop.cropIndex}`) as HTMLElement).appendChild(canvas2);
+            (resultElm.querySelector(`#canvasContainer${crop.cropIndex}`) as HTMLElement).appendChild(dimensionsLabel);
 
             canvas2.style.left = 0+'px';
             canvas2.style.display = this.useSpectralAnalysis.checked ? '' : 'none';
-            let appendTo = (this.root.querySelector('#imgheadercell'+crop.cropIndex) as HTMLElement);
-
+            
             // Button for downloading the base canvas
-            let downloadDiv = document.createElement('div');
-            let downloadBtn = document.createElement('button');
-            downloadBtn.id = "save"+crop.cropIndex;
-            downloadBtn.innerHTML = '💾'; 
+            let downloadBtn = resultElm.querySelector("#save"+crop.cropIndex) as HTMLButtonElement;
             downloadBtn.addEventListener('click', () => this.downloadCanvas('canvas' + crop.cropIndex, crop.cropIndex));
-            downloadBtn.title = "Download Image";
-
+            
             // Button for downloading the spectrum canvas
-            let downloadSpectrumBtn = document.createElement('button');
-            downloadSpectrumBtn.id = "savespectrum"+crop.cropIndex;
-            downloadSpectrumBtn.innerHTML = '💾🌈'; // Replace with actual icons
+            let downloadSpectrumBtn = resultElm.querySelector("#savespectrum"+crop.cropIndex) as HTMLButtonElement;
             downloadSpectrumBtn.addEventListener('click', () => {
-                let imageName = ((this.root.querySelector(`#name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString()) + '_spectrum';
+                let imageName = ((resultElm.querySelector(`#name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString()) + '_spectrum';
                 this.downloadCanvas('canvas2' + crop.cropIndex, crop.cropIndex, undefined, imageName);
             });
             downloadSpectrumBtn.style.display = this.useSpectralAnalysis.checked ? '' : 'none';
-            downloadSpectrumBtn.title = "Download Spectrum Image";
-
+            
             // Download spectral data as csv
-            let downloadSpectrumCSVBtn = document.createElement('button');
-            downloadSpectrumCSVBtn.id = "savespectrumcsv"+crop.cropIndex;
-            downloadSpectrumCSVBtn.innerHTML = '💾📉'; // Replace with actual icons
+            let downloadSpectrumCSVBtn = resultElm.querySelector("#savespectrumcsv"+crop.cropIndex) as HTMLButtonElement;
             downloadSpectrumCSVBtn.addEventListener('click', () => {
                 downloadSpectrumCSV();
             });
             downloadSpectrumCSVBtn.style.display = this.useSpectralAnalysis.checked ? '' : 'none';
-            downloadSpectrumCSVBtn.title = "Download Spectrum CSV";
-
-            let setBaselineButton = document.createElement('button');
-            setBaselineButton.id = "setbaseline"+crop.cropIndex;
-            setBaselineButton.innerHTML = '⛳'; // Replace with actual icons
+            
+            let setBaselineButton = resultElm.querySelector("#setbaseline"+crop.cropIndex) as HTMLButtonElement;
             setBaselineButton.addEventListener('click', () => {
                 this.threads.poolingThread.run({command:'baseline', name:crop.name},undefined,true);
                 setBaselineButton.disabled = true;
                 this.baselineSet = true;
             });
-            setBaselineButton.title = "Set as Baseline";
             if(this.baselineSet) setBaselineButton.disabled = true;
 
-            let clearSampleButton = document.createElement('button');
-            clearSampleButton.id = "clearsample"+crop.cropIndex;
-            clearSampleButton.innerHTML = '🆑'; // Replace with actual icons
+            let clearSampleButton = resultElm.querySelector("#clearsample"+crop.cropIndex) as HTMLButtonElement;
             clearSampleButton.addEventListener('click', () => {
                 //reset the data structures for this crop
                 this.threads.poolingThread.run({command:'delete', name:crop.name}, undefined, true);
@@ -641,11 +598,8 @@ export class ImageProcessor {
                 (this.root.querySelector('#label'+crop.cropIndex) as HTMLElement).innerText = '';
             
             });
-            clearSampleButton.title = "Clear Sample Data for Next Pass";
 
-            let clearBaselineButton = document.createElement('button');
-            clearBaselineButton.id = "clearbaseline"+crop.cropIndex;
-            clearBaselineButton.innerHTML = '🆑⛳'; // Replace with actual icons
+            let clearBaselineButton = resultElm.querySelector("#clearbaseline"+crop.cropIndex) as HTMLButtonElement;
             clearBaselineButton.addEventListener('click', () => {
                 //reset the data structures for this crop
                 this.threads.poolingThread.run({command:'reset', name:crop.name}, undefined, true);
@@ -655,14 +609,13 @@ export class ImageProcessor {
                 setBaselineButton.disabled = false;
                 this.baselineSet = false;
             });
-            clearBaselineButton.title = "Clear Baseline Averaging Data";
 
            
             let getSpectralCSV = async () => {
                 let result = await this.threads.poolingThread.run({command:'getspectral', name:crop.name}, undefined, true);
                 if(!result?.spectral) return {processed:'', csvName:''};
                 const spectralData = result.spectral;
-                let csvName = (this.root.querySelector(`#name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString();
+                let csvName = (resultElm.querySelector(`#name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString();
                 let processed = "Intensity,R,G,B\n";
                 for(const value of spectralData.intensities) {
                     processed += `${value.i},${value.r},${value.g},${value.b}\n`;
@@ -671,17 +624,56 @@ export class ImageProcessor {
                 return {processed, csvName};
             }
 
-            //TODO: Spectrum CSV (pull from poolingThread with getspectral:true and overridePort:true)
             let downloadSpectrumCSV = async () => {
                 let {processed, csvName} = await getSpectralCSV();
                 if(processed && csvName) CSV.saveCSV(processed, csvName);
             }
 
 
+            let folderspan = resultElm.querySelector('#folderspan'+crop.cropIndex) as HTMLElement;
+            let folders = resultElm.querySelector('#folderselect'+crop.cropIndex) as HTMLSelectElement;
+            let foldername = resultElm.querySelector('#foldername'+crop.cropIndex) as HTMLInputElement;
+                                
+            let lastv;
+            let listFolders = () => {
+                if(gdrive.isLoggedIn) {
+                    folderspan.style.display = '';
+                    gdrive.listFolders().then((list) => {
+                        let map = list.map((folder) => {
+                            return `<option value="${folder.id}" ${lastv === folder.name ? 'selected' : ''}>${folder.name}</option>`
+                        }) as string[];
+                        folders.innerHTML += `${map.join('')}`;
+                    });
+                    let createfolderspan = resultElm.querySelector('#createfolderspan'+crop.cropIndex) as HTMLSpanElement;
+                    folders.onchange = (ev:any) => {
+                        if(ev.target.value === "new") {
+                            createfolderspan.style.display = '';    
+                        } else {
+                            createfolderspan.style.display = 'none';  
+                        }
+                    }
+
+                    (resultElm.querySelector('#createfolder'+crop.cropIndex) as HTMLButtonElement).onclick = () => {
+                        if(foldername.value) {
+                            let v = foldername.value;
+                            foldername.value = "";
+                            folders.value = ""; createfolderspan.style.display = 'none';
+                            gdrive.checkFolder(v, undefined, undefined, gdrive.directoryId).then((folder:any)=>{
+                                lastv = folder.name;
+                                listFolders();
+                            });
+                        }
+                    }
+                }
+            }
+
+            this.folderLists[crop.cropIndex] = listFolders;
+
+            if(!gdrive.isLoggedIn) folderspan.style.display = 'none';
+            else listFolders();
+
             //google drive/cloud upload feature. In this example we can specify a subfolder to write to (or add one), then upload the image or other files directly
-            let backupToCloud = document.createElement('button');
-            backupToCloud.id = "backupToCloud"+crop.cropIndex;
-            backupToCloud.innerHTML = '☁️🔼'; // Replace with actual icons
+            let backupToCloud = resultElm.querySelector('#backuptocloud'+crop.cropIndex) as HTMLButtonElement;
             backupToCloud.addEventListener('click', async () => {
                 backupToCloud.disabled = true;
                 backupToCloud.innerHTML = '...';
@@ -700,7 +692,7 @@ export class ImageProcessor {
                         'canvas2'+crop.cropIndex
                     ); //get png
 
-                    let imageName = (this.root.querySelector(`#name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString();
+                    let imageName = (resultElm.querySelector(`#name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString();
                     let files = [
                         {
                             name:csvName,
@@ -719,7 +711,16 @@ export class ImageProcessor {
                         }
                     ];
 
-                    if(!this.gdrive.isLoggedIn) await this.gdrive.handleUserSignIn(); 
+                    if(folders.value && folders.value !== 'new') {
+                        files.forEach((file:any) => {
+                            file.parents = [folders.value];
+                        })
+                    }
+
+                    if(!this.gdrive.isLoggedIn) {
+                        await this.gdrive.handleUserSignIn(); 
+                        this.folderLists.map((v) => {v();});
+                    }
                     if(this.gdrive.isLoggedIn) await this.gdrive.uploadFiles(files);
                     else alert("Not Logged In!");
                 } catch(er) {
@@ -730,18 +731,7 @@ export class ImageProcessor {
                 backupToCloud.innerHTML = '☁️🔼'; // Replace with actual icons
             });
 
-            backupToCloud.title = "Backup to Cloud";
 
-            //todo disable after clear then reenable on new data
-            downloadDiv.appendChild(setBaselineButton);
-            downloadDiv.appendChild(downloadBtn);
-            downloadDiv.appendChild(downloadSpectrumBtn);
-            downloadDiv.appendChild(downloadSpectrumCSVBtn);
-            downloadDiv.appendChild(backupToCloud);
-            downloadDiv.appendChild(clearSampleButton);
-            downloadDiv.appendChild(clearBaselineButton);
-
-            appendTo.appendChild(downloadDiv);
         }
     }
 
@@ -974,3 +964,66 @@ export class ImageProcessor {
 
 export default ImageProcessor;
 
+
+
+
+
+class ImageProcessorResult extends HTMLElement {
+    
+    cropIndex:string|number; outputWidth:string|number; outputHeight:string|number;
+
+
+    constructor() {
+        super();
+    }
+
+    static observedAttributes = ['cropIndex', 'outputWidth', 'outputHeight'];
+
+    // // Respond to attribute changes
+    // attributeChangedCallback(name, oldValue, newValue) {
+    //     if (this.isConnected) { // Check if element is in the DOM
+    //         this.updateContent();
+    //     }
+    // }
+
+    // Called every time the element is inserted into the DOM
+    connectedCallback() {
+        this.render();
+        this.updateContent();
+    }
+
+    // disconnectedCallback() {
+    //     console.log("Custom element removed from page.");
+    // }
+    
+    // adoptedCallback() {
+    //     console.log("Custom element moved to new page.");
+    // }
+
+    // Render method to provide the base HTML
+    render() {
+        this.innerHTML = resulthtml;
+    }
+
+    // Dynamically update content and IDs based on cropIndex
+    updateContent() {
+        const cropIndex = this.cropIndex || 0;
+        const outputWidth = this.outputWidth || 0;
+        const outputHeight = this.outputHeight || 0;
+
+        // Query all elements that require ID updates
+        this.querySelectorAll('[id]').forEach(el => {
+            // Check if the ID already ends with a number
+            el.id = `${el.id}${cropIndex}`; // Append with new cropIndex
+        });
+
+        // Update dimensions label specially
+        const dimensionsLabel = this.querySelector('.image-processor-dimensions-label');
+        if (dimensionsLabel) {
+            dimensionsLabel.innerHTML = `${outputWidth}x${outputHeight}`;
+        }
+    }
+}
+
+// Define the new element
+customElements.define('image-processor-result', ImageProcessorResult);
