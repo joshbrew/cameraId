@@ -678,38 +678,46 @@ export class ImageProcessor {
                 backupToCloud.disabled = true;
                 backupToCloud.innerHTML = '...';
                 try {
-                    //we need to get the image and the spectrum csv and whatever else then upload the files to drive
-                    let {processed, csvName} = await getSpectralCSV();
+
+                    let imageName = (resultElm.querySelector(`#name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString();
+                    
+                    let files = [] as any[];
+                    if(this.useSpectralAnalysis.checked) {
+                        //we need to get the image and the spectrum csv and whatever else then upload the files to drive
+                        let {processed, csvName} = await getSpectralCSV();
+
+                        //this gets the line image
+                        let img2 = await this.getCanvasBlob(
+                            'canvas2'+crop.cropIndex
+                        ); //get png
+
+                        files.push(
+                            {
+                                name:csvName,
+                                mimeType:'text/csv',
+                                data:processed
+                            },
+                            {
+                                name:imageName+'_spectral',
+                                mimeType:'image/png',
+                                data:img2
+                            }
+                        );
+                    }
                     //upload this to drive as a csv
                     
                     //now do the same for the image file
                     let img = await this.getCanvasBlob(
                         'canvas'+crop.cropIndex
                     ); //get png//now do the same for the image file
-                    
-                    //this gets the line image
-                    let img2 = await this.getCanvasBlob(
-                        'canvas2'+crop.cropIndex
-                    ); //get png
 
-                    let imageName = (resultElm.querySelector(`#name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString();
-                    let files = [
-                        {
-                            name:csvName,
-                            mimeType:'text/csv',
-                            data:processed
-                        },
+                    files.push(
                         {
                             name:imageName,
                             mimeType:'image/png',
                             data:img
-                        },
-                        {
-                            name:imageName+'_spectral',
-                            mimeType:'image/png',
-                            data:img2
                         }
-                    ];
+                    );
 
                     if(folders.value && folders.value !== 'new') {
                         files.forEach((file:any) => {
