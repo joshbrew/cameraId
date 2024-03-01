@@ -403,6 +403,7 @@ export class MediaElementCreator {
   }
 
   clearControlElements() {
+    this.controlElements = {}; //new 
     this.controlsDialog.innerHTML = '';
   }
 
