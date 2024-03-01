@@ -18,6 +18,7 @@ export class MediaElementCreator {
   ontargetchanged?: CB;
 
   
+  controlsParent:HTMLElement;
   controlsDialog:HTMLDivElement;
   toggleDialogButton:HTMLButtonElement;
   currentTrack:MediaStreamTrack;
@@ -218,11 +219,11 @@ export class MediaElementCreator {
     });
     
     // Determine where to append the slider control
-    if (labelText.toLowerCase().includes('zoom')) {
-        this.parentElement.appendChild(container); // Directly on the parent for immediate access
-    } else {
+    //if (labelText.toLowerCase().includes('zoom')) { 
+    //    this.controlsParent.appendChild(container); // Directly on the parent for immediate access
+    //} else {
         this.controlsDialog.appendChild(container); // Inside the dialog for other settings
-    }
+    //}
 
     container.appendChild(label);
     container.appendChild(slider);
@@ -300,6 +301,7 @@ export class MediaElementCreator {
 
       parentElement.appendChild(this.toggleDialogButton);
       parentElement.appendChild(this.controlsDialog);
+      this.controlsParent = parentElement;
       
   }
 
