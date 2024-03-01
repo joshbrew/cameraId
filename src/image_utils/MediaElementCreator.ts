@@ -97,7 +97,7 @@ export class MediaElementCreator {
 
   createVideoSelectElement(parent:HTMLElement, includeAudio:boolean) {
     this.videoSelect = document.createElement('select');
-    this.setupVideoInputOptions();
+    this.setupVideoInputOptions(includeAudio);
     parent.appendChild(this.videoSelect);
     let button = document.createElement('button');
     button.innerHTML = "Stream";
@@ -107,7 +107,7 @@ export class MediaElementCreator {
     parent.appendChild(button);
   }
 
-  setStream = (includeAudio:boolean) => {
+  setStream = (includeAudio?:boolean) => {
     const options: MediaStreamConstraints = {
       ...this.mediaOptions,
       video: { 
@@ -121,7 +121,7 @@ export class MediaElementCreator {
     this.getVideoStream(options);
   }
 
-  async setupVideoInputOptions() {
+  setupVideoInputOptions = async (includeAudio:boolean) => {
     const devices = await navigator.mediaDevices.enumerateDevices();
     const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
@@ -129,7 +129,7 @@ export class MediaElementCreator {
       .map(device => `<option value="${device.deviceId}">${device.label || device.deviceId}</option>`)
       .join('');
 
-    this.videoSelect.addEventListener('change', this.setStream);
+    this.videoSelect.addEventListener('change', ()=>{this.setStream(includeAudio);});
   }
 
   async getVideoStream(options: MediaStreamConstraints) {
