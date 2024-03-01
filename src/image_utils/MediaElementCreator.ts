@@ -33,7 +33,8 @@ export class MediaElementCreator {
       ontargetchanged?: CB
     },
     mediaOptions?: MediaStreamConstraints,
-    autostart=true
+    autostart=true,
+    includeAudio=false
   ) {
     this.parentElement = parentElement;
     this.mediaOptions = mediaOptions || {
@@ -60,7 +61,7 @@ export class MediaElementCreator {
     this.parentElement.appendChild(controlsDiv);
 
     this.createFileInputElement(controlsDiv);
-    this.createVideoSelectElement(controlsDiv);
+    this.createVideoSelectElement(controlsDiv, includeAudio);
 
     // Initialize the controls dialog
     this.initializeControlsDialog(controlsDiv);
@@ -94,19 +95,19 @@ export class MediaElementCreator {
     parent.appendChild(this.fileInput);
   }
 
-  createVideoSelectElement(parent:HTMLElement) {
+  createVideoSelectElement(parent:HTMLElement, includeAudio:boolean) {
     this.videoSelect = document.createElement('select');
     this.setupVideoInputOptions();
     parent.appendChild(this.videoSelect);
     let button = document.createElement('button');
     button.innerHTML = "Stream";
     button.onclick = () => {
-      this.setStream();
+      this.setStream(includeAudio);
     }
     parent.appendChild(button);
   }
 
-  setStream = () => {
+  setStream = (includeAudio:boolean) => {
     const options: MediaStreamConstraints = {
       ...this.mediaOptions,
       video: { 
@@ -116,6 +117,7 @@ export class MediaElementCreator {
         deviceId:this.videoSelect.value
       } as any
     };
+    if(includeAudio) Object.assign(options,{audio:true});
     this.getVideoStream(options);
   }
 
@@ -321,6 +323,7 @@ export class MediaElementCreator {
   // Method to create controls based on the video track capabilities
   //https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#exposuremode
   createControlElements(track) {
+    this.clearControlElements();
     const capabilities = track.getCapabilities();
     const settings = track.getSettings();
     this.toggleDialogButton.style.display = '';
@@ -400,11 +403,7 @@ export class MediaElementCreator {
   }
 
   clearControlElements() {
-    // Clear existing controls from the dialog
-    while (this.controlsDialog.firstChild) {
-        this.controlsDialog.removeChild(this.controlsDialog.firstChild);
-    }
-    // Optionally, reset or remove the zoom control if it's outside the dialog
+    this.controlsDialog.innerHTML = '';
   }
 
 
