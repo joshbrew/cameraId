@@ -17,6 +17,11 @@ export class MediaElementCreator {
   onended?: CB;
   ontargetchanged?: CB;
 
+  
+  controlsDialog:HTMLDivElement;
+  toggleDialogButton:HTMLButtonElement;
+  currentTrack:MediaStreamTrack;
+
   constructor(
     parentElement: HTMLElement,
     callbacks?: {
@@ -55,6 +60,9 @@ export class MediaElementCreator {
 
     this.createFileInputElement(controlsDiv);
     this.createVideoSelectElement(controlsDiv);
+
+    // Initialize the controls dialog
+    this.initializeControlsDialog(controlsDiv);
 
     if(autostart)
       setTimeout(()=>{ //give it a moment to enumerate
@@ -103,6 +111,7 @@ export class MediaElementCreator {
       video: { 
         width:{ min:480, ideal:3840},
         height:{ min:320, ideal:2160},
+        zoom:true,
         deviceId:this.videoSelect.value
       } as any
     };
@@ -132,9 +141,295 @@ export class MediaElementCreator {
       //capabilities.then((res)=>{console.log("CAPTURE CAPABILITIES: ",...res);});
 
       this.createVideoElement(stream, (options?.video as any)?.deviceId);
+
+      
+      const [videoTrack] = stream.getVideoTracks();
+      this.createControlElements(videoTrack);
+      this.currentTrack = videoTrack;
     } catch (error) {
       console.error('Error accessing the webcam', error);
     }
+  }
+
+  // Helper to create a dropdown control for mode settings
+  createSelectControl(labelText, options, currentSetting, onChangeCallback) {
+    const label = document.createElement('label');
+    label.textContent = labelText + ": ";
+    const select = document.createElement('select');
+
+    this.controlElements[labelText] = select; 
+
+    options.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option;
+        optionElement.textContent = option;
+        optionElement.selected = option === currentSetting;
+        select.appendChild(optionElement);
+    });
+
+    select.addEventListener('change', () => onChangeCallback(select.value));
+    if(this.controlsDialog)
+      this.controlsDialog.appendChild(label); // This ensures it's inside the dialog)
+    else this.parentElement.appendChild(label);
+    label.appendChild(select);
+  }
+
+  // Helper to create a slider control for numeric values
+  createSliderControl(labelText, capabilities, currentSetting, onChangeCallback) {
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.justifyContent = 'space-between';
+    container.style.alignItems = 'center';
+    container.style.padding = '10px'; // Add padding for better spacing
+
+    const label = document.createElement('label');
+    label.textContent = labelText + ": ";
+    label.style.flex = '2'; // Adjusted for relative sizing
+    label.style.whiteSpace = 'nowrap'; // Prevent the label from wrapping
+    label.style.overflow = 'hidden'; // Hide overflow
+    label.style.textOverflow = 'ellipsis'; // Add ellipsis for overflow text
+    label.style.fontSize = '0.9em'; // Relative font size
+
+    const valueDisplay = document.createElement('span');
+    valueDisplay.textContent = currentSetting;
+    valueDisplay.style.fontFamily = 'Consolas, "Courier New", monospace';
+    valueDisplay.style.flex = '1'; // Ensure this doesn't grow too much
+    valueDisplay.style.textAlign = 'right'; // Align the text to the right
+    valueDisplay.style.fontSize = '0.9em'; // Use relative sizing
+    valueDisplay.style.width = '10%';
+    valueDisplay.style.overflow = 'hidden'; // Hide overflow
+    valueDisplay.style.textOverflow = 'ellipsis'; // Add ellipsis for overflow text
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = capabilities.min;
+    slider.max = capabilities.max;
+    slider.step = capabilities.step || 1; // Default step to 1 if not specified
+    slider.value = currentSetting;
+    slider.style.flex = '3'; // Allow the slider to grow, adjust as needed
+    slider.style.maxWidth = '200px'; // Fixed width for the slider
+
+    this.controlElements[labelText] = { control: slider, label: valueDisplay };
+
+    slider.addEventListener('input', () => {
+      const value = parseFloat(slider.value);
+      valueDisplay.textContent = `${value}`; // Update the display value
+      onChangeCallback(value);
+    });
+    
+    // Determine where to append the slider control
+    if (labelText.toLowerCase().includes('zoom')) {
+        this.parentElement.appendChild(container); // Directly on the parent for immediate access
+    } else {
+        this.controlsDialog.appendChild(container); // Inside the dialog for other settings
+    }
+
+    container.appendChild(label);
+    container.appendChild(slider);
+    container.appendChild(valueDisplay); // Append the value display to the container
+  }
+
+  // Helper to create toggle control for boolean values
+  createToggleControl(labelText, currentState, onChangeCallback) {
+    const label = document.createElement('label');
+    label.textContent = labelText + ": ";
+    const toggle = document.createElement('input');
+    toggle.type = 'checkbox';
+    toggle.checked = currentState;
+
+    this.controlElements[labelText] = toggle;
+
+    toggle.addEventListener('change', () => onChangeCallback(toggle.checked));
+    if (this.controlsDialog) {
+      this.controlsDialog.appendChild(label); // Inside the dialog for other settings
+    } else {
+      this.parentElement.appendChild(label); // Directly on the parent for immediate access 
+    }
+    label.appendChild(toggle);
+  }
+
+  // New helper for pointsOfInterest, which requires a unique approach
+  createPointsOfInterestControl(track) {
+    const poiButton = document.createElement('button');
+    poiButton.textContent = "Set Points of Interest";
+    poiButton.addEventListener('click', () => {
+        // This example assumes a method to capture click events on the video to set points of interest
+        // Implement your method to capture points of interest here
+        // For simplicity, this is a placeholder for actual implementation
+        console.log("Implement POI selection logic");
+        // After selecting POIs, apply constraints with something like:
+        // track.applyConstraints({ advanced: [{ pointsOfInterest: [{x: 0.5, y: 0.5}] }] });
+    });
+    
+    this.parentElement.appendChild(poiButton);
+  }
+
+
+  initializeControlsDialog(parentElement) {
+      // Create the dialog container
+      this.controlsDialog = document.createElement('div');
+      this.controlsDialog.style.display = 'none'; // Hidden by default
+
+      Object.assign(this.controlsDialog.style,{
+        position:'absolute',
+        zIndex:'2',
+        backgroundColor:'rgba(10,10,10,0.5)',
+        flexDirection:'column'
+      } as CSSStyleDeclaration);
+
+      this.controlsDialog.setAttribute('class', 'controls-dialog');
+
+      // Optionally, add a button to show/hide the dialog
+      this.toggleDialogButton = document.createElement('button');
+      
+      this.toggleDialogButton.style.display = 'none'; //hidden till we access getUserMedia
+      this.toggleDialogButton.textContent = 'Show Camera Settings';
+      this.toggleDialogButton.addEventListener('click', () => {
+          const isDisplayed = this.controlsDialog.style.display === 'flex';
+          this.controlsDialog.style.display = isDisplayed ? 'none' : 'flex';
+          this.toggleDialogButton.textContent = isDisplayed ? 'Show Camera Settings' : 'Hide Camera Settings';
+      
+          // Start or stop the monitoring loop based on the dialog visibility
+          if (isDisplayed) {
+              this.stopMonitoringLoop();
+          } else {
+              this.startMonitoringLoop(this.currentTrack); // Ensure `this.currentTrack` is updated to the current track elsewhere in your code
+          }
+      });
+
+
+      parentElement.appendChild(this.toggleDialogButton);
+      parentElement.appendChild(this.controlsDialog);
+      
+  }
+
+  controlElements:any = {};
+  monitoringInterval;
+
+  // Method to create controls based on the video track capabilities
+  //https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#exposuremode
+  createControlElements(track) {
+    const capabilities = track.getCapabilities();
+    const settings = track.getSettings();
+    this.toggleDialogButton.style.display = '';
+    
+    
+    //console.log(capabilities); //check this for more settings we could add
+
+    // Continue creating controls for each capability...
+    // The following are additional examples for other settings
+
+    // Handle the creation of controls for whiteBalanceMode, exposureMode, and focusMode
+    [
+      'whiteBalanceMode', 
+      'exposureMode', 
+      'focusMode',
+      'resizeMode'
+    ].forEach(setting => {
+      if (capabilities[setting]) {
+          this.createSelectControl(setting.charAt(0).toUpperCase() + setting.slice(1).replace(/([A-Z])/g, ' $1'), // Format the label text
+              capabilities[setting], settings[setting], value => {
+                  let constraint = {};
+                  constraint[setting] = value;
+                  track.applyConstraints({ advanced: [constraint] });
+              });
+      }
+    });
+
+
+    // Numeric options: colorTemperature, iso, etc.
+    [
+      'zoom',
+      'colorTemperature', 
+      'iso', 
+      'brightness', 
+      'contrast', 
+      'saturation', 
+      'sharpness', 
+      'focusDistance',
+      'exposureTime',
+      'exposureCompensation',
+      'frameRate'
+    ].forEach(setting => {
+        if (capabilities[setting]) {
+            this.createSliderControl(setting.replace(/([A-Z])/g, ' $1'), // Add spaces before capital letters for readability
+                capabilities[setting], settings[setting], value => {
+                    let constraint = {};
+                    constraint[setting] = value;
+                    track.applyConstraints({ advanced: [constraint] });
+                });
+        }
+    });
+
+    // Boolean option: torch
+    if ('torch' in capabilities) {
+        this.createToggleControl('Torch', settings.torch, value => {
+            track.applyConstraints({ advanced: [{ torch: value }] });
+        });
+    }
+
+    // Special handling for pointsOfInterest as it requires custom logic
+    if ('pointsOfInterest' in capabilities) {
+        this.createPointsOfInterestControl(track);
+    }
+
+    // Handling for facingMode, aspectRatio, frameRate, height, width as dropdowns if they have discrete values
+    ['facingMode', 'aspectRatio', 'frameRate', 'height', 'width'].forEach(setting => {
+        if (capabilities[setting] && Array.isArray(capabilities[setting]) && capabilities[setting].length > 0) {
+            this.createSelectControl(setting.replace(/([A-Z])/g, ' $1'), // Add spaces before capital letters for readability
+                capabilities[setting], settings[setting], value => {
+                    let constraint = {};
+                    constraint[setting] = value;
+                    track.applyConstraints({[setting]: value});
+                });
+        }
+    });
+  }
+
+  clearControlElements() {
+    // Clear existing controls from the dialog
+    while (this.controlsDialog.firstChild) {
+        this.controlsDialog.removeChild(this.controlsDialog.firstChild);
+    }
+    // Optionally, reset or remove the zoom control if it's outside the dialog
+  }
+
+
+  startMonitoringLoop(track) {
+    if (this.monitoringInterval) {
+        clearInterval(this.monitoringInterval);
+    }
+
+    let lastValues = {} as any;
+    this.monitoringInterval = setInterval(() => {
+        // Fetch current track settings
+        const settings = track.getSettings();
+
+        // Update control values
+        for (const key in this.controlElements) {
+          if(typeof settings[key] === 'undefined' || settings[key] !== lastValues[key]) continue;
+          console.log(settings[key], typeof settings[key])
+          lastValues[key] = settings[key];
+          const controlInfo = this.controlElements[key];
+          if (typeof controlInfo === 'object') { // For sliders with labels
+            if(controlInfo.control && controlInfo.label) {
+              controlInfo.control.value = settings[key];
+              controlInfo.label.textContent = settings[key];
+            } else if (controlInfo.tagName === 'SELECT') { // For select elements
+              controlInfo.value = settings[key];
+            } else if (controlInfo.type === 'checkbox') {
+              controlInfo.checked = settings[key];
+            }
+          }
+        }
+    }, 1000); // 2fps -> 500ms per frame
+  }
+
+  stopMonitoringLoop() {
+      if (this.monitoringInterval) {
+          clearInterval(this.monitoringInterval);
+          this.monitoringInterval = null;
+      }
   }
 
   createMediaElement(file: File) {
@@ -241,6 +536,7 @@ export class MediaElementCreator {
   }
 
   deinitMediaElement() {
+    this.toggleDialogButton.style.display = 'none';
     if (this.currentMediaElement) {
       if (this.currentMediaElement instanceof HTMLVideoElement && this.currentMediaElement.srcObject) {
         const tracks = (this.currentMediaElement.srcObject as MediaStream).getTracks();

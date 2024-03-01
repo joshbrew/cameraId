@@ -3,6 +3,9 @@
     <body>
         <script>
             class ModalButton extends HTMLElement {
+
+                dialog;
+
                 constructor() {
                     super();
                     this.shadow = this.attachShadow({mode: 'open'});
@@ -14,6 +17,7 @@
 
                     // Modal dialog
                     const modal = document.createElement('dialog');
+                    this.dialog = modal;
                     modal.setAttribute('class', 'modal-dialog');
                     modal.innerHTML = `
                         <slot name="modal-header"></slot>    
@@ -176,7 +180,7 @@
             }
 
             .modal-close-button:hover {
-                background-color: #c22d2d;
+                background-color: hsl(0, 62%, 47%);
                 transform: scale(1.05);
             }
 
@@ -246,6 +250,70 @@
                 }
             }
 
+            @keyframes grow-left-to-right {
+                0% {
+                    opacity: 0;
+                    height: 0;
+                    width: 0;
+                    transform-origin: left center;
+                }
+                50% {
+                    opacity: 0.5;
+                    height: 100%;
+                    width: 0;
+                }
+                100% {
+                    opacity: 1;
+                    height: 100%;
+                    width: 100%;
+                }
+            }
+
+            @keyframes grow-right-to-left {
+                0% {
+                    opacity: 0;
+                    height: 0;
+                    width: 0;
+                    transform-origin: right center;
+                }
+                50% {
+                    opacity: 0.5;
+                    height: 100%;
+                    width: 0;
+                }
+                100% {
+                    opacity: 1;
+                    height: 100%;
+                    width: 100%;
+                }
+            }
+
+            @keyframes bounce-in {
+                0% {
+                    opacity: 0;
+                    transform: scale(0.5);
+                }
+                50% {
+                    transform: scale(1.2);
+                }
+                100% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+
+            .modal-dialog-left-to-right {
+                animation: grow-left-to-right 0.7s ease forwards;
+            }
+
+            .modal-dialog-right-to-left {
+                animation: grow-right-to-left 0.7s ease forwards;
+            }
+
+            .bounce-in-animation {
+                animation: bounce-in 0.7s ease-out forwards;
+            }
+
         </style>
 
         <modal-button id="myModal">
@@ -265,6 +333,22 @@
 
             modal.addEventListener('close', () => {
                 console.log('Modal closed!');
+            });
+
+            // Listen for the end of the fade-in animation
+            modal.dialog.addEventListener('animationend', (event) => {
+                console.log(event);
+                if (event.animationName === 'fade-in') {
+                    // Now start the grow-left-to-right animation
+                    modal.dialog.classList.add('modal-dialog-left-to-right');
+                } else if (event.animationName === 'grow-left-to-right') {
+                    // After growing, trigger the bounce-in animation for the content
+                     const modalContent = this.querySelector('.modal-content'); 
+                     Array.from(modal.dialog.children).forEach((child) => {
+                        // Apply bounce-in animation only to top-level children
+                        child.classList.add('.bounce-in-animation');
+                    });
+                }
             });
 
         </script>

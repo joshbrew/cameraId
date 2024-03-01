@@ -1,0 +1,137 @@
+
+<script>
+class SkyrimCompass extends HTMLElement {
+    constructor() {
+        super();
+        this._compassContainer = null;
+        this._startX = 0;
+        this._lastX = 0;
+        this._lastMoveTime = Date.now();
+        this._velocity = 0;
+        this.attachShadow({ mode: 'open' });
+        this._totalWidth = 0;
+        this._visibleWidth = 0;
+        this._isOvershooting = false; // New variable to track overshooting
+    }
+
+    
+    connectedCallback() {
+        this.shadowRoot.innerHTML = `
+                <div class="compass-container">
+                    ${this._generateMarkers()}
+                </div>
+        `;
+        this._style();
+        this._compassContainer = this.shadowRoot.querySelector('.compass-container');
+        this._addEventListeners();
+        this._calculateWidths();
+    }
+    
+    _generateMarkers() {
+        let markersHtml = '';
+        for (let i = 0; i < 360; i++) {
+            markersHtml += `<div class="compass-marker" data-degree="${i}"></div>`;
+        }
+        return markersHtml;
+    }
+
+    _calculateWidths() {
+        // Calculate total width of the compass container after rendering
+        this._totalWidth = this._compassContainer.offsetWidth;
+        this._visibleWidth = this.offsetWidth; // Assuming <skyrim-compass> fills its container
+    }
+
+    _style() {
+        const style = document.createElement('style');
+        style.textContent = `
+        .compass-container {
+            display: flex;
+            justify-content: start;
+            align-items: center;
+            width: max-content;
+            will-change: transform;
+            cursor: grab;
+        }
+
+        .compass-marker {
+            width: 1px;
+            height: 30px; /* Adjust as needed */
+            background-color: black;
+            margin: 0 2px; /* Adjust spacing between markers */
+        }
+        `;
+        this.shadowRoot.appendChild(style);
+    }
+
+    _addEventListeners() {
+        this._compassContainer.addEventListener('mousedown', this._onMouseDown.bind(this));
+        window.addEventListener('mouseup', this._onMouseUp.bind(this));
+        window.addEventListener('mousemove', this._onMouseMove.bind(this));
+    }
+
+    _onMouseDown(event) {
+        this._startX = event.pageX;
+        this._lastX = event.pageX;
+        this._lastMoveTime = Date.now();
+        this._compassContainer.style.cursor = 'grabbing';
+        this._compassContainer.style.transition = 'none'; // Disable transition for instant drag response
+    }
+
+    _onMouseUp() {
+        this._compassContainer.style.cursor = 'grab';
+        // Apply momentum and deceleration based on velocity if it's significant
+        if (Math.abs(this._velocity) > 5) {
+            // Increase deceleration effect
+            let decelerationFactor = 0.25; // Lower value for more pronounced deceleration
+            let decelerationVelocity = this._velocity * decelerationFactor;
+            
+            // Adjust deceleration distance calculation for a more pronounced effect
+            let decelerationDistance = decelerationVelocity; // Simplify to directly use deceleration velocity
+            
+            // Calculate target position with deceleration applied
+            let currentX = parseFloat(window.getComputedStyle(this._compassContainer).transform.split('(')[1].split(')')[0].split(', ')[4]);
+            let targetX = currentX + decelerationDistance;
+            targetX = this._getXWithinBounds(targetX);
+
+            // Apply smooth transition to target position
+            this._compassContainer.style.transition = 'transform 0.5s ease-out';
+            this._compassContainer.style.transform = `translateX(${targetX}px)`;
+        } else {
+            // Calculate target position with deceleration applied
+            let currentX = parseFloat(window.getComputedStyle(this._compassContainer).transform.split('(')[1].split(')')[0].split(', ')[4]);
+            let targetX = this._getXWithinBounds(currentX);
+
+            // Apply smooth transition to target position
+            this._compassContainer.style.transition = 'transform 0.5s ease-out';
+            this._compassContainer.style.transform = `translateX(${targetX}px)`;
+        }
+    }
+
+    _onMouseMove(event) {
+        if (event.buttons !== 1) return;
+        let now = Date.now();
+        let dx = event.pageX - this._lastX;
+        let dt = now - this._lastMoveTime;
+        this._velocity = dx / dt * 1000; // pixels per second
+        this._lastX = event.pageX;
+        this._lastMoveTime = now;
+        let currentTransform = window.getComputedStyle(this._compassContainer).transform;
+        let matrix = currentTransform === 'none' ? [1, 0, 0, 1, 0, 0] : currentTransform.split('(')[1].split(')')[0].split(', ');
+        let x = parseFloat(matrix[4]) + dx;
+        this._compassContainer.style.transform = `translateX(${x}px)`;
+    }
+
+    _getXWithinBounds(proposedX = null) {
+        let x = proposedX !== null ? proposedX : parseFloat(window.getComputedStyle(this._compassContainer).transform.split('(')[1].split(')')[0].split(', ')[4]);
+        if (x > 0) return 0;
+        let maxTranslateX = -(this._totalWidth - this._visibleWidth);
+        if (x < maxTranslateX) return maxTranslateX;
+        return x; // If within bounds, return current x
+    }
+}
+window.customElements.define('skyrim-compass', SkyrimCompass);
+
+</script>
+
+
+<skyrim-compass></skyrim-compass>
