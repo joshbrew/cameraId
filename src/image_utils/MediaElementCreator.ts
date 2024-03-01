@@ -191,8 +191,12 @@ export class MediaElementCreator {
     label.style.textOverflow = 'ellipsis'; // Add ellipsis for overflow text
     label.style.fontSize = '0.9em'; // Relative font size
 
-    const valueDisplay = document.createElement('span');
-    valueDisplay.textContent = currentSetting;
+    const valueDisplay = document.createElement('input');
+    valueDisplay.type = 'number';
+    valueDisplay.min = capabilities.min;
+    valueDisplay.max = capabilities.max;
+    valueDisplay.step = capabilities.step;
+    valueDisplay.value = currentSetting;
     valueDisplay.style.fontFamily = 'Consolas, "Courier New", monospace';
     valueDisplay.style.flex = '1'; // Ensure this doesn't grow too much
     valueDisplay.style.textAlign = 'right'; // Align the text to the right
@@ -214,7 +218,13 @@ export class MediaElementCreator {
 
     slider.addEventListener('input', () => {
       const value = parseFloat(slider.value);
-      valueDisplay.textContent = `${value}`; // Update the display value
+      valueDisplay.value = `${value}`; // Update the display value
+      onChangeCallback(value);
+    });
+
+    valueDisplay.addEventListener('change', () => {
+      let value = parseFloat(valueDisplay.value);
+      slider.value = valueDisplay.value; 
       onChangeCallback(value);
     });
     
@@ -351,7 +361,8 @@ export class MediaElementCreator {
       'focusDistance',
       'exposureTime',
       'exposureCompensation',
-      'frameRate'
+      'frameRate',
+      //'aspectRatio' //pretty jank
     ].forEach(setting => {
         if (capabilities[setting]) {
             this.createSliderControl(setting.replace(/([A-Z])/g, ' $1'), // Add spaces before capital letters for readability
