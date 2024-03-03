@@ -79,7 +79,6 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 		if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGlobalScope) { //workercanvas stuff 
 			canvas.addEventListener( 'orientation', onScreenOrientationChangeEvent, false );
 			canvas.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-
 		} else {
 			screen.orientation.removeEventListener('change', onScreenOrientationChangeEvent, false );
 			window.removeEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );

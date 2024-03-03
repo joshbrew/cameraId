@@ -272,7 +272,14 @@ export function initPanoTool(parentElement=document.body) {
         }
         masterPano.shadowRoot.getElementById('resetvfov').onclick = () => {
             panos.forEach((pano) => {
-                if(pano.useWorkers) pano.renderThread.update({resetVideoFOV:true});
+                if(pano.useWorkers) {
+                    pano.renderThread.update({resetVideoFOV:true});
+                    if(!pano.hideControls) {
+                        pano.shadowRoot.getElementById('xSlider').value = 0;
+                        pano.shadowRoot.getElementById('ySlider').value = 0;
+                        pano.shadowRoot.getElementById('zSlider').value = 0;
+                    }
+                }
                 else pano.resetVideoFOV();
             });
         }
@@ -283,7 +290,6 @@ export function initPanoTool(parentElement=document.body) {
                 else {
                     pano.startPos = ev.target.value;
                     pano.resetRender();
-                    
                 }
             })
         }
