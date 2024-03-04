@@ -357,10 +357,10 @@ export function initPanoTool(parentElement=document.body) {
                 newPano = false; curElm = elm;
                 
                 const container = document.getElementsByClassName('video-container')[0];
-                //container.style.position = 'fixed';
+                container.style.position = 'fixed';
                 container.style.right = '10px';
-                elm.style.minWidth = "300px";
-                elm.style.maxHeight = "300px";
+                elm.style.minWidth = "150px";
+                elm.style.maxHeight = "150px";
                 
                 let onframe = () => {
                     if(offscreen && PanoElm) PanoElm.onVideoFrame(); //this will run internally if a video element, and not if a canvas (rn)
