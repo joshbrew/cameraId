@@ -32,7 +32,9 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 
 	var onScreenOrientationChangeEvent = (ev)=> {
 		scope.screenOrientation = ev.target.angle; //screen.orientatio
+		if(scope.portraitMode !== ev.target.type) alert("Portrait mode change: "+ ev.target.type);
 		scope.portraitMode = ev.target.type;
+		
 	}
 
 	// The angles alpha, beta and gamma form a set of intrinsic Tait-Bryan angles of type Z-X'-Y''
