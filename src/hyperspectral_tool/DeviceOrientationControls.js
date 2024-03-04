@@ -87,7 +87,7 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 
 	};
 
-	this.update = function() {
+	this.update = function(landscape=true) {
 
 		if ( scope.enabled === false ) return;
 
@@ -105,9 +105,9 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 			var beta = scope.deviceOrientation.beta ? THREE.MathUtils.degToRad( this.betaOffsetAngle - scope.deviceOrientation.beta ) : 0; // X'
 			var gamma = scope.deviceOrientation.gamma ? THREE.MathUtils.degToRad( this.gammaOffsetAngle - scope.deviceOrientation.gamma ) : 0; // Y''
 			var orient = scope.screenOrientation ? THREE.MathUtils.degToRad( scope.screenOrientation ) : 0; // O
-			console.log(orient)
+	
 			//console.log(alpha,beta,gamma);
-			setObjectQuaternion( scope.object.quaternion, alpha, beta, gamma, orient );
+			setObjectQuaternion( scope.object.quaternion, alpha, landscape ? gamma : beta, landscape ? beta : gamma, orient );
 			this.alpha = alpha;
 			
 			if(firstCall && firstEvent) {
