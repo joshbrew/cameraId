@@ -24,6 +24,10 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 		this.portraitMode = 'landscape-primary';
 	}
 
+	this.alpha = 0;
+	this.beta = 0;
+	this.gamma = 0;
+
 	this.alphaOffsetAngle = offsetDeg?.alpha || undefined;
 	this.betaOffsetAngle = offsetDeg?.beta || undefined;
 	this.gammaOffsetAngle = offsetDeg?.gamma || undefined;
@@ -94,6 +98,14 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 			var gamma = scope.deviceOrientation.gamma ? THREE.MathUtils.degToRad(scope.deviceOrientation.gamma) : 0; // Y''
 			var orient = scope.screenOrientation ? THREE.MathUtils.degToRad( scope.screenOrientation ) : 0; // O
 	
+			if(alpha === this.alpha && beta === this.beta && gamma === this.gamma) {
+				return; //prevent redundant updates
+			}
+
+			this.alpha = alpha;
+			this.beta = beta;
+			this.gamma = gamma;
+
 			setObjectQuaternion( 
 				scope.object.quaternion, 
 				alpha, 

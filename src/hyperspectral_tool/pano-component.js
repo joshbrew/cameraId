@@ -540,8 +540,8 @@ export class SphericalVideoRenderer extends HTMLElement {
                     this.lookAtSphere();
                 },
                 (obj,o,ang,pmode) => {
-                    //if(pmode.includes('landscape')) 
-                        //this.partialSphere.rotation.z = 0; ///(Math.PI/2);
+                    if(pmode.includes('landscape')) 
+                        this.partialSphere.rotateZ(Math.PI/2); 
                 }
             );
             this.controls.update();

@@ -32587,6 +32587,9 @@ var DeviceOrientationControls = function(object, offsetDeg, firstEvent, onEvent,
     this.screenOrientation = 0;
     this.portraitMode = "landscape-primary";
   }
+  this.alpha = 0;
+  this.beta = 0;
+  this.gamma = 0;
   this.alphaOffsetAngle = offsetDeg?.alpha || void 0;
   this.betaOffsetAngle = offsetDeg?.beta || void 0;
   this.gammaOffsetAngle = offsetDeg?.gamma || void 0;
@@ -32640,6 +32643,12 @@ var DeviceOrientationControls = function(object, offsetDeg, firstEvent, onEvent,
       var beta = scope.deviceOrientation.beta ? MathUtils.degToRad(scope.deviceOrientation.beta) : 0;
       var gamma = scope.deviceOrientation.gamma ? MathUtils.degToRad(scope.deviceOrientation.gamma) : 0;
       var orient = scope.screenOrientation ? MathUtils.degToRad(scope.screenOrientation) : 0;
+      if (alpha === this.alpha && beta === this.beta && gamma === this.gamma) {
+        return;
+      }
+      this.alpha = alpha;
+      this.beta = beta;
+      this.gamma = gamma;
       setObjectQuaternion(
         scope.object.quaternion,
         alpha,
