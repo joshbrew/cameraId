@@ -32,7 +32,7 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 
 	var onScreenOrientationChangeEvent = (ev)=> {
 		scope.screenOrientation = ev.target.angle; //screen.orientatio
-		if(scope.portraitMode !== ev.target.type) alert("Portrait mode change: "+ ev.target.type);
+		//if(scope.portraitMode !== ev.target.type) alert("Portrait mode change: "+ ev.target.type);
 		scope.portraitMode = ev.target.type;
 		
 	}
@@ -101,7 +101,6 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 
 		if(typeof scope.deviceOrientation.alpha === 'number') {
 
-			
 			if(typeof this.alphaOffsetAngle === 'undefined') {
 				this.alphaOffsetAngle = -scope.deviceOrientation.alpha;
 				this.betaOffsetAngle = -scope.deviceOrientation.beta;
