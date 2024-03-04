@@ -20,9 +20,9 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 	this.portraitMode = screen?.orientation.type || 'landscape-primary';
 
 	this.alpha = 0;
-	this.alphaOffsetAngle = offsetDeg?.alpha || 0;
-	this.betaOffsetAngle = offsetDeg?.beta || 0;
-	this.gammaOffsetAngle = offsetDeg?.gamma || 0;
+	this.alphaOffsetAngle = offsetDeg?.alpha || undefined;
+	this.betaOffsetAngle = offsetDeg?.beta || undefined;
+	this.gammaOffsetAngle = offsetDeg?.gamma || undefined;
 
 	let firstCall = true;
 

@@ -6,10 +6,15 @@ import { BoundingBoxTool } from '../image_utils/boundingBoxTool'
 //document.body.insertAdjacentHTML('afterbegin',``);
 
 
+//IMPORTANT TO GET CORRECT PANORAMA ASPECT RATIO:
+//Lens FOVS:
+//Arducam recommended lens: 20deg (16mm)
+//S10e main camera: 77 deg
+
 //specify number of divisions and then render that many threejs scenes to paint spectral images. We can paint mutliple images in one scene
 export function initPanoTool(parentElement=document.body) {
 
-    let BBTool; let PanoElm; let LensFOV = 20; let offscreen;
+    let BBTool; let PanoElm; let LensFOV = 77; let offscreen;
     let panos; let curElm; let curBB;
 
     let container = document.createElement('div');
@@ -28,7 +33,7 @@ export function initPanoTool(parentElement=document.body) {
     parentElement.appendChild(container);
     
     let fovsetter = container.querySelector("#lensfov");
-    
+
     fovsetter.onchange = (ev) => {
         LensFOV = parseFloat(ev.target.value);
         resetPanos();
@@ -185,7 +190,7 @@ export function initPanoTool(parentElement=document.body) {
         masterPano.resX = imageLines[0].width;
         masterPano.resY = imageLines[0].height;
         masterPano.useWorkers = useWorkers;
-        masterPano.startFOV = 30;
+        masterPano.startFOV = 77;
         masterPano.startVideoFOV = fov;
         div2.appendChild(masterPano);
         let secondaryPanos = [];
@@ -199,7 +204,7 @@ export function initPanoTool(parentElement=document.body) {
                 PanoElm.resX = imageLines[i].width;
                 PanoElm.resY = imageLines[i].height;
                 PanoElm.useWorkers = useWorkers;
-                PanoElm.startFOV = 30;
+                PanoElm.startFOV = 77;
                 PanoElm.startVideoFOV = fov;
                 secondaryPanos.push(PanoElm);
                 div2.appendChild(PanoElm);
@@ -272,6 +277,14 @@ export function initPanoTool(parentElement=document.body) {
         }
         masterPano.shadowRoot.getElementById('resetfov').onclick = () => {
             panos.forEach((pano) => {
+                if(pano.controls) {
+                    
+                    pano.controls.screenOrientation = screen?.orientation?.angle || 0;
+                    pano.controls.portraitMode = screen?.orientation?.type || 'landscape-primary';
+                    pano.controls.alphaOffsetAngle = undefined;
+                    pano.controls.betaOffsetAngle = undefined;
+                    pano.controls.gammaOffsetAngle = undefined;
+                }
                 if(pano.useWorkers) pano.renderThread.update({resetFOV:true});
                 else pano.resetFOV();
             });
