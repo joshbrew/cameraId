@@ -24,7 +24,6 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 		this.portraitMode = 'landscape-primary';
 	}
 
-	this.alpha = 0;
 	this.alphaOffsetAngle = offsetDeg?.alpha || undefined;
 	this.betaOffsetAngle = offsetDeg?.beta || undefined;
 	this.gammaOffsetAngle = offsetDeg?.gamma || undefined;
@@ -52,26 +51,20 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 		
 	}
 
-	// The angles alpha, beta and gamma form a set of intrinsic Tait-Bryan angles of type Z-X'-Y''
-
-	 var setObjectQuaternion = function() {
+	var setObjectQuaternion = function() {
         var zee = new THREE.Vector3(0, 0, 1);
         var euler = new THREE.Euler();
         var q0 = new THREE.Quaternion();
         var q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
 
         return function(quaternion, alpha, beta, gamma, orient) {
-            // if (scope.screenOrientation === 90) {
-            //     beta = -beta; // Negate the X-axis rotation if in landscape secondary orientation.
-            // }
 
             euler.set(beta, alpha, -gamma, 'YXZ'); // 'ZXY' for the device, but 'YXZ' for us
-
             var deviceQuaternion = new THREE.Quaternion().setFromEuler(euler);
             deviceQuaternion.multiply(q1); // camera looks out the back of the device, not the top
             deviceQuaternion.multiply(q0.setFromAxisAngle(zee, -orient)); // adjust for screen orientation
-
-            quaternion.copy(scope.initialQuaternion).multiply(deviceQuaternion); // Apply initial offset and then device orientation
+			quaternion.copy(scope.initialQuaternion).multiply(deviceQuaternion); // Apply initial offset and then device orientation
+			
         };
     }();
 
@@ -110,8 +103,6 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 				gamma,//landscape ? beta : gamma, 
 				orient 
 			);
-
-			this.alpha = alpha;
 			
 			if(firstCall && firstEvent) {
 				firstCall = false;

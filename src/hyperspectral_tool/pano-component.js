@@ -111,8 +111,8 @@ export class SphericalVideoRenderer extends HTMLElement {
                                 self.lookAtSphere();
                             }, 
                             (obj,o,ang,pmode) => {
-                                if(pmode.includes('landscape')) 
-                                    self.partialSphere.rotateZ(Math.PI/2);
+                                // if(pmode.includes('landscape')) 
+                                //     self.partialSphere.rotateZ(Math.PI/2); //fixed Z rotation to prevent spinning
                             },
                             self.canvas
                         );
@@ -233,6 +233,14 @@ export class SphericalVideoRenderer extends HTMLElement {
             
                 self.resetFOV = () => {
             
+                    if(self.controls) {
+                        // self.controls.screenOrientation = screen?.orientation?.angle || 0;
+                        // self.controls.portraitMode = screen?.orientation?.type || 'landscape-primary';
+                        self.controls.alphaOffsetAngle = undefined;
+                        self.controls.betaOffsetAngle = undefined;
+                        self.controls.gammaOffsetAngle = undefined;
+                    }
+
                     self.rotationRate.xRate = 0;
                     self.rotationRate.yRate = 0;
                     self.rotationRate.zRate = 0;
@@ -533,7 +541,7 @@ export class SphericalVideoRenderer extends HTMLElement {
                 },
                 (obj,o,ang,pmode) => {
                     //if(pmode.includes('landscape')) 
-                        //this.partialSphere.rotateZ(Math.PI/2);
+                        //this.partialSphere.rotation.z = 0; ///(Math.PI/2);
                 }
             );
             this.controls.update();
@@ -852,6 +860,14 @@ export class SphericalVideoRenderer extends HTMLElement {
     }
 
     resetFOV() {
+
+        if(this.controls) {
+            this.controls.screenOrientation = screen?.orientation?.angle || 0;
+            this.controls.portraitMode = screen?.orientation?.type || 'landscape-primary';
+            this.controls.alphaOffsetAngle = undefined;
+            this.controls.betaOffsetAngle = undefined;
+            this.controls.gammaOffsetAngle = undefined;
+        }
 
         this.camera.fov = this.startFOV;
         this.camera.position.z = 0;

@@ -32587,7 +32587,6 @@ var DeviceOrientationControls = function(object, offsetDeg, firstEvent, onEvent,
     this.screenOrientation = 0;
     this.portraitMode = "landscape-primary";
   }
-  this.alpha = 0;
   this.alphaOffsetAngle = offsetDeg?.alpha || void 0;
   this.betaOffsetAngle = offsetDeg?.beta || void 0;
   this.gammaOffsetAngle = offsetDeg?.gamma || void 0;
@@ -32652,7 +32651,6 @@ var DeviceOrientationControls = function(object, offsetDeg, firstEvent, onEvent,
         //landscape ? beta : gamma, 
         orient
       );
-      this.alpha = alpha;
       if (firstCall && firstEvent) {
         firstCall = false;
         firstEvent(this.object, scope.deviceOrientation, scope.screenOrientation, scope.portraitMode);

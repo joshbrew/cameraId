@@ -284,16 +284,10 @@ export function initPanoTool(parentElement=document.body) {
         }
         masterPano.shadowRoot.getElementById('resetfov').onclick = () => {
             panos.forEach((pano) => {
-                if(pano.controls) {
-                    
-                    pano.controls.screenOrientation = screen?.orientation?.angle || 0;
-                    pano.controls.portraitMode = screen?.orientation?.type || 'landscape-primary';
-                    pano.controls.alphaOffsetAngle = undefined;
-                    pano.controls.betaOffsetAngle = undefined;
-                    pano.controls.gammaOffsetAngle = undefined;
-                }
                 if(pano.useWorkers) pano.renderThread.update({resetFOV:true});
-                else pano.resetFOV();
+                else {
+                    pano.resetFOV();
+                }
             });
         }
         masterPano.shadowRoot.getElementById('vfov').onchange = (e) => {
