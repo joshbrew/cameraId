@@ -58,7 +58,7 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
         var q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
 
         return function(quaternion, alpha, beta, gamma, orient) {
-            // if (scope.screenOrientation === 270) {
+            // if (scope.screenOrientation === 90) {
             //     beta = -beta; // Negate the X-axis rotation if in landscape secondary orientation.
             // }
 
