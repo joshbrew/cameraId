@@ -55,7 +55,7 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 				let temp = beta;
 				beta = gamma;
 				gamma = temp;
-				if (scope.screenOrientation === 90) {
+				if (!scope.screenOrientation || scope.screenOrientation === 90) {
 					beta = -beta; // Negate the X-axis rotation if in landscape secondary orientation.
 				}
 			}
