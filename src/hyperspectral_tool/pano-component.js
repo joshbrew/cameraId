@@ -784,6 +784,7 @@ export class SphericalVideoRenderer extends HTMLElement {
 
     disconnectedCallback() {
         this.animating = false;
+        if(this.renderThread) this.renderThread.worker.terminate();
         this.destroy();
     }
 

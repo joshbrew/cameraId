@@ -15,20 +15,24 @@ import { BoundingBoxTool } from '../image_utils/boundingBoxTool'
 export function initPanoTool(parentElement=document.body) {
 
     let BBTool; let PanoElm; let LensFOV = 77; let offscreen;
-    let panos; let curElm; let curBB;
+    let panos; let curElm; let curBB; let id;
 
     let container = document.createElement('div');
     container.id = 'panocontainer';
     
     container.insertAdjacentHTML('afterbegin',`
-    Lens FOV: <input id="lensfov" value="${LensFOV}" min="1" max="179"/><br/>
-    Draw a box on the Picture-in-Picture to subdivide the image. 
-    <br/> Multiple? 
+    Lens FOV: <input id="lensfov" value="${LensFOV}" min="1" max="179" type="number"/> Be sure this matches your camera lens for correct perspective<br/>
+    Draw a box on the Picture-in-Picture to subdivide the image.
+    <br/> 
+    
+    Multiple? 
     <input type="checkbox" id="multiple" checked/>
     <input id="ninp" type="number" value="4"/> 
-    Workers? <input id="workers" type="checkbox" checked/> 
-    Note there are performance bugs when toggling<br/>
-    `);
+    
+    <span style="display:none;"> 
+        Workers? <input id="workers" type="checkbox" checked/> 
+    </span>
+    `); //temp ux
 
     parentElement.appendChild(container);
     
@@ -43,7 +47,7 @@ export function initPanoTool(parentElement=document.body) {
     let nInput = container.querySelector('#ninp');
     let wrkrs = container.querySelector('#workers');
     
-    let useWorkers = wrkrs.checked; //todo: fix rendering bugs
+    let useWorkers = wrkrs?.checked || true; //todo: fix rendering bugs
     
     const clearPanos = () => {
         if(PanoElm) {
@@ -60,8 +64,8 @@ export function initPanoTool(parentElement=document.body) {
     const resetPanos = () => {
         clearPanos();
         if(curElm) {
-            if(curBB) setupPanos(curElm, curBB.rect.x, curBB.rect.y, curBB.rect.width, curBB.rect.height, parseInt(nInput.value));
-            else setupPanos(curElm,0,0,curElm.videoWidth,curElm.videoHeight, parseInt(nInput.value));
+            if(curBB) setupPanos(curElm, curBB.rect.x, curBB.rect.y, curBB.rect.width, curBB.rect.height, nInput?.value ? (parseInt(nInput.value) || 1) : 1);
+            else setupPanos(curElm,0,0,curElm.videoWidth,curElm.videoHeight, nInput?.value ? (parseInt(nInput.value) || 1) : 1);
         }
     }
     
@@ -102,7 +106,8 @@ export function initPanoTool(parentElement=document.body) {
     }
     
     
-    let div = document.createElement('div'); div.style.height = '40vw'; div.style.minHeight = "340px";
+    let div = document.createElement('div'); 
+    div.style.minHeight = "175px";
     let div2 = document.createElement('div');
     
     const setupOffscreen = (source,dx,dy,width,height) => {
@@ -172,6 +177,8 @@ export function initPanoTool(parentElement=document.body) {
     const setupPanos = (source,dx,dy,width,height,nSplits) => {
         if(typeof nSplits !== 'number' || isNaN(nSplits) || nSplits < 1) nSplits = 1;
         clearPanos();
+        id = Math.random();
+        let curId = id; //local for tracking videoframe callback
         /**
          * e.g.. 5 divisions evenly distributes 5 n-width pixel division lines within the source canvas
          * setup offscreens for each section within the bounding box to draw that line and convey the modified fov
@@ -342,7 +349,7 @@ export function initPanoTool(parentElement=document.body) {
         }
     
         let draw = (now) => {
-            if(panos.length === 0) return;
+            if(id !== curId || panos.length === 0 || imageLines.length < 1) return;
             panos.forEach((pano,i) => {
                 imageLines[i].getImageBitmap().then((bmp) => {
                     if(useWorkers) pano.renderThread.update({image:bmp},[bmp]); //need to transfer image to thread
@@ -396,7 +403,7 @@ export function initPanoTool(parentElement=document.body) {
                     let fov = LensFOV;
                     setupPano(offscreen, elm.videoWidth,elm.videoHeight, fov);
                 }
-                else setupPanos(elm,0,0,elm.videoWidth,elm.videoHeight, parseInt(nInput.value) || 1);
+                else setupPanos(elm,0,0,elm.videoWidth,elm.videoHeight, nInput?.value ? (parseInt(nInput.value) || 1) : 1);
     
                 BBTool?.clearBoundingBoxes(true);
                 BBTool = new BoundingBoxTool(elm, { 
@@ -411,7 +418,7 @@ export function initPanoTool(parentElement=document.body) {
                             let fov = LensFOV * box.rect.width/elm.videoWidth
                             setupPano(offscreen, box.rect.width, box.rect.height, fov);
                         }
-                        else setupPanos(elm,box.rect.x,box.rect.y,box.rect.width,box.rect.height, parseInt(nInput.value) || 1);
+                        else setupPanos(elm,box.rect.x,box.rect.y,box.rect.width,box.rect.height, nInput?.value ? (parseInt(nInput.value) || 1) : 1);
                     },
                     onedited: (box, boxes, boxIndex) => { 
                         curBB = box;
@@ -420,7 +427,7 @@ export function initPanoTool(parentElement=document.body) {
                             let fov = LensFOV * box.rect.width/elm.videoWidth;
                             setupPano(offscreen, box.rect.width, box.rect.height, fov);
                         }
-                        else setupPanos(elm,box.rect.x,box.rect.y,box.rect.width,box.rect.height, parseInt(nInput.value) || 1);
+                        else setupPanos(elm,box.rect.x,box.rect.y,box.rect.width,box.rect.height, nInput?.value ? (parseInt(nInput.value) || 1) : 1);
                     },
                     ondelete: (box, boxes, boxIndex) => { 
                         console.log("Deleted", box, boxes);  
@@ -430,7 +437,7 @@ export function initPanoTool(parentElement=document.body) {
                             let fov = LensFOV;
                             setupPano(offscreen, elm.videoWidth,elm.videoHeight, fov);
                         }
-                        else setupPanos(elm,0,0,elm.videoWidth,elm.videoHeight, parseInt(nInput.value) || 1);
+                        else setupPanos(elm,0,0,elm.videoWidth,elm.videoHeight, nInput?.value ? (parseInt(nInput.value) || 1) : 1);
                     }
                 });
             }
