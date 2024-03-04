@@ -16,7 +16,9 @@ export function initPanoTool(parentElement=document.body) {
     container.id = 'panocontainer';
     
     container.insertAdjacentHTML('afterbegin',`
-    Draw a box on the Picture-in-Picture to subdivide the image. | Multiple? 
+    Lens FOV: <input id="lensfov" value="${LensFOV}" min="1" max="179"/><br/>
+    Draw a box on the Picture-in-Picture to subdivide the image. 
+    <br/> Multiple? 
     <input type="checkbox" id="multiple" checked/>
     <input id="ninp" type="number" value="4"/> 
     Workers? <input id="workers" type="checkbox"/> 
@@ -25,6 +27,13 @@ export function initPanoTool(parentElement=document.body) {
 
     parentElement.appendChild(container);
     
+    let fovsetter = container.querySelector("#lensfov");
+    
+    fovsetter.onchange = (ev) => {
+        LensFOV = parseFloat(ev.target.value);
+        resetPanos();
+    }
+
     let multiplePanos = container.querySelector('#multiple');
     let nInput = container.querySelector('#ninp');
     let wrkrs = container.querySelector('#workers');
