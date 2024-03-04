@@ -32583,6 +32583,9 @@ var DeviceOrientationControls = function(object, offsetDeg, firstEvent, onEvent,
   if (typeof screen !== "undefined") {
     this.screenOrientation = screen.orientation.angle || 0;
     this.portraitMode = screen.orientation.type || "landscape-primary";
+  } else {
+    this.screenOrientation = 0;
+    this.portraitMode = "landscape-primary";
   }
   this.alpha = 0;
   this.alphaOffsetAngle = offsetDeg?.alpha || void 0;

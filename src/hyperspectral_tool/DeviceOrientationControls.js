@@ -19,6 +19,9 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 	if(typeof screen !== 'undefined') {
 		this.screenOrientation = screen.orientation.angle || 0;
 		this.portraitMode = screen.orientation.type || 'landscape-primary';
+	} else {
+		this.screenOrientation = 0;
+		this.portraitMode = 'landscape-primary';
 	}
 
 	this.alpha = 0;
