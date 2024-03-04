@@ -385,13 +385,14 @@ export class ImageProcessor {
                 captureButton.classList.remove('capture-btn-active');
             });
             
+            const dummy = () => {} //reset
             if(this.selectedInput === 'spectral') {
                 for(let i = 0; i < 9; i++) {
                     //console.log('awaiting');
                     await this.processBoundingBoxes(false, false);   
                     await new Promise((res,rej)=>{
                         this.onframe = (now) => {
-                            this.onframe = () => {}
+                            this.onframe = dummy; //reset
                             //console.log("frame",now);
                             res(true);
                         }
