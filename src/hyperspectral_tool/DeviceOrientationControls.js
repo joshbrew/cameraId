@@ -24,6 +24,16 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 	this.betaOffsetAngle = offsetDeg?.beta || undefined;
 	this.gammaOffsetAngle = offsetDeg?.gamma || undefined;
 
+	if(this.alphaOffsetAngle) {
+		this.initialQuaternion = new THREE.Quaternion();
+		this.initialQuaternion.setFromEuler(new THREE.Euler(
+			THREE.MathUtils.degToRad(this.betaOffsetAngle),
+			THREE.MathUtils.degToRad(this.alphaOffsetAngle),
+			THREE.MathUtils.degToRad(this.gammaOffsetAngle),
+			"YXZ"
+		));
+	}
+ 
 	let firstCall = true;
 
 	var onDeviceOrientationChangeEvent = function( event ) {
@@ -39,66 +49,27 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 
 	// The angles alpha, beta and gamma form a set of intrinsic Tait-Bryan angles of type Z-X'-Y''
 
-	var setObjectQuaternion = function() {
+	 var setObjectQuaternion = function() {
+        var zee = new THREE.Vector3(0, 0, 1);
+        var euler = new THREE.Euler();
+        var q0 = new THREE.Quaternion();
+        var q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
 
-		var zee = new THREE.Vector3( 0, 0, 1 );
+        return function(quaternion, alpha, beta, gamma, orient) {
+            if (scope.screenOrientation === 90) {
+                beta = -beta; // Negate the X-axis rotation if in landscape secondary orientation.
+            }
 
-		var euler = new THREE.Euler();
+            euler.set(beta, alpha, -gamma, 'YXZ'); // 'ZXY' for the device, but 'YXZ' for us
 
-		var q0 = new THREE.Quaternion();
+            var deviceQuaternion = new THREE.Quaternion().setFromEuler(euler);
+            deviceQuaternion.multiply(q1); // camera looks out the back of the device, not the top
+            deviceQuaternion.multiply(q0.setFromAxisAngle(zee, -orient)); // adjust for screen orientation
 
-		var q1 = new THREE.Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) ); // - PI/2 around the x-axis
+            quaternion.copy(scope.initialQuaternion).multiply(deviceQuaternion); // Apply initial offset and then device orientation
+        };
+    }();
 
-		return function( quaternion, alpha, beta, gamma, orient ) {
-
-
-			if (scope.screenOrientation === 90) {
-				beta = -beta; // Negate the X-axis rotation if in landscape secondary orientation.
-			}
-
-			if (scope.portraitMode.startsWith('landscape')) {
-				let temp = beta;
-				beta = gamma;
-				gamma = temp;
-			}
-
-			euler.set( beta, alpha, - gamma, 'YXZ' ); // 'ZXY' for the device, but 'YXZ' for us
-
-			quaternion.setFromEuler( euler ); // orient the device
-
-			quaternion.multiply( q1 ); // camera looks out the back of the device, not the top
-
-			quaternion.multiply( q0.setFromAxisAngle( zee, - orient ) ); // adjust for screen orientation
-			
-		};
-
-	}();
-
-	this.connect = function() {
-
-		//onScreenOrientationChangeEvent(); // run once on load
-		if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGlobalScope) { //workercanvas stuff 
-			canvas.addEventListener( 'orientation', onScreenOrientationChangeEvent, false );
-			canvas.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-		} else {
-			screen.orientation.addEventListener('change', onScreenOrientationChangeEvent, false );
-			window.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-		}
-		scope.enabled = true;
-
-	};
-
-	this.disconnect = function() {
-		if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGlobalScope) { //workercanvas stuff 
-			canvas.addEventListener( 'orientation', onScreenOrientationChangeEvent, false );
-			canvas.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-		} else {
-			screen.orientation.removeEventListener('change', onScreenOrientationChangeEvent, false );
-			window.removeEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-		}
-		scope.enabled = false;
-
-	};
 
 	this.update = function(){//landscape=true) {
 
@@ -106,11 +77,20 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 
 		if(typeof scope.deviceOrientation.alpha === 'number') {
 
-			// if(typeof this.alphaOffsetAngle === 'undefined') {
-			// 	this.alphaOffsetAngle = scope.deviceOrientation.alpha;
-			// 	this.betaOffsetAngle = scope.deviceOrientation.beta;
-			// 	this.gammaOffsetAngle = scope.deviceOrientation.gamma;
-			// }
+			if(typeof this.alphaOffsetAngle === 'undefined') {
+				if(typeof this.alphaOffsetAngle === 'undefined') {
+					this.alphaOffsetAngle = scope.deviceOrientation.alpha;
+					this.betaOffsetAngle = scope.deviceOrientation.beta;
+					this.gammaOffsetAngle = scope.deviceOrientation.gamma;
+				}
+				this.initialQuaternion = new THREE.Quaternion();
+				this.initialQuaternion.setFromEuler(new THREE.Euler(
+					THREE.MathUtils.degToRad(this.betaOffsetAngle),
+					THREE.MathUtils.degToRad(this.alphaOffsetAngle),
+					THREE.MathUtils.degToRad(this.gammaOffsetAngle),
+					"YXZ"
+				));
+			}
 
 			//todo, this does not always respond correctly to device orientation
 			var alpha = scope.deviceOrientation.alpha ? THREE.MathUtils.degToRad(scope.deviceOrientation.alpha) : 0; // Z
@@ -137,6 +117,32 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 				onEvent(this.object, scope.deviceOrientation, scope.screenOrientation, scope.portraitMode);
 			}
 		}
+	};
+
+	this.connect = function() {
+
+		//onScreenOrientationChangeEvent(); // run once on load
+		if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGlobalScope) { //workercanvas stuff 
+			canvas.addEventListener( 'orientation', onScreenOrientationChangeEvent, false );
+			canvas.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
+		} else {
+			screen.orientation.addEventListener('change', onScreenOrientationChangeEvent, false );
+			window.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
+		}
+		scope.enabled = true;
+
+	};
+
+	this.disconnect = function() {
+		if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGlobalScope) { //workercanvas stuff 
+			canvas.addEventListener( 'orientation', onScreenOrientationChangeEvent, false );
+			canvas.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
+		} else {
+			screen.orientation.removeEventListener('change', onScreenOrientationChangeEvent, false );
+			window.removeEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
+		}
+		scope.enabled = false;
+
 	};
 
 	this.updateAlphaOffsetAngle = function( angle ) {
