@@ -31,7 +31,7 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 	};
 
 	var onScreenOrientationChangeEvent = (ev)=> {
-		scope.screenOrientation = ev.target.angle;
+		scope.screenOrientation = ev.target.angle; //screen.orientatio
 		scope.portraitMode = ev.target.type;
 	}
 
@@ -101,9 +101,9 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 			}
 
 			//todo, this does not always respond correctly to device orientation
-			var alpha = scope.deviceOrientation.alpha ? THREE.MathUtils.degToRad( this.alphaOffsetAngle - scope.deviceOrientation.alpha ) : 0; // Z
-			var beta = scope.deviceOrientation.beta ? THREE.MathUtils.degToRad( this.betaOffsetAngle - scope.deviceOrientation.beta ) : 0; // X'
-			var gamma = scope.deviceOrientation.gamma ? THREE.MathUtils.degToRad( this.gammaOffsetAngle - scope.deviceOrientation.gamma ) : 0; // Y''
+			var alpha = scope.deviceOrientation.alpha ? THREE.MathUtils.degToRad(scope.deviceOrientation.alpha + this.alphaOffsetAngle) : 0; // Z
+			var beta = scope.deviceOrientation.beta ? THREE.MathUtils.degToRad(scope.deviceOrientation.beta + this.betaOffsetAngle) : 0; // X'
+			var gamma = scope.deviceOrientation.gamma ? THREE.MathUtils.degToRad(scope.deviceOrientation.gamma + this.gammaOffsetAngle) : 0; // Y''
 			var orient = scope.screenOrientation ? THREE.MathUtils.degToRad( scope.screenOrientation ) : 0; // O
 	
 			setObjectQuaternion( 
