@@ -56,12 +56,11 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 				beta = -beta; // Negate the X-axis rotation if in landscape secondary orientation.
 			}
 
-			// if (scope.portraitMode.startsWith('landscape')) {
-			// 	let temp = beta;
-			// 	beta = gamma;
-			// 	gamma = temp;
-				
-			// }
+			if (scope.portraitMode.startsWith('landscape')) {
+				let temp = beta;
+				beta = gamma;
+				gamma = temp;
+			}
 
 			euler.set( beta, alpha, - gamma, 'YXZ' ); // 'ZXY' for the device, but 'YXZ' for us
 
@@ -108,9 +107,9 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 		if(typeof scope.deviceOrientation.alpha === 'number') {
 
 			if(typeof this.alphaOffsetAngle === 'undefined') {
-				this.alphaOffsetAngle = -scope.deviceOrientation.alpha;
-				this.betaOffsetAngle = -scope.deviceOrientation.beta;
-				this.gammaOffsetAngle = -scope.deviceOrientation.gamma;
+				this.alphaOffsetAngle = scope.deviceOrientation.alpha;
+				this.betaOffsetAngle = scope.deviceOrientation.beta;
+				this.gammaOffsetAngle = scope.deviceOrientation.gamma;
 			}
 
 			//todo, this does not always respond correctly to device orientation
