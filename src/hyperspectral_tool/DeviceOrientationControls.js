@@ -76,11 +76,9 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 		if(typeof scope.deviceOrientation.alpha === 'number') {
 
 			if(typeof this.alphaOffsetAngle === 'undefined') {
-				if(typeof this.alphaOffsetAngle === 'undefined') {
-					this.alphaOffsetAngle = scope.deviceOrientation.alpha;
-					this.betaOffsetAngle = scope.deviceOrientation.beta;
-					this.gammaOffsetAngle = scope.deviceOrientation.gamma;
-				}
+				this.alphaOffsetAngle = scope.deviceOrientation.alpha;
+				this.betaOffsetAngle = scope.deviceOrientation.beta;
+				this.gammaOffsetAngle = scope.deviceOrientation.gamma;
 				this.initialQuaternion = new THREE.Quaternion();
 				this.initialQuaternion.setFromEuler(new THREE.Euler(
 					THREE.MathUtils.degToRad(this.betaOffsetAngle),
