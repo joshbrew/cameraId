@@ -109,10 +109,10 @@ export class SphericalVideoRenderer extends HTMLElement {
                             () => {
                                 self.lookAtSphere();
                             }, 
-                            (obj,o,ang,pmode) => {
-                                if(pmode.includes('landscape')) 
-                                    self.partialSphere.rotateZ(Math.PI/2);
-                            },
+                            // (obj,o,ang,pmode) => {
+                            //     if(pmode.includes('landscape')) 
+                            //         self.partialSphere.rotateZ(Math.PI/2);
+                            // },
                             self.canvas
                         );
                         self.controls.update();
@@ -530,10 +530,10 @@ export class SphericalVideoRenderer extends HTMLElement {
                 () => {
                     this.lookAtSphere();
                 },
-                (obj,o,ang,pmode) => {
-                    if(pmode.includes('landscape')) 
-                        this.partialSphere.rotateZ(Math.PI/2);
-                }
+                // (obj,o,ang,pmode) => {
+                //     if(pmode.includes('landscape')) 
+                //         this.partialSphere.rotateZ(Math.PI/2);
+                // }
             );
             this.controls.update();
         } 
