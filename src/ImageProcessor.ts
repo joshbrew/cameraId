@@ -112,6 +112,8 @@ export class ImageProcessor {
 
     gdrive:GDrive;
 
+    newFrame; //new frame promise
+
     constructor(
         parentElement=document.body,
         modelInpWidth:number=classifierSettings['spectralclassifier'].modelInpWidth, 
@@ -173,6 +175,13 @@ export class ImageProcessor {
 
         const onstarted = (id, element) => {
             console.log('Stream or video started with ID or URL:', id);
+
+            const onframe = (now, metadata) => {
+                if(this.onframe) this.onframe(now,metadata);
+                (element as HTMLVideoElement).requestVideoFrameCallback(onframe);
+            }
+
+            (element as HTMLVideoElement).requestVideoFrameCallback(onframe);
         };
 
         const ondelete = (id, element) => {
@@ -212,9 +221,11 @@ export class ImageProcessor {
         this.streamVideo = this.root.querySelector(`#streamvideo`) as HTMLInputElement;
 
         this.useSpectralAnalysis = this.root.querySelector(`#spectral`) as HTMLInputElement;
+        this.useSpectralAnalysis.checked = threadSettings.input === 'spectral'; //defaults
         //this.useAutocor = this.parentElement.querySelector(`#autocorrelate${this.id}`) as HTMLInputElement;
         //this.usePano = this.parentElement.querySelector(`#pano${this.id}`) as HTMLInputElement;
         this.useAveraging = this.root.querySelector(`#average`) as HTMLInputElement;
+        this.useAveraging.checked = threadSettings.input === 'spectral'; //defaults
         let animating = false;
 
         // this.usePano.onchange = () => {
@@ -376,8 +387,15 @@ export class ImageProcessor {
             
             if(this.selectedInput === 'spectral') {
                 for(let i = 0; i < 9; i++) {
-                    console.log('awaiting');
+                    //console.log('awaiting');
                     await this.processBoundingBoxes(false, false);   
+                    await new Promise((res,rej)=>{
+                        this.onframe = (now) => {
+                            this.onframe = () => {}
+                            //console.log("frame",now);
+                            res(true);
+                        }
+                    }); //await next frame
                 }
                 await this.processBoundingBoxes(true, true);   
             } else {
@@ -452,6 +470,9 @@ export class ImageProcessor {
         }
         this.ui.remove();
     }
+
+    //customizable onframe callback
+    onframe(now, metadata) {}
 
     async initThreads(outputWidth, outputHeight, {
         decoderPool=4,
