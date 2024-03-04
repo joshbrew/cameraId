@@ -548,7 +548,6 @@ export class SphericalVideoRenderer extends HTMLElement {
                         left: 10px;
                         z-index: 100;
                         font-size: 2vw;
-                        //position:absolute;
                         background-color:rgba(10,10,10,0.5);
                     }
                     .slider {
@@ -599,7 +598,7 @@ export class SphericalVideoRenderer extends HTMLElement {
                 </div>
             </span>
         `;
-        
+
         // Attach the canvas and video element to the renderer and texture
         this.canvas = this.shadowRoot.querySelector('canvas');
         if(!this.source) this.source = this.shadowRoot.querySelector('video');
