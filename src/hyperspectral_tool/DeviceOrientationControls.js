@@ -118,11 +118,11 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 			
 			if(firstCall && firstEvent) {
 				firstCall = false;
-				firstEvent(this.object, scope.deviceOrientation);
+				firstEvent(this.object, scope.deviceOrientation, scope.screenOrientation, scope.portraitMode);
 			}
 
 			if(onEvent) {
-				onEvent(this.object, scope.deviceOrientation);
+				onEvent(this.object, scope.deviceOrientation, scope.screenOrientation, scope.portraitMode);
 			}
 		}
 	};
