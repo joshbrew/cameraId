@@ -6,7 +6,7 @@ import * as THREE from 'three'
  * W3C Device Orientation control (http://w3c.github.io/deviceorientation/spec-source-orientation.html)
  */
 
-export const DeviceOrientationControls = function( object, offsetDeg, firstEvent, canvas ) {
+export const DeviceOrientationControls = function( object, offsetDeg, firstEvent, onEvent, canvas ) {
 
 	var scope = this;
 
@@ -56,7 +56,7 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 			quaternion.multiply( q1 ); // camera looks out the back of the device, not the top
 
 			quaternion.multiply( q0.setFromAxisAngle( zee, - orient ) ); // adjust for screen orientation
-
+			
 		};
 
 	}();
@@ -113,11 +113,16 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 				gamma,//landscape ? beta : gamma, 
 				orient 
 			);
+
 			this.alpha = alpha;
 			
 			if(firstCall && firstEvent) {
 				firstCall = false;
 				firstEvent(this.object, scope.deviceOrientation);
+			}
+
+			if(onEvent) {
+				onEvent(this.object, scope.deviceOrientation);
 			}
 		}
 	};

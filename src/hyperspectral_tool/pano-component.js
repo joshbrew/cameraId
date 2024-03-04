@@ -103,9 +103,17 @@ export class SphericalVideoRenderer extends HTMLElement {
                     self.scene.add(self.partialSphere);
             
                     if (self.useOrientation) { //probably safest option for mobile
-                        self.controls = new DeviceOrientationControls(self.partialSphere, undefined, () => {
-                            self.lookAtSphere();
-                        }, self.canvas);
+                        self.controls = new DeviceOrientationControls(
+                            self.partialSphere, 
+                            undefined, 
+                            () => {
+                                self.lookAtSphere();
+                            }, 
+                            ()=>{
+                                self.partialSphere.rotateZ(Math.PI/2);
+                            },
+                            self.canvas
+                        );
                         self.controls.update();
                        
                     } 
@@ -515,11 +523,17 @@ export class SphericalVideoRenderer extends HTMLElement {
         this.scene.add(this.partialSphere);
 
         if (this.useOrientation) { //probably safest option for mobile
-            this.controls = new DeviceOrientationControls(this.partialSphere, undefined, () => {
-                this.lookAtSphere();
-            });
+            this.controls = new DeviceOrientationControls(
+                this.partialSphere, 
+                undefined, 
+                () => {
+                    this.lookAtSphere();
+                },
+                () => {
+                    this.partialSphere.rotateZ(Math.PI/2);
+                }
+            );
             this.controls.update();
-           
         } 
 
     }
