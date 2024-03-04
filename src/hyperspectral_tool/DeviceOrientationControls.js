@@ -16,8 +16,10 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 	this.enabled = true;
 
 	this.deviceOrientation = {};
-	this.screenOrientation = screen?.orientation.angle || 0;
-	this.portraitMode = screen?.orientation.type || 'landscape-primary';
+	if(typeof screen !== 'undefined') {
+		this.screenOrientation = screen.orientation.angle || 0;
+		this.portraitMode = screen.orientation.type || 'landscape-primary';
+	}
 
 	this.alpha = 0;
 	this.alphaOffsetAngle = offsetDeg?.alpha || undefined;
@@ -126,7 +128,7 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 			canvas.addEventListener( 'orientation', onScreenOrientationChangeEvent, false );
 			canvas.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
 		} else {
-			screen.orientation.addEventListener('change', onScreenOrientationChangeEvent, false );
+			screen?.orientation.addEventListener('change', onScreenOrientationChangeEvent, false );
 			window.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
 		}
 		scope.enabled = true;
@@ -138,7 +140,7 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 			canvas.addEventListener( 'orientation', onScreenOrientationChangeEvent, false );
 			canvas.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
 		} else {
-			screen.orientation.removeEventListener('change', onScreenOrientationChangeEvent, false );
+			screen?.orientation.removeEventListener('change', onScreenOrientationChangeEvent, false );
 			window.removeEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
 		}
 		scope.enabled = false;

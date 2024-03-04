@@ -32573,6 +32573,151 @@ var OrbitControls = class extends EventDispatcher {
   }
 };
 
+// src/hyperspectral_tool/DeviceOrientationControls.js
+var DeviceOrientationControls = function(object, offsetDeg, firstEvent, onEvent, canvas) {
+  var scope = this;
+  this.object = object;
+  this.object.rotation.reorder("YXZ");
+  this.enabled = true;
+  this.deviceOrientation = {};
+  if (typeof screen !== "undefined") {
+    this.screenOrientation = screen.orientation.angle || 0;
+    this.portraitMode = screen.orientation.type || "landscape-primary";
+  }
+  this.alpha = 0;
+  this.alphaOffsetAngle = offsetDeg?.alpha || void 0;
+  this.betaOffsetAngle = offsetDeg?.beta || void 0;
+  this.gammaOffsetAngle = offsetDeg?.gamma || void 0;
+  if (this.alphaOffsetAngle) {
+    this.initialQuaternion = new Quaternion();
+    this.initialQuaternion.setFromEuler(new Euler(
+      MathUtils.degToRad(this.betaOffsetAngle),
+      MathUtils.degToRad(this.alphaOffsetAngle),
+      MathUtils.degToRad(this.gammaOffsetAngle),
+      "YXZ"
+    ));
+  }
+  let firstCall = true;
+  var onDeviceOrientationChangeEvent = function(event) {
+    scope.deviceOrientation = event;
+  };
+  var onScreenOrientationChangeEvent = (ev) => {
+    scope.screenOrientation = ev.target.angle;
+    scope.portraitMode = ev.target.type;
+  };
+  var setObjectQuaternion = function() {
+    var zee = new Vector3(0, 0, 1);
+    var euler = new Euler();
+    var q0 = new Quaternion();
+    var q1 = new Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
+    return function(quaternion, alpha, beta, gamma, orient) {
+      euler.set(beta, alpha, -gamma, "YXZ");
+      var deviceQuaternion = new Quaternion().setFromEuler(euler);
+      deviceQuaternion.multiply(q1);
+      deviceQuaternion.multiply(q0.setFromAxisAngle(zee, -orient));
+      quaternion.copy(scope.initialQuaternion).multiply(deviceQuaternion);
+    };
+  }();
+  this.update = function() {
+    if (scope.enabled === false)
+      return;
+    if (typeof scope.deviceOrientation.alpha === "number") {
+      if (typeof this.alphaOffsetAngle === "undefined") {
+        if (typeof this.alphaOffsetAngle === "undefined") {
+          this.alphaOffsetAngle = scope.deviceOrientation.alpha;
+          this.betaOffsetAngle = scope.deviceOrientation.beta;
+          this.gammaOffsetAngle = scope.deviceOrientation.gamma;
+        }
+        this.initialQuaternion = new Quaternion();
+        this.initialQuaternion.setFromEuler(new Euler(
+          MathUtils.degToRad(this.betaOffsetAngle),
+          MathUtils.degToRad(this.alphaOffsetAngle),
+          MathUtils.degToRad(this.gammaOffsetAngle),
+          "YXZ"
+        ));
+      }
+      var alpha = scope.deviceOrientation.alpha ? MathUtils.degToRad(scope.deviceOrientation.alpha) : 0;
+      var beta = scope.deviceOrientation.beta ? MathUtils.degToRad(scope.deviceOrientation.beta) : 0;
+      var gamma = scope.deviceOrientation.gamma ? MathUtils.degToRad(scope.deviceOrientation.gamma) : 0;
+      var orient = scope.screenOrientation ? MathUtils.degToRad(scope.screenOrientation) : 0;
+      setObjectQuaternion(
+        scope.object.quaternion,
+        alpha,
+        beta,
+        //landscape ? gamma : beta, 
+        gamma,
+        //landscape ? beta : gamma, 
+        orient
+      );
+      this.alpha = alpha;
+      if (firstCall && firstEvent) {
+        firstCall = false;
+        firstEvent(this.object, scope.deviceOrientation, scope.screenOrientation, scope.portraitMode);
+      }
+      if (onEvent) {
+        onEvent(this.object, scope.deviceOrientation, scope.screenOrientation, scope.portraitMode);
+      }
+    }
+  };
+  this.connect = function() {
+    if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlobalScope) {
+      canvas.addEventListener("orientation", onScreenOrientationChangeEvent, false);
+      canvas.addEventListener("deviceorientation", onDeviceOrientationChangeEvent, false);
+    } else {
+      screen?.orientation.addEventListener("change", onScreenOrientationChangeEvent, false);
+      window.addEventListener("deviceorientation", onDeviceOrientationChangeEvent, false);
+    }
+    scope.enabled = true;
+  };
+  this.disconnect = function() {
+    if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlobalScope) {
+      canvas.addEventListener("orientation", onScreenOrientationChangeEvent, false);
+      canvas.addEventListener("deviceorientation", onDeviceOrientationChangeEvent, false);
+    } else {
+      screen?.orientation.removeEventListener("change", onScreenOrientationChangeEvent, false);
+      window.removeEventListener("deviceorientation", onDeviceOrientationChangeEvent, false);
+    }
+    scope.enabled = false;
+  };
+  this.updateAlphaOffsetAngle = function(angle) {
+    this.alphaOffsetAngle = angle;
+    this.initialQuaternion = new Quaternion();
+    this.initialQuaternion.setFromEuler(new Euler(
+      MathUtils.degToRad(this.betaOffsetAngle),
+      MathUtils.degToRad(this.alphaOffsetAngle),
+      MathUtils.degToRad(this.gammaOffsetAngle),
+      "YXZ"
+    ));
+    this.update();
+  };
+  this.updateBetaOffsetAngle = function(angle) {
+    this.betaOffsetAngle = angle;
+    this.initialQuaternion = new Quaternion();
+    this.initialQuaternion.setFromEuler(new Euler(
+      MathUtils.degToRad(this.betaOffsetAngle),
+      MathUtils.degToRad(this.alphaOffsetAngle),
+      MathUtils.degToRad(this.gammaOffsetAngle),
+      "YXZ"
+    ));
+    this.update();
+  };
+  this.updateGammaOffsetAngle = function(angle) {
+    this.gammaOffsetAngle = angle;
+    this.initialQuaternion = new Quaternion();
+    this.initialQuaternion.setFromEuler(new Euler(
+      MathUtils.degToRad(this.betaOffsetAngle),
+      MathUtils.degToRad(this.alphaOffsetAngle),
+      MathUtils.degToRad(this.gammaOffsetAngle),
+      "YXZ"
+    ));
+    this.update();
+  };
+  this.dispose = function() {
+    this.disconnect();
+  };
+  this.connect();
+};
+
 // src/hyperspectral_tool/three.worker.ts
 if (typeof WorkerGlobalScope !== "undefined") {
   const routes = {
@@ -32581,6 +32726,7 @@ if (typeof WorkerGlobalScope !== "undefined") {
       const ThreeProps = {
         //e.g. install these systems to 'self', which is the worker canvas
         THREE: three_module_exports,
+        DeviceOrientationControls,
         OrbitControls
         // EffectComposer,
         // RenderPass,

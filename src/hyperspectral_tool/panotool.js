@@ -26,7 +26,7 @@ export function initPanoTool(parentElement=document.body) {
     <br/> Multiple? 
     <input type="checkbox" id="multiple" checked/>
     <input id="ninp" type="number" value="4"/> 
-    Workers? <input id="workers" type="checkbox"/> 
+    Workers? <input id="workers" type="checkbox" checked/> 
     Note there are performance bugs when toggling<br/>
     `);
 
@@ -145,7 +145,7 @@ export function initPanoTool(parentElement=document.body) {
             let settings = {
                 dx:dx + x0,
                 dy,
-                width:10,
+                width:20,
                 height,
                 getImageBitmap:async ()=>{
                     //console.log(source,settings);
@@ -190,7 +190,7 @@ export function initPanoTool(parentElement=document.body) {
         masterPano.resX = imageLines[0].width;
         masterPano.resY = imageLines[0].height;
         masterPano.useWorkers = useWorkers;
-        masterPano.startFOV = 77;
+        masterPano.startFOV = 40;
         masterPano.startVideoFOV = fov;
         div2.appendChild(masterPano);
         let secondaryPanos = [];
@@ -204,7 +204,7 @@ export function initPanoTool(parentElement=document.body) {
                 PanoElm.resX = imageLines[i].width;
                 PanoElm.resY = imageLines[i].height;
                 PanoElm.useWorkers = useWorkers;
-                PanoElm.startFOV = 77;
+                PanoElm.startFOV = 40;
                 PanoElm.startVideoFOV = fov;
                 secondaryPanos.push(PanoElm);
                 div2.appendChild(PanoElm);

@@ -63,9 +63,10 @@ export class SphericalVideoRenderer extends HTMLElement {
             resY:this.resY,
             maxFOV:this.maxFOV,
             autoAdjustFOV:this.autoAdjustFOV,
+            useOrientation:this.useOrientation,
             init:function(self,canvas,context){ 
 
-                const { THREE } = self;
+                const { THREE, DeviceOrientationControls } = self;
                 //could also use 'this' but self is a cleaner association with the render thread
                 self.rotationRate = {
                     xRate:0, rotX:0, initialX:0,
