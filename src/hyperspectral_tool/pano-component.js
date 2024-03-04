@@ -111,7 +111,7 @@ export class SphericalVideoRenderer extends HTMLElement {
                                 self.lookAtSphere();
                             }, 
                             (obj,o,ang,pmode) => {
-                                 if(pmode.includes('landscape')) 
+                                if(pmode.includes('landscape')) 
                                     self.partialSphere.rotateZ(Math.PI/2); 
                             },
                             self.canvas
