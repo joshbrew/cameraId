@@ -16,8 +16,8 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 	this.enabled = true;
 
 	this.deviceOrientation = {};
-	this.screenOrientation = 0;
-	this.portraitMode = '';
+	this.screenOrientation = screen?.orientation.angle || 0;
+	this.portraitMode = screen?.orientation.type || 'landscape-primary';
 
 	this.alpha = 0;
 	this.alphaOffsetAngle = offsetDeg?.alpha || 0;
@@ -51,11 +51,14 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 
 		return function( quaternion, alpha, beta, gamma, orient ) {
 
-			// if (scope.portraitMode.includes('landscape')) {
-			// 	let temp = beta;
-			// 	beta = gamma;
-			// 	gamma = temp;
-			// }
+			if (scope.portraitMode.startsWith('landscape')) {
+				let temp = beta;
+				beta = gamma;
+				gamma = temp;
+				if (scope.screenOrientation === 90) {
+					beta = -beta; // Negate the X-axis rotation if in landscape secondary orientation.
+				}
+			}
 
 			euler.set( beta, alpha, - gamma, 'YXZ' ); // 'ZXY' for the device, but 'YXZ' for us
 
