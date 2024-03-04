@@ -49,6 +49,12 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 
 		return function( quaternion, alpha, beta, gamma, orient ) {
 
+			if (scope.portraitMode.includes('landscape')) {
+				let temp = beta;
+				beta = gamma;
+				gamma = temp;
+			}
+
 			euler.set( beta, alpha, - gamma, 'YXZ' ); // 'ZXY' for the device, but 'YXZ' for us
 
 			quaternion.setFromEuler( euler ); // orient the device
