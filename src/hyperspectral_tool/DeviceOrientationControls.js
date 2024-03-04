@@ -52,7 +52,7 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 		return function( quaternion, alpha, beta, gamma, orient ) {
 
 
-			if (!scope.screenOrientation || scope.screenOrientation === 90) {
+			if (scope.screenOrientation === 90) {
 				beta = -beta; // Negate the X-axis rotation if in landscape secondary orientation.
 			}
 
@@ -106,16 +106,16 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 
 		if(typeof scope.deviceOrientation.alpha === 'number') {
 
-			if(typeof this.alphaOffsetAngle === 'undefined') {
-				this.alphaOffsetAngle = scope.deviceOrientation.alpha;
-				this.betaOffsetAngle = scope.deviceOrientation.beta;
-				this.gammaOffsetAngle = scope.deviceOrientation.gamma;
-			}
+			// if(typeof this.alphaOffsetAngle === 'undefined') {
+			// 	this.alphaOffsetAngle = scope.deviceOrientation.alpha;
+			// 	this.betaOffsetAngle = scope.deviceOrientation.beta;
+			// 	this.gammaOffsetAngle = scope.deviceOrientation.gamma;
+			// }
 
 			//todo, this does not always respond correctly to device orientation
-			var alpha = scope.deviceOrientation.alpha ? THREE.MathUtils.degToRad(scope.deviceOrientation.alpha + this.alphaOffsetAngle) : 0; // Z
-			var beta = scope.deviceOrientation.beta ? THREE.MathUtils.degToRad(scope.deviceOrientation.beta + this.betaOffsetAngle) : 0; // X'
-			var gamma = scope.deviceOrientation.gamma ? THREE.MathUtils.degToRad(scope.deviceOrientation.gamma + this.gammaOffsetAngle) : 0; // Y''
+			var alpha = scope.deviceOrientation.alpha ? THREE.MathUtils.degToRad(scope.deviceOrientation.alpha) : 0; // Z
+			var beta = scope.deviceOrientation.beta ? THREE.MathUtils.degToRad(scope.deviceOrientation.beta) : 0; // X'
+			var gamma = scope.deviceOrientation.gamma ? THREE.MathUtils.degToRad(scope.deviceOrientation.gamma) : 0; // Y''
 			var orient = scope.screenOrientation ? THREE.MathUtils.degToRad( scope.screenOrientation ) : 0; // O
 	
 			setObjectQuaternion( 
