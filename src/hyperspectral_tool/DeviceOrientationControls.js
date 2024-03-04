@@ -56,9 +56,9 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
         var q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
 
         return function(quaternion, alpha, beta, gamma, orient) {
-            if (scope.screenOrientation === 90) {
-                beta = -beta; // Negate the X-axis rotation if in landscape secondary orientation.
-            }
+            // if (scope.screenOrientation === 270) {
+            //     beta = -beta; // Negate the X-axis rotation if in landscape secondary orientation.
+            // }
 
             euler.set(beta, alpha, -gamma, 'YXZ'); // 'ZXY' for the device, but 'YXZ' for us
 
@@ -148,6 +148,13 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 	this.updateAlphaOffsetAngle = function( angle ) {
 
 		this.alphaOffsetAngle = angle;
+		this.initialQuaternion = new THREE.Quaternion();
+		this.initialQuaternion.setFromEuler(new THREE.Euler(
+			THREE.MathUtils.degToRad(this.betaOffsetAngle),
+			THREE.MathUtils.degToRad(this.alphaOffsetAngle),
+			THREE.MathUtils.degToRad(this.gammaOffsetAngle),
+			"YXZ"
+		));
 		this.update();
 
 	};
@@ -155,6 +162,13 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 	this.updateBetaOffsetAngle = function( angle ) {
 
 		this.betaOffsetAngle = angle;
+		this.initialQuaternion = new THREE.Quaternion();
+		this.initialQuaternion.setFromEuler(new THREE.Euler(
+			THREE.MathUtils.degToRad(this.betaOffsetAngle),
+			THREE.MathUtils.degToRad(this.alphaOffsetAngle),
+			THREE.MathUtils.degToRad(this.gammaOffsetAngle),
+			"YXZ"
+		));
 		this.update();
 
 	};
@@ -162,6 +176,13 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 	this.updateGammaOffsetAngle = function( angle ) {
 
 		this.gammaOffsetAngle = angle;
+		this.initialQuaternion = new THREE.Quaternion();
+		this.initialQuaternion.setFromEuler(new THREE.Euler(
+			THREE.MathUtils.degToRad(this.betaOffsetAngle),
+			THREE.MathUtils.degToRad(this.alphaOffsetAngle),
+			THREE.MathUtils.degToRad(this.gammaOffsetAngle),
+			"YXZ"
+		));
 		this.update();
 
 	};
