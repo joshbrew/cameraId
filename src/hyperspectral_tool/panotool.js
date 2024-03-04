@@ -17,7 +17,10 @@ export function initPanoTool(parentElement=document.body) {
     
     container.insertAdjacentHTML('afterbegin',`
     Draw a box on the Picture-in-Picture to subdivide the image. | Multiple? 
-    <input type="checkbox" id="multiple" checked/><input id="ninp" type="number" value="7"/> Workers? <input id="workers" type="checkbox" checked/> Note there are performance bugs when toggling<br/>
+    <input type="checkbox" id="multiple" checked/>
+    <input id="ninp" type="number" value="4"/> 
+    Workers? <input id="workers" type="checkbox"/> 
+    Note there are performance bugs when toggling<br/>
     `);
 
     parentElement.appendChild(container);
@@ -301,6 +304,18 @@ export function initPanoTool(parentElement=document.body) {
                 } else {
                     pano.autoAdjustFOV = ev.target.checked;
                 }
+            });
+        }
+
+        masterPano.shadowRoot.getElementById('save').onclick = () => {
+            panos.forEach((pano,i) => {
+                pano.canvas.toBlob((blob)=>{
+                    let link = document.createElement('a');
+                    link.download =  'scan'+i+'.png';
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                    URL.revokeObjectURL(link.href); // Clean up the URL object
+                });
             });
         }
     

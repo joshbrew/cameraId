@@ -100,10 +100,12 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
 				this.gammaOffsetAngle = -scope.deviceOrientation.gamma;
 			}
 
-			var alpha = scope.deviceOrientation.alpha ? THREE.MathUtils.degToRad( scope.deviceOrientation.alpha + this.alphaOffsetAngle ) : 0; // Z
-			var beta = scope.deviceOrientation.beta ? THREE.MathUtils.degToRad( scope.deviceOrientation.beta + this.betaOffsetAngle ) : 0; // X'
-			var gamma = scope.deviceOrientation.gamma ? THREE.MathUtils.degToRad( scope.deviceOrientation.gamma + this.gammaOffsetAngle ) : 0; // Y''
+			//todo, this does not always respond correctly to device orientation
+			var alpha = scope.deviceOrientation.alpha ? THREE.MathUtils.degToRad( this.alphaOffsetAngle - scope.deviceOrientation.alpha ) : 0; // Z
+			var beta = scope.deviceOrientation.beta ? THREE.MathUtils.degToRad( this.betaOffsetAngle - scope.deviceOrientation.beta ) : 0; // X'
+			var gamma = scope.deviceOrientation.gamma ? THREE.MathUtils.degToRad( this.gammaOffsetAngle - scope.deviceOrientation.gamma ) : 0; // Y''
 			var orient = scope.screenOrientation ? THREE.MathUtils.degToRad( scope.screenOrientation ) : 0; // O
+			console.log(orient)
 			//console.log(alpha,beta,gamma);
 			setObjectQuaternion( scope.object.quaternion, alpha, beta, gamma, orient );
 			this.alpha = alpha;

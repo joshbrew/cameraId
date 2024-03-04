@@ -600,19 +600,19 @@ export class SphericalVideoRenderer extends HTMLElement {
             </span>
         `;
         
+        // Attach the canvas and video element to the renderer and texture
+        this.canvas = this.shadowRoot.querySelector('canvas');
+        if(!this.source) this.source = this.shadowRoot.querySelector('video');
+        
         // Slider events
         if(this.hideControls) {
             this.shadowRoot.getElementById('controlscontainer').style.display = 'none';
         } else {
 
-            // Attach the canvas and video element to the renderer and texture
-            this.canvas = this.shadowRoot.querySelector('canvas');
-            if(!this.source) this.source = this.shadowRoot.querySelector('video');
-
             this.shadowRoot.getElementById('save').onclick = () => {
                 this.canvas.toBlob((blob)=>{
                     let link = document.createElement('a');
-                    link.download = imageName + '.png';
+                    link.download =  'scan.png';
                     link.href = URL.createObjectURL(blob);
                     link.click();
                     URL.revokeObjectURL(link.href); // Clean up the URL object
