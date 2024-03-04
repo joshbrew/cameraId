@@ -32617,10 +32617,9 @@ var DeviceOrientationControls = function(object, offsetDeg, firstEvent, onEvent,
     var q1 = new Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
     return function(quaternion, alpha, beta, gamma, orient) {
       euler.set(beta, alpha, -gamma, "YXZ");
-      var deviceQuaternion = new Quaternion().setFromEuler(euler);
-      deviceQuaternion.multiply(q1);
-      deviceQuaternion.multiply(q0.setFromAxisAngle(zee, -orient));
-      quaternion.copy(scope.initialQuaternion).multiply(deviceQuaternion);
+      quaternion.setFromEuler(euler);
+      quaternion.multiply(q1);
+      quaternion.multiply(q0.setFromAxisAngle(zee, -orient));
     };
   }();
   this.update = function() {

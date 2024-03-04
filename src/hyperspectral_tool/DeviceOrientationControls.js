@@ -64,10 +64,16 @@ export const DeviceOrientationControls = function( object, offsetDeg, firstEvent
         return function(quaternion, alpha, beta, gamma, orient) {
 
             euler.set(beta, alpha, -gamma, 'YXZ'); // 'ZXY' for the device, but 'YXZ' for us
-            var deviceQuaternion = new THREE.Quaternion().setFromEuler(euler);
-            deviceQuaternion.multiply(q1); // camera looks out the back of the device, not the top
-            deviceQuaternion.multiply(q0.setFromAxisAngle(zee, -orient)); // adjust for screen orientation
-			quaternion.copy(scope.initialQuaternion).multiply(deviceQuaternion); // Apply initial offset and then device orientation
+
+			quaternion.setFromEuler( euler ); // orient the device
+
+			quaternion.multiply( q1 ); // camera looks out the back of the device, not the top
+
+			quaternion.multiply( q0.setFromAxisAngle( zee, - orient ) ); // adjust for screen orientation
+            // var deviceQuaternion = new THREE.Quaternion().setFromEuler(euler);
+            // deviceQuaternion.multiply(q1); // camera looks out the back of the device, not the top
+            // deviceQuaternion.multiply(q0.setFromAxisAngle(zee, -orient)); // adjust for screen orientation
+			//quaternion.copy(scope.initialQuaternion).multiply(deviceQuaternion); // Apply initial offset and then device orientation
 			
         };
     }();
