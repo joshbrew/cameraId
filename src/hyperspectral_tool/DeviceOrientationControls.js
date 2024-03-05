@@ -75,7 +75,7 @@ export class DeviceOrientationControls {
             let b = beta; 
             //swap axes
             beta = gamma;
-            gamma = beta;
+            gamma = b;
             
         }
 
