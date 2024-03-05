@@ -70,6 +70,15 @@ export class DeviceOrientationControls {
     };
 
     setObjectQuaternion = (quaternion, alpha, beta, gamma, orient) => {
+
+        if(this.portraitMode.includes('landscape')) {
+            let b = beta; 
+            //swap axes
+            beta = gamma;
+            gamma = beta;
+            
+        }
+
 		euler.set(beta, alpha, -gamma, 'YXZ');
 		quaternion.setFromEuler(euler);
 		quaternion.multiply(q1);

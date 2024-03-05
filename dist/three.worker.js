@@ -32627,6 +32627,11 @@ var DeviceOrientationControls = class {
     this.portraitMode = ev.target.type;
   };
   setObjectQuaternion = (quaternion, alpha, beta, gamma, orient) => {
+    if (this.portraitMode.includes("landscape")) {
+      let b2 = beta;
+      beta = gamma;
+      gamma = beta;
+    }
     euler.set(beta, alpha, -gamma, "YXZ");
     quaternion.setFromEuler(euler);
     quaternion.multiply(q1);
