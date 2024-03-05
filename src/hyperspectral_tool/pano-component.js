@@ -111,12 +111,6 @@ export class SphericalVideoRenderer extends HTMLElement {
                                 self.lookAtSphere();
                             }, 
                             (obj,o,ang,pmode) => {
-                                let cameraEuler = new THREE.Euler().setFromQuaternion(
-                                    self.camera.quaternion, 'XYZ'
-                                );
-                                self.partialSphere.rotation.z = cameraEuler.z;
-                                // if(pmode.includes('landscape')) 
-                                //     self.partialSphere.rotateZ(Math.PI/2);
                             },
                             self.canvas
                         );
@@ -165,6 +159,12 @@ export class SphericalVideoRenderer extends HTMLElement {
                     // Apply this rotation to the camera's current quaternion
                     self.camera.quaternion.multiply(y180Rotation);
                     self.camera.rotateZ(Math.PI);
+
+                    
+                    let cameraEuler = new THREE.Euler().setFromQuaternion(
+                        self.camera.quaternion, 'XYZ'
+                    );
+                    self.partialSphere.rotation.z = cameraEuler.z;
 
                     let startPos = self.startPos;
                     if(startPos && startPos !== 'center') {
