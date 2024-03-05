@@ -1,8 +1,8 @@
 Spectral Data Sampling notes:
 
-1. Before we sample we take a baseline image of the light reflected unadulterated off a plain white sheet of paper, that is used to subtract the following samples from it to receive a reflectance spectrum. 
+1. Before we sample we take a baseline image of the light reflected unadulterated off a plain white sheet of paper, that is used to subtract the following samples from it to receive a reflectance spectrum. Use the red golf flag icon to set the baseline before moving on to the samples.
 
-2. With the baseline image set, point the spectrometer box at an illuminated substance and click the capture button to take an averaged sample over 10 frames. 
+2. Next point the spectrometer box at an illuminated substance and click the capture button to take an averaged sample over 10 frames. The result will have been corrected for you already given the baseline was set.
 
 3. You can custom label (defaults to classifier's guess (probably wrong!)) and save each image to your phone or desktop, and if you set your own API keys (until we make our hosted version public) you can upload samples to google drive directly including the raw images and spectral csvs representing the accumulated intensities along the x-axis with the raw R,G,B and summed values for each column of pixels in the image. 
 

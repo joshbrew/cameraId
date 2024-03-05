@@ -542,7 +542,7 @@ export class SphericalVideoRenderer extends HTMLElement {
             this.controls = new DeviceOrientationControls(
                 this.partialSphere, 
                 undefined, 
-                () => {
+                () => { //TODO: MAKE SURE THIS ALWAYS FIXES THE IMAGE VERTICALLY WHEN STARTING/RESETTING TRACKING
                     this.lookAtSphere();
                 },
                 (obj,o,ang,pmode) => {
