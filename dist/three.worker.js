@@ -32608,6 +32608,8 @@ var DeviceOrientationControls = class {
     this.initialQuaternion.copy(this.object.quaternion);
     this.connect();
   }
+  reset() {
+  }
   onDeviceOrientationChangeEvent = (event) => {
     this.deviceOrientation = event;
   };

@@ -111,11 +111,12 @@ export class SphericalVideoRenderer extends HTMLElement {
                                 self.lookAtSphere();
                             }, 
                             (obj,o,ang,pmode) => {
-                                
-                                // self.camera.rotation.z = Math.PI/2;
-                                // self.partialSphere.rotation.z = Math.PI/2;
+                                let cameraEuler = new THREE.Euler().setFromQuaternion(
+                                    self.camera.quaternion, 'XYZ'
+                                );
+                                self.partialSphere.rotation.z = cameraEuler.z;
                                 // if(pmode.includes('landscape')) 
-                                //     self.partialSphere.rotateZ(Math.PI/2); 
+                                //     this.partialSphere.rotateZ(Math.PI/2); 
                             },
                             self.canvas
                         );
@@ -128,18 +129,25 @@ export class SphericalVideoRenderer extends HTMLElement {
                 self.resetRender = () => {
                     if(self.partialSphere) {
                         self.lookAtSphere();
-                        
                     }
                     self.renderer.clear(); 
                 }
             
 
-                self.lookAtSphere = () => {
+                self.lookAtSphere = (
+                    constrainX=false, 
+                    constrainY=false, 
+                    constrainZ=false
+                ) => {
                     // Assuming the point we are tracking on the sphere's surface is initially at (0, 0, 1) before rotation
                     let initialDirection = new THREE.Vector3(0, 0, 1);
                     let sphereCenter = self.partialSphere.position; // Center of the sphere
                     let direction = initialDirection.clone().applyQuaternion(self.partialSphere.quaternion).normalize();
             
+                      // Capture the current rotation of the camera before changing it
+                    let currentEuler = new THREE.Euler().setFromQuaternion(self.camera.quaternion, 'XYZ');
+                    let currentRotation = { x: currentEuler.x, y: currentEuler.y, z: currentEuler.z };
+
                     // Now set the camera position to the center of the sphere
                     self.camera.position.copy(sphereCenter);
             
@@ -148,11 +156,16 @@ export class SphericalVideoRenderer extends HTMLElement {
             
                     // Make the camera look in the direction of the sphere's rotation
                     self.camera.lookAt(lookAtPoint);
-                    self.camera.rotation.z = 0;
-                    
-                    // if(/(android)/i.test(navigator.userAgent)) {
-                    //     self.camera.rotation.z -= Math.PI/2;
-                    // }
+
+                    // After lookAt, selectively reapply the original rotations based on constraints
+                    let finalEuler = new THREE.Euler(
+                        constrainX ? currentRotation.x : self.camera.rotation.x,
+                        constrainY ? currentRotation.y : self.camera.rotation.y,
+                        constrainZ ? currentRotation.z : self.camera.rotation.z,
+                        'XYZ'
+                    );
+
+                    self.camera.quaternion.setFromEuler(finalEuler);
 
                     let startPos = self.startPos;
                     if(startPos && startPos !== 'center') {
@@ -546,10 +559,11 @@ export class SphericalVideoRenderer extends HTMLElement {
                     this.lookAtSphere();
                 },
                 (obj,o,ang,pmode) => {
-                    // this.camera.rotation.z = Math.PI/2;
-                    // this.partialSphere.rotation.z = Math.PI/2;
-                    // if(pmode.includes('landscape')) 
-                    //     this.partialSphere.rotateZ(Math.PI/2); 
+                    //fix roll
+                    let cameraEuler = new THREE.Euler().setFromQuaternion(
+                        this.camera.quaternion, 'XYZ'
+                    );
+                    this.partialSphere.rotation.z = cameraEuler.z;
                 }
             );
             this.controls.update();
@@ -711,7 +725,11 @@ export class SphericalVideoRenderer extends HTMLElement {
         this.renderer.clear(); 
     }
 
-    lookAtSphere = () => {
+    lookAtSphere = (
+        constrainX=false, 
+        constrainY=false, 
+        constrainZ=false
+    ) => {
         // Assuming the point we are tracking on the sphere's surface is initially at (0, 0, 1) before rotation
         var initialDirection = new THREE.Vector3(0, 0, 1);
         var sphereCenter = this.partialSphere.position; // Center of the sphere
@@ -725,12 +743,17 @@ export class SphericalVideoRenderer extends HTMLElement {
 
         // Make the camera look in the direction of the sphere's rotation
         this.camera.lookAt(lookAtPoint);
-        this.camera.rotation.z = 0;
-        // if(/(android)/i.test(navigator.userAgent)) {
-        //     this.camera.rotation.z -= Math.PI/2;
-        // }
-
         
+        // After lookAt, selectively reapply the original rotations based on constraints
+        let finalEuler = new THREE.Euler(
+            constrainX ? currentRotation.x : self.camera.rotation.x,
+            constrainY ? currentRotation.y : self.camera.rotation.y,
+            constrainZ ? currentRotation.z : self.camera.rotation.z,
+            'XYZ'
+        );
+
+        self.camera.quaternion.setFromEuler(finalEuler);
+
         if(this.startPos !== 'center') {
             let fov = this.camera.fov;
             let vfov = this.sphereFOV;
