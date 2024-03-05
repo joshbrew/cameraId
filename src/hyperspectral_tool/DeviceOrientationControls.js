@@ -71,9 +71,9 @@ export class DeviceOrientationControls {
 
     setObjectQuaternion = (quaternion, alpha, beta, gamma, orient) => {
 
+        //swap axes
         if(this.portraitMode.includes('landscape')) {
             let b = beta; 
-            //swap axes
             beta = gamma;
             gamma = b;
             
