@@ -6,205 +6,118 @@ import * as THREE from 'three'
  * W3C Device Orientation control (http://w3c.github.io/deviceorientation/spec-source-orientation.html)
  */
 
-export const DeviceOrientationControls = function( object, offsetDeg, firstEvent, onEvent, canvas ) {
 
-	var scope = this;
+const zee = new THREE.Vector3(0, 0, 1);
+const euler = new THREE.Euler();
+const q0 = new THREE.Quaternion();
+const q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
 
-	this.object = object;
-	this.object.rotation.reorder( "YXZ" );
 
-	this.enabled = true;
+export class DeviceOrientationControls {
+    object = null;
+    enabled = true;
+    deviceOrientation = {};
+    screenOrientation = typeof screen !== 'undefined' ? screen.orientation.angle || 0 : 0;
+    portraitMode = typeof screen !== 'undefined' ? screen.orientation.type || 'landscape-primary' : 'landscape-primary';
+    alpha = 0;
+    beta = 0;
+    gamma = 0;
+    initialQuaternion = new THREE.Quaternion();
+    firstCall = true;
+    offsetDeg = 0; // Assuming default value, adjust as necessary
+    firstEvent = null; // Assuming default value, adjust as necessary
+    onEvent = null; // Assuming default value, adjust as necessary
+    canvas = null; // Assuming default value, adjust as necessary
+    initialQuaternion = new THREE.Quaternion();
 
-	this.deviceOrientation = {};
-	if(typeof screen !== 'undefined') {
-		this.screenOrientation = screen.orientation.angle || 0;
-		this.portraitMode = screen.orientation.type || 'landscape-primary';
-	} else {
-		this.screenOrientation = 0;
-		this.portraitMode = 'landscape-primary';
-	}
+    constructor(object, offsetDeg, firstEvent, onEvent, canvas) {
+        this.object = object;
+        this.object.rotation.reorder("YXZ");
+        this.offsetDeg = offsetDeg;
+        this.firstEvent = firstEvent;
+        this.onEvent = onEvent;
+        this.canvas = canvas;
 
-	this.alpha = 0;
-	this.beta = 0;
-	this.gamma = 0;
+        // Set the initial quaternion based on the object's current rotation
+        this.initialQuaternion.copy(this.object.quaternion);
 
-	this.alphaOffsetAngle = offsetDeg?.alpha || undefined;
-	this.betaOffsetAngle = offsetDeg?.beta || undefined;
-	this.gammaOffsetAngle = offsetDeg?.gamma || undefined;
+        // Auto-connect on instantiation
+        this.connect();
+    }
 
-	if(this.alphaOffsetAngle) {
-		this.initialQuaternion = new THREE.Quaternion();
-		this.initialQuaternion.setFromEuler(new THREE.Euler(
-			THREE.MathUtils.degToRad(this.betaOffsetAngle),
-			THREE.MathUtils.degToRad(this.alphaOffsetAngle),
-			THREE.MathUtils.degToRad(this.gammaOffsetAngle),
-			"YXZ"
-		));
-	}
- 
-	let firstCall = true;
-
-	var onDeviceOrientationChangeEvent = function( event ) {
-		scope.deviceOrientation = event;
-	};
-
-	var onScreenOrientationChangeEvent = (ev)=> {
-		scope.screenOrientation = ev.target.angle; //screen.orientatio
-		//if(scope.portraitMode !== ev.target.type) alert("Portrait mode change: "+ ev.target.type);
-		scope.portraitMode = ev.target.type;
+	reset() {
 		
 	}
 
-	var setObjectQuaternion = function() {
-        var zee = new THREE.Vector3(0, 0, 1);
-        var euler = new THREE.Euler();
-        var q0 = new THREE.Quaternion();
-        var q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
+    onDeviceOrientationChangeEvent = (event) => {
+        this.deviceOrientation = event;
+    };
 
-        return function(quaternion, alpha, beta, gamma, orient) {
+    onScreenOrientationChangeEvent = (ev) => {
+        this.screenOrientation = ev.target.angle;
+        this.portraitMode = ev.target.type;
+    };
 
-            euler.set(beta, alpha, -gamma, 'YXZ'); // 'ZXY' for the device, but 'YXZ' for us
-
-			quaternion.setFromEuler( euler ); // orient the device
-
-			quaternion.multiply( q1 ); // camera looks out the back of the device, not the top
-
-			quaternion.multiply( q0.setFromAxisAngle( zee, - orient ) ); // adjust for screen orientation
-            // var deviceQuaternion = new THREE.Quaternion().setFromEuler(euler);
-            // deviceQuaternion.multiply(q1); // camera looks out the back of the device, not the top
-            // deviceQuaternion.multiply(q0.setFromAxisAngle(zee, -orient)); // adjust for screen orientation
-			//quaternion.copy(scope.initialQuaternion).multiply(deviceQuaternion); // Apply initial offset and then device orientation
-			
-        };
-    }();
-
-
-	this.update = function(){//landscape=true) {
-
-		if ( scope.enabled === false ) return;
-
-		if(typeof scope.deviceOrientation.alpha === 'number') {
-
-			if(typeof this.alphaOffsetAngle === 'undefined') {
-				this.alphaOffsetAngle = scope.deviceOrientation.alpha;
-				this.betaOffsetAngle = scope.deviceOrientation.beta;
-				this.gammaOffsetAngle = scope.deviceOrientation.gamma;
-				this.initialQuaternion = new THREE.Quaternion();
-				this.initialQuaternion.setFromEuler(new THREE.Euler(
-					THREE.MathUtils.degToRad(this.betaOffsetAngle),
-					THREE.MathUtils.degToRad(this.alphaOffsetAngle),
-					THREE.MathUtils.degToRad(this.gammaOffsetAngle),
-					"YXZ"
-				));
-			}
-
-			//todo, this does not always respond correctly to device orientation
-			var alpha = scope.deviceOrientation.alpha ? THREE.MathUtils.degToRad(scope.deviceOrientation.alpha) : 0; // Z
-			var beta = scope.deviceOrientation.beta ? THREE.MathUtils.degToRad(scope.deviceOrientation.beta) : 0; // X'
-			var gamma = scope.deviceOrientation.gamma ? THREE.MathUtils.degToRad(scope.deviceOrientation.gamma) : 0; // Y''
-			var orient = scope.screenOrientation ? THREE.MathUtils.degToRad( scope.screenOrientation ) : 0; // O
-	
-			if(alpha === this.alpha && beta === this.beta && gamma === this.gamma) {
-				return; //prevent redundant updates
-			}
-
-			this.alpha = alpha;
-			this.beta = beta;
-			this.gamma = gamma;
-
-			setObjectQuaternion( 
-				scope.object.quaternion, 
-				alpha, 
-				beta,//landscape ? gamma : beta, 
-				gamma,//landscape ? beta : gamma, 
-				orient 
-			);
-			
-			if(firstCall && firstEvent) {
-				firstCall = false;
-				firstEvent(this.object, scope.deviceOrientation, scope.screenOrientation, scope.portraitMode);
-			}
-
-			if(onEvent) {
-				onEvent(this.object, scope.deviceOrientation, scope.screenOrientation, scope.portraitMode);
-			}
-		}
+    setObjectQuaternion = (quaternion, alpha, beta, gamma, orient) => {
+		euler.set(beta, alpha, -gamma, 'YXZ');
+		quaternion.setFromEuler(euler);
+		quaternion.multiply(q1);
+		quaternion.multiply(q0.setFromAxisAngle(zee, -orient));
+		quaternion.premultiply(this.initialQuaternion); // Apply the initial orientation
 	};
 
-	this.connect = function() {
+    update = () => {
+        if (!this.enabled) return;
 
-		//onScreenOrientationChangeEvent(); // run once on load
-		if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGlobalScope) { //workercanvas stuff 
-			canvas.addEventListener( 'orientation', onScreenOrientationChangeEvent, false );
-			canvas.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-		} else {
-			screen?.orientation.addEventListener('change', onScreenOrientationChangeEvent, false );
-			window.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-		}
-		scope.enabled = true;
+        const { alpha, beta, gamma } = this.deviceOrientation;
+        if (typeof alpha === 'number') {
+            const orient = THREE.MathUtils.degToRad(this.screenOrientation || 0);
+            const radAlpha = THREE.MathUtils.degToRad(alpha || 0);
+            const radBeta = THREE.MathUtils.degToRad(beta || 0);
+            const radGamma = THREE.MathUtils.degToRad(gamma || 0);
 
-	};
+            if (radAlpha === this.alpha && radBeta === this.beta && radGamma === this.gamma) return;
 
-	this.disconnect = function() {
-		if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGlobalScope) { //workercanvas stuff 
-			canvas.addEventListener( 'orientation', onScreenOrientationChangeEvent, false );
-			canvas.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-		} else {
-			screen?.orientation.removeEventListener('change', onScreenOrientationChangeEvent, false );
-			window.removeEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-		}
-		scope.enabled = false;
+            this.alpha = radAlpha;
+            this.beta = radBeta;
+            this.gamma = radGamma;
 
-	};
+            this.setObjectQuaternion(this.object.quaternion, radAlpha, radBeta, radGamma, orient);
 
-	this.updateAlphaOffsetAngle = function( angle ) {
+            if (this.firstCall && this.firstEvent) {
+                this.firstCall = false;
+                this.firstEvent(this.object, this.deviceOrientation, this.screenOrientation, this.portraitMode);
+            }
 
-		this.alphaOffsetAngle = angle;
-		this.initialQuaternion = new THREE.Quaternion();
-		this.initialQuaternion.setFromEuler(new THREE.Euler(
-			THREE.MathUtils.degToRad(this.betaOffsetAngle),
-			THREE.MathUtils.degToRad(this.alphaOffsetAngle),
-			THREE.MathUtils.degToRad(this.gammaOffsetAngle),
-			"YXZ"
-		));
-		this.update();
+            if (this.onEvent) {
+                this.onEvent(this.object, this.deviceOrientation, this.screenOrientation, this.portraitMode);
+            }
+        }
+    };
 
-	};
+    connect = () => {
+        if (typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGlobalScope) {
+            this.canvas.addEventListener('orientation', this.onScreenOrientationChangeEvent, false);
+            this.canvas.addEventListener('deviceorientation', this.onDeviceOrientationChangeEvent, false);
+        } else {
+            screen?.orientation.addEventListener('change', this.onScreenOrientationChangeEvent, false);
+            window.addEventListener('deviceorientation', this.onDeviceOrientationChangeEvent, false);
+        }
+        this.enabled = true;
+    };
 
-	this.updateBetaOffsetAngle = function( angle ) {
+    disconnect = () => {
+        if (typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGlobalScope) {
+            this.canvas.removeEventListener('orientation', this.onScreenOrientationChangeEvent, false);
+            this.canvas.removeEventListener('deviceorientation', this.onDeviceOrientationChangeEvent, false);
+        } else {
+            screen?.orientation.removeEventListener('change', this.onScreenOrientationChangeEvent, false);
+            window.removeEventListener('deviceorientation', this.onDeviceOrientationChangeEvent, false);
+        }
+        this.enabled = false;
+    };
 
-		this.betaOffsetAngle = angle;
-		this.initialQuaternion = new THREE.Quaternion();
-		this.initialQuaternion.setFromEuler(new THREE.Euler(
-			THREE.MathUtils.degToRad(this.betaOffsetAngle),
-			THREE.MathUtils.degToRad(this.alphaOffsetAngle),
-			THREE.MathUtils.degToRad(this.gammaOffsetAngle),
-			"YXZ"
-		));
-		this.update();
-
-	};
-
-	this.updateGammaOffsetAngle = function( angle ) {
-
-		this.gammaOffsetAngle = angle;
-		this.initialQuaternion = new THREE.Quaternion();
-		this.initialQuaternion.setFromEuler(new THREE.Euler(
-			THREE.MathUtils.degToRad(this.betaOffsetAngle),
-			THREE.MathUtils.degToRad(this.alphaOffsetAngle),
-			THREE.MathUtils.degToRad(this.gammaOffsetAngle),
-			"YXZ"
-		));
-		this.update();
-
-	};
-
-	this.dispose = function() {
-
-		this.disconnect();
-
-	};
-
-	this.connect();
-
-};
+    dispose = () => {
+        this.disconnect();
+    };
+}

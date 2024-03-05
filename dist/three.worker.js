@@ -2871,8 +2871,8 @@ var Quaternion = class {
     this._onChangeCallback();
     return this;
   }
-  setFromEuler(euler, update = true) {
-    const x2 = euler._x, y2 = euler._y, z2 = euler._z, order = euler._order;
+  setFromEuler(euler2, update = true) {
+    const x2 = euler2._x, y2 = euler2._y, z2 = euler2._z, order = euler2._order;
     const cos = Math.cos;
     const sin = Math.sin;
     const c1 = cos(x2 / 2);
@@ -3284,8 +3284,8 @@ var Vector3 = class _Vector3 {
     this.z = a.z * b2.z;
     return this;
   }
-  applyEuler(euler) {
-    return this.applyQuaternion(_quaternion$4.setFromEuler(euler));
+  applyEuler(euler2) {
+    return this.applyQuaternion(_quaternion$4.setFromEuler(euler2));
   }
   applyAxisAngle(axis, angle) {
     return this.applyQuaternion(_quaternion$4.setFromAxisAngle(axis, angle));
@@ -4414,13 +4414,13 @@ var Matrix4 = class _Matrix4 {
     te[15] = 1;
     return this;
   }
-  makeRotationFromEuler(euler) {
+  makeRotationFromEuler(euler2) {
     const te = this.elements;
-    const x2 = euler.x, y2 = euler.y, z2 = euler.z;
+    const x2 = euler2.x, y2 = euler2.y, z2 = euler2.z;
     const a = Math.cos(x2), b2 = Math.sin(x2);
     const c2 = Math.cos(y2), d2 = Math.sin(y2);
     const e = Math.cos(z2), f2 = Math.sin(z2);
-    if (euler.order === "XYZ") {
+    if (euler2.order === "XYZ") {
       const ae = a * e, af = a * f2, be = b2 * e, bf = b2 * f2;
       te[0] = c2 * e;
       te[4] = -c2 * f2;
@@ -4431,7 +4431,7 @@ var Matrix4 = class _Matrix4 {
       te[2] = bf - ae * d2;
       te[6] = be + af * d2;
       te[10] = a * c2;
-    } else if (euler.order === "YXZ") {
+    } else if (euler2.order === "YXZ") {
       const ce = c2 * e, cf = c2 * f2, de = d2 * e, df = d2 * f2;
       te[0] = ce + df * b2;
       te[4] = de * b2 - cf;
@@ -4442,7 +4442,7 @@ var Matrix4 = class _Matrix4 {
       te[2] = cf * b2 - de;
       te[6] = df + ce * b2;
       te[10] = a * c2;
-    } else if (euler.order === "ZXY") {
+    } else if (euler2.order === "ZXY") {
       const ce = c2 * e, cf = c2 * f2, de = d2 * e, df = d2 * f2;
       te[0] = ce - df * b2;
       te[4] = -a * f2;
@@ -4453,7 +4453,7 @@ var Matrix4 = class _Matrix4 {
       te[2] = -a * d2;
       te[6] = b2;
       te[10] = a * c2;
-    } else if (euler.order === "ZYX") {
+    } else if (euler2.order === "ZYX") {
       const ae = a * e, af = a * f2, be = b2 * e, bf = b2 * f2;
       te[0] = c2 * e;
       te[4] = be * d2 - af;
@@ -4464,7 +4464,7 @@ var Matrix4 = class _Matrix4 {
       te[2] = -d2;
       te[6] = b2 * c2;
       te[10] = a * c2;
-    } else if (euler.order === "YZX") {
+    } else if (euler2.order === "YZX") {
       const ac = a * c2, ad = a * d2, bc = b2 * c2, bd = b2 * d2;
       te[0] = c2 * e;
       te[4] = bd - ac * f2;
@@ -4475,7 +4475,7 @@ var Matrix4 = class _Matrix4 {
       te[2] = -d2 * e;
       te[6] = ad * f2 + bc;
       te[10] = ac - bd * f2;
-    } else if (euler.order === "XZY") {
+    } else if (euler2.order === "XZY") {
       const ac = a * c2, ad = a * d2, bc = b2 * c2, bd = b2 * d2;
       te[0] = c2 * e;
       te[4] = -f2;
@@ -5070,11 +5070,11 @@ var Euler = class _Euler {
   clone() {
     return new this.constructor(this._x, this._y, this._z, this._order);
   }
-  copy(euler) {
-    this._x = euler._x;
-    this._y = euler._y;
-    this._z = euler._z;
-    this._order = euler._order;
+  copy(euler2) {
+    this._x = euler2._x;
+    this._y = euler2._y;
+    this._z = euler2._z;
+    this._order = euler2._order;
     this._onChangeCallback();
     return this;
   }
@@ -5163,8 +5163,8 @@ var Euler = class _Euler {
     _quaternion$3.setFromEuler(this);
     return this.setFromQuaternion(_quaternion$3, newOrder);
   }
-  equals(euler) {
-    return euler._x === this._x && euler._y === this._y && euler._z === this._z && euler._order === this._order;
+  equals(euler2) {
+    return euler2._x === this._x && euler2._y === this._y && euler2._z === this._z && euler2._order === this._order;
   }
   fromArray(array) {
     this._x = array[0];
@@ -5324,8 +5324,8 @@ var Object3D = class _Object3D extends EventDispatcher {
   setRotationFromAxisAngle(axis, angle) {
     this.quaternion.setFromAxisAngle(axis, angle);
   }
-  setRotationFromEuler(euler) {
-    this.quaternion.setFromEuler(euler, true);
+  setRotationFromEuler(euler2) {
+    this.quaternion.setFromEuler(euler2, true);
   }
   setRotationFromMatrix(m2) {
     this.quaternion.setFromRotationMatrix(m2);
@@ -23435,20 +23435,20 @@ function area(p2, q2, r) {
 function equals(p1, p2) {
   return p1.x === p2.x && p1.y === p2.y;
 }
-function intersects(p1, q1, p2, q2) {
-  const o1 = sign(area(p1, q1, p2));
-  const o2 = sign(area(p1, q1, q2));
+function intersects(p1, q12, p2, q2) {
+  const o1 = sign(area(p1, q12, p2));
+  const o2 = sign(area(p1, q12, q2));
   const o3 = sign(area(p2, q2, p1));
-  const o4 = sign(area(p2, q2, q1));
+  const o4 = sign(area(p2, q2, q12));
   if (o1 !== o2 && o3 !== o4)
     return true;
-  if (o1 === 0 && onSegment(p1, p2, q1))
+  if (o1 === 0 && onSegment(p1, p2, q12))
     return true;
-  if (o2 === 0 && onSegment(p1, q2, q1))
+  if (o2 === 0 && onSegment(p1, q2, q12))
     return true;
   if (o3 === 0 && onSegment(p2, p1, q2))
     return true;
-  if (o4 === 0 && onSegment(p2, q1, q2))
+  if (o4 === 0 && onSegment(p2, q12, q2))
     return true;
   return false;
 }
@@ -32574,155 +32574,101 @@ var OrbitControls = class extends EventDispatcher {
 };
 
 // src/hyperspectral_tool/DeviceOrientationControls.js
-var DeviceOrientationControls = function(object, offsetDeg, firstEvent, onEvent, canvas) {
-  var scope = this;
-  this.object = object;
-  this.object.rotation.reorder("YXZ");
-  this.enabled = true;
-  this.deviceOrientation = {};
-  if (typeof screen !== "undefined") {
-    this.screenOrientation = screen.orientation.angle || 0;
-    this.portraitMode = screen.orientation.type || "landscape-primary";
-  } else {
-    this.screenOrientation = 0;
-    this.portraitMode = "landscape-primary";
+var zee = new Vector3(0, 0, 1);
+var euler = new Euler();
+var q0 = new Quaternion();
+var q1 = new Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
+var DeviceOrientationControls = class {
+  object = null;
+  enabled = true;
+  deviceOrientation = {};
+  screenOrientation = typeof screen !== "undefined" ? screen.orientation.angle || 0 : 0;
+  portraitMode = typeof screen !== "undefined" ? screen.orientation.type || "landscape-primary" : "landscape-primary";
+  alpha = 0;
+  beta = 0;
+  gamma = 0;
+  initialQuaternion = new Quaternion();
+  firstCall = true;
+  offsetDeg = 0;
+  // Assuming default value, adjust as necessary
+  firstEvent = null;
+  // Assuming default value, adjust as necessary
+  onEvent = null;
+  // Assuming default value, adjust as necessary
+  canvas = null;
+  // Assuming default value, adjust as necessary
+  initialQuaternion = new Quaternion();
+  constructor(object, offsetDeg, firstEvent, onEvent, canvas) {
+    this.object = object;
+    this.object.rotation.reorder("YXZ");
+    this.offsetDeg = offsetDeg;
+    this.firstEvent = firstEvent;
+    this.onEvent = onEvent;
+    this.canvas = canvas;
+    this.initialQuaternion.copy(this.object.quaternion);
+    this.connect();
   }
-  this.alpha = 0;
-  this.beta = 0;
-  this.gamma = 0;
-  this.alphaOffsetAngle = offsetDeg?.alpha || void 0;
-  this.betaOffsetAngle = offsetDeg?.beta || void 0;
-  this.gammaOffsetAngle = offsetDeg?.gamma || void 0;
-  if (this.alphaOffsetAngle) {
-    this.initialQuaternion = new Quaternion();
-    this.initialQuaternion.setFromEuler(new Euler(
-      MathUtils.degToRad(this.betaOffsetAngle),
-      MathUtils.degToRad(this.alphaOffsetAngle),
-      MathUtils.degToRad(this.gammaOffsetAngle),
-      "YXZ"
-    ));
-  }
-  let firstCall = true;
-  var onDeviceOrientationChangeEvent = function(event) {
-    scope.deviceOrientation = event;
+  onDeviceOrientationChangeEvent = (event) => {
+    this.deviceOrientation = event;
   };
-  var onScreenOrientationChangeEvent = (ev) => {
-    scope.screenOrientation = ev.target.angle;
-    scope.portraitMode = ev.target.type;
+  onScreenOrientationChangeEvent = (ev) => {
+    this.screenOrientation = ev.target.angle;
+    this.portraitMode = ev.target.type;
   };
-  var setObjectQuaternion = function() {
-    var zee = new Vector3(0, 0, 1);
-    var euler = new Euler();
-    var q0 = new Quaternion();
-    var q1 = new Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
-    return function(quaternion, alpha, beta, gamma, orient) {
-      euler.set(beta, alpha, -gamma, "YXZ");
-      quaternion.setFromEuler(euler);
-      quaternion.multiply(q1);
-      quaternion.multiply(q0.setFromAxisAngle(zee, -orient));
-    };
-  }();
-  this.update = function() {
-    if (scope.enabled === false)
+  setObjectQuaternion = (quaternion, alpha, beta, gamma, orient) => {
+    euler.set(beta, alpha, -gamma, "YXZ");
+    quaternion.setFromEuler(euler);
+    quaternion.multiply(q1);
+    quaternion.multiply(q0.setFromAxisAngle(zee, -orient));
+    quaternion.premultiply(this.initialQuaternion);
+  };
+  update = () => {
+    if (!this.enabled)
       return;
-    if (typeof scope.deviceOrientation.alpha === "number") {
-      if (typeof this.alphaOffsetAngle === "undefined") {
-        this.alphaOffsetAngle = scope.deviceOrientation.alpha;
-        this.betaOffsetAngle = scope.deviceOrientation.beta;
-        this.gammaOffsetAngle = scope.deviceOrientation.gamma;
-        this.initialQuaternion = new Quaternion();
-        this.initialQuaternion.setFromEuler(new Euler(
-          MathUtils.degToRad(this.betaOffsetAngle),
-          MathUtils.degToRad(this.alphaOffsetAngle),
-          MathUtils.degToRad(this.gammaOffsetAngle),
-          "YXZ"
-        ));
-      }
-      var alpha = scope.deviceOrientation.alpha ? MathUtils.degToRad(scope.deviceOrientation.alpha) : 0;
-      var beta = scope.deviceOrientation.beta ? MathUtils.degToRad(scope.deviceOrientation.beta) : 0;
-      var gamma = scope.deviceOrientation.gamma ? MathUtils.degToRad(scope.deviceOrientation.gamma) : 0;
-      var orient = scope.screenOrientation ? MathUtils.degToRad(scope.screenOrientation) : 0;
-      if (alpha === this.alpha && beta === this.beta && gamma === this.gamma) {
+    const { alpha, beta, gamma } = this.deviceOrientation;
+    if (typeof alpha === "number") {
+      const orient = MathUtils.degToRad(this.screenOrientation || 0);
+      const radAlpha = MathUtils.degToRad(alpha || 0);
+      const radBeta = MathUtils.degToRad(beta || 0);
+      const radGamma = MathUtils.degToRad(gamma || 0);
+      if (radAlpha === this.alpha && radBeta === this.beta && radGamma === this.gamma)
         return;
+      this.alpha = radAlpha;
+      this.beta = radBeta;
+      this.gamma = radGamma;
+      this.setObjectQuaternion(this.object.quaternion, radAlpha, radBeta, radGamma, orient);
+      if (this.firstCall && this.firstEvent) {
+        this.firstCall = false;
+        this.firstEvent(this.object, this.deviceOrientation, this.screenOrientation, this.portraitMode);
       }
-      this.alpha = alpha;
-      this.beta = beta;
-      this.gamma = gamma;
-      setObjectQuaternion(
-        scope.object.quaternion,
-        alpha,
-        beta,
-        //landscape ? gamma : beta, 
-        gamma,
-        //landscape ? beta : gamma, 
-        orient
-      );
-      if (firstCall && firstEvent) {
-        firstCall = false;
-        firstEvent(this.object, scope.deviceOrientation, scope.screenOrientation, scope.portraitMode);
-      }
-      if (onEvent) {
-        onEvent(this.object, scope.deviceOrientation, scope.screenOrientation, scope.portraitMode);
+      if (this.onEvent) {
+        this.onEvent(this.object, this.deviceOrientation, this.screenOrientation, this.portraitMode);
       }
     }
   };
-  this.connect = function() {
+  connect = () => {
     if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlobalScope) {
-      canvas.addEventListener("orientation", onScreenOrientationChangeEvent, false);
-      canvas.addEventListener("deviceorientation", onDeviceOrientationChangeEvent, false);
+      this.canvas.addEventListener("orientation", this.onScreenOrientationChangeEvent, false);
+      this.canvas.addEventListener("deviceorientation", this.onDeviceOrientationChangeEvent, false);
     } else {
-      screen?.orientation.addEventListener("change", onScreenOrientationChangeEvent, false);
-      window.addEventListener("deviceorientation", onDeviceOrientationChangeEvent, false);
+      screen?.orientation.addEventListener("change", this.onScreenOrientationChangeEvent, false);
+      window.addEventListener("deviceorientation", this.onDeviceOrientationChangeEvent, false);
     }
-    scope.enabled = true;
+    this.enabled = true;
   };
-  this.disconnect = function() {
+  disconnect = () => {
     if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlobalScope) {
-      canvas.addEventListener("orientation", onScreenOrientationChangeEvent, false);
-      canvas.addEventListener("deviceorientation", onDeviceOrientationChangeEvent, false);
+      this.canvas.removeEventListener("orientation", this.onScreenOrientationChangeEvent, false);
+      this.canvas.removeEventListener("deviceorientation", this.onDeviceOrientationChangeEvent, false);
     } else {
-      screen?.orientation.removeEventListener("change", onScreenOrientationChangeEvent, false);
-      window.removeEventListener("deviceorientation", onDeviceOrientationChangeEvent, false);
+      screen?.orientation.removeEventListener("change", this.onScreenOrientationChangeEvent, false);
+      window.removeEventListener("deviceorientation", this.onDeviceOrientationChangeEvent, false);
     }
-    scope.enabled = false;
+    this.enabled = false;
   };
-  this.updateAlphaOffsetAngle = function(angle) {
-    this.alphaOffsetAngle = angle;
-    this.initialQuaternion = new Quaternion();
-    this.initialQuaternion.setFromEuler(new Euler(
-      MathUtils.degToRad(this.betaOffsetAngle),
-      MathUtils.degToRad(this.alphaOffsetAngle),
-      MathUtils.degToRad(this.gammaOffsetAngle),
-      "YXZ"
-    ));
-    this.update();
-  };
-  this.updateBetaOffsetAngle = function(angle) {
-    this.betaOffsetAngle = angle;
-    this.initialQuaternion = new Quaternion();
-    this.initialQuaternion.setFromEuler(new Euler(
-      MathUtils.degToRad(this.betaOffsetAngle),
-      MathUtils.degToRad(this.alphaOffsetAngle),
-      MathUtils.degToRad(this.gammaOffsetAngle),
-      "YXZ"
-    ));
-    this.update();
-  };
-  this.updateGammaOffsetAngle = function(angle) {
-    this.gammaOffsetAngle = angle;
-    this.initialQuaternion = new Quaternion();
-    this.initialQuaternion.setFromEuler(new Euler(
-      MathUtils.degToRad(this.betaOffsetAngle),
-      MathUtils.degToRad(this.alphaOffsetAngle),
-      MathUtils.degToRad(this.gammaOffsetAngle),
-      "YXZ"
-    ));
-    this.update();
-  };
-  this.dispose = function() {
+  dispose = () => {
     this.disconnect();
   };
-  this.connect();
 };
 
 // src/hyperspectral_tool/three.worker.ts

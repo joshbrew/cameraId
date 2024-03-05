@@ -111,8 +111,11 @@ export class SphericalVideoRenderer extends HTMLElement {
                                 self.lookAtSphere();
                             }, 
                             (obj,o,ang,pmode) => {
-                                if(pmode.includes('landscape')) 
-                                    self.partialSphere.rotateZ(Math.PI/2); 
+                                
+                                // self.camera.rotation.z = Math.PI/2;
+                                // self.partialSphere.rotation.z = Math.PI/2;
+                                // if(pmode.includes('landscape')) 
+                                //     self.partialSphere.rotateZ(Math.PI/2); 
                             },
                             self.canvas
                         );
@@ -125,17 +128,7 @@ export class SphericalVideoRenderer extends HTMLElement {
                 self.resetRender = () => {
                     if(self.partialSphere) {
                         self.lookAtSphere();
-                        let startPos = self.startPos;
-                        if(startPos && startPos !== 'center') {
-                            let fov = self.camera.fov;
-                            let vfov = self.sphereFOV;
-                            let diff = vfov - 0.75*fov;
-                            if(startPos === 'left') {
-                                self.camera.rotateY(diff*Math.PI/180);
-                            } else {
-                                self.camera.rotateY(-diff*Math.PI/180);
-                            }
-                        }
+                        
                     }
                     self.renderer.clear(); 
                 }
@@ -156,8 +149,21 @@ export class SphericalVideoRenderer extends HTMLElement {
                     // Make the camera look in the direction of the sphere's rotation
                     self.camera.lookAt(lookAtPoint);
                     self.camera.rotation.z = 0;
-                    if(/(android)/i.test(navigator.userAgent)) {
-                        self.camera.rotation.z -= Math.PI/2;
+                    
+                    // if(/(android)/i.test(navigator.userAgent)) {
+                    //     self.camera.rotation.z -= Math.PI/2;
+                    // }
+
+                    let startPos = self.startPos;
+                    if(startPos && startPos !== 'center') {
+                        let fov = self.camera.fov;
+                        let vfov = self.sphereFOV;
+                        let diff = vfov - 0.75*fov;
+                        if(startPos === 'left') {
+                            self.camera.rotateY(diff*Math.PI/180);
+                        } else {
+                            self.camera.rotateY(-diff*Math.PI/180);
+                        }
                     }
                 }
 
@@ -540,8 +546,10 @@ export class SphericalVideoRenderer extends HTMLElement {
                     this.lookAtSphere();
                 },
                 (obj,o,ang,pmode) => {
-                    if(pmode.includes('landscape')) 
-                        this.partialSphere.rotateZ(Math.PI/2); 
+                    // this.camera.rotation.z = Math.PI/2;
+                    // this.partialSphere.rotation.z = Math.PI/2;
+                    // if(pmode.includes('landscape')) 
+                    //     this.partialSphere.rotateZ(Math.PI/2); 
                 }
             );
             this.controls.update();
@@ -694,16 +702,6 @@ export class SphericalVideoRenderer extends HTMLElement {
     resetRender = () => {
         if(this.partialSphere) {
             this.lookAtSphere();
-            if(this.startPos !== 'center') {
-                let fov = this.camera.fov;
-                let vfov = this.sphereFOV;
-                let diff = vfov - 0.75*fov;
-                if(this.startPos === 'left') {
-                    this.camera.rotateY(diff*Math.PI/180);
-                } else {
-                    this.camera.rotateY(-diff*Math.PI/180);
-                }
-            }
         }
         if(!this.hideControls) {
             this.shadowRoot.getElementById('xSlider').value = 0;
@@ -728,8 +726,20 @@ export class SphericalVideoRenderer extends HTMLElement {
         // Make the camera look in the direction of the sphere's rotation
         this.camera.lookAt(lookAtPoint);
         this.camera.rotation.z = 0;
-        if(/(android)/i.test(navigator.userAgent)) {
-            this.camera.rotation.z -= Math.PI/2;
+        // if(/(android)/i.test(navigator.userAgent)) {
+        //     this.camera.rotation.z -= Math.PI/2;
+        // }
+
+        
+        if(this.startPos !== 'center') {
+            let fov = this.camera.fov;
+            let vfov = this.sphereFOV;
+            let diff = vfov - 0.75*fov;
+            if(this.startPos === 'left') {
+                this.camera.rotateY(diff*Math.PI/180);
+            } else {
+                this.camera.rotateY(-diff*Math.PI/180);
+            }
         }
     }
 
