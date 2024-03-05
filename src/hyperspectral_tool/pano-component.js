@@ -144,12 +144,12 @@ export class SphericalVideoRenderer extends HTMLElement {
                     let sphereCenter = self.partialSphere.position; // Center of the sphere
                     let direction = initialDirection.clone().applyQuaternion(self.partialSphere.quaternion).normalize();
             
-                      // Capture the current rotation of the camera before changing it
-                    let currentEuler = new THREE.Euler().setFromQuaternion(self.camera.quaternion, 'XYZ');
-                    let currentRotation = { x: currentEuler.x, y: currentEuler.y, z: currentEuler.z };
-
                     // Now set the camera position to the center of the sphere
                     self.camera.position.copy(sphereCenter);
+
+                    if(constrainX) direction.x = 0;
+                    if(constrainY) direction.y = 0;
+                    if(constrainZ) direction.z = 0;
             
                     // Calculate a point in space in the direction we want the camera to look
                     let lookAtPoint = new THREE.Vector3().addVectors(sphereCenter, direction);
@@ -157,15 +157,14 @@ export class SphericalVideoRenderer extends HTMLElement {
                     // Make the camera look in the direction of the sphere's rotation
                     self.camera.lookAt(lookAtPoint);
 
-                    // After lookAt, selectively reapply the original rotations based on constraints
-                    let finalEuler = new THREE.Euler(
-                        constrainX ? currentRotation.x : self.camera.rotation.x,
-                        constrainY ? currentRotation.y : self.camera.rotation.y,
-                        constrainZ ? currentRotation.z : self.camera.rotation.z,
-                        'XYZ'
-                    );
+                    self.camera.quaternion.copy(self.partialSphere.quaternion);
 
-                    self.camera.quaternion.setFromEuler(finalEuler);
+                    // Create a quaternion representing a 180 degree rotation around the Y axis
+                    let y180Rotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+
+                    // Apply this rotation to the camera's current quaternion
+                    self.camera.quaternion.multiply(y180Rotation);
+                    self.camera.rotateZ(Math.PI);
 
                     let startPos = self.startPos;
                     if(startPos && startPos !== 'center') {
