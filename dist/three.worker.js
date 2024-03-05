@@ -32636,7 +32636,6 @@ var DeviceOrientationControls = class {
     quaternion.setFromEuler(euler);
     quaternion.multiply(q1);
     quaternion.multiply(q0.setFromAxisAngle(zee, -orient));
-    quaternion.premultiply(this.initialQuaternion);
   };
   update = () => {
     if (!this.enabled)

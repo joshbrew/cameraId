@@ -83,7 +83,7 @@ export class DeviceOrientationControls {
 		quaternion.setFromEuler(euler);
 		quaternion.multiply(q1);
 		quaternion.multiply(q0.setFromAxisAngle(zee, -orient));
-		quaternion.premultiply(this.initialQuaternion); // Apply the initial orientation
+		//quaternion.premultiply(this.initialQuaternion); // Apply the initial orientation
 	};
 
     update = () => {
