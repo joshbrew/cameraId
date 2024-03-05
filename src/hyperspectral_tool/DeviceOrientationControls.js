@@ -18,7 +18,7 @@ export class DeviceOrientationControls {
     enabled = true;
     deviceOrientation = {};
     screenOrientation = typeof screen !== 'undefined' ? screen.orientation.angle || 0 : 0;
-    portraitMode = typeof screen !== 'undefined' ? screen.orientation.type || 'landscape-primary' : 'landscape-primary';
+    portraitMode = typeof screen !== 'undefined' ? screen.orientation.type : '';//|| 'landscape-primary' : 'landscape-primary';
     alpha = 0;
     beta = 0;
     gamma = 0;

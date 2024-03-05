@@ -115,8 +115,8 @@ export class SphericalVideoRenderer extends HTMLElement {
                                     self.camera.quaternion, 'XYZ'
                                 );
                                 self.partialSphere.rotation.z = cameraEuler.z;
-                                // if(pmode.includes('landscape')) 
-                                //     this.partialSphere.rotateZ(Math.PI/2); 
+                                if(pmode.includes('landscape')) 
+                                    self.partialSphere.rotateZ(Math.PI/2);
                             },
                             self.canvas
                         );
@@ -564,6 +564,8 @@ export class SphericalVideoRenderer extends HTMLElement {
                         this.camera.quaternion, 'XYZ'
                     );
                     this.partialSphere.rotation.z = cameraEuler.z;
+                    if(pmode.includes('landscape')) 
+                        this.partialSphere.rotateZ(Math.PI/2);
                 }
             );
             this.controls.update();
