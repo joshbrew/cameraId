@@ -160,7 +160,6 @@ export class SphericalVideoRenderer extends HTMLElement {
                     self.camera.quaternion.multiply(y180Rotation);
                     self.camera.rotateZ(Math.PI);
 
-                    
                     let cameraEuler = new THREE.Euler().setFromQuaternion(
                         self.camera.quaternion, 'XYZ'
                     );
@@ -251,14 +250,6 @@ export class SphericalVideoRenderer extends HTMLElement {
             
                 self.resetFOV = () => {
             
-                    if(self.controls) {
-                        // self.controls.screenOrientation = screen?.orientation?.angle || 0;
-                        // self.controls.portraitMode = screen?.orientation?.type || 'landscape-primary';
-                        self.controls.alphaOffsetAngle = undefined;
-                        self.controls.betaOffsetAngle = undefined;
-                        self.controls.gammaOffsetAngle = undefined;
-                    }
-
                     self.rotationRate.xRate = 0;
                     self.rotationRate.yRate = 0;
                     self.rotationRate.zRate = 0;
@@ -556,15 +547,16 @@ export class SphericalVideoRenderer extends HTMLElement {
                 undefined, 
                 () => { //TODO: MAKE SURE THIS ALWAYS FIXES THE IMAGE VERTICALLY WHEN STARTING/RESETTING TRACKING
                     this.lookAtSphere();
+                    this.renderer.clear();
                 },
                 (obj,o,ang,pmode) => {
-                    //fix roll
-                    let cameraEuler = new THREE.Euler().setFromQuaternion(
-                        this.camera.quaternion, 'XYZ'
-                    );
-                    this.partialSphere.rotation.z = cameraEuler.z;
-                    // if(pmode.includes('landscape')) 
-                    //     this.partialSphere.rotateZ(Math.PI/2);
+                    // //fix roll
+                    // let cameraEuler = new THREE.Euler().setFromQuaternion(
+                    //     this.camera.quaternion, 'XYZ'
+                    // );
+                    // this.partialSphere.rotation.z = cameraEuler.z;
+                    // // if(pmode.includes('landscape')) 
+                    // //     this.partialSphere.rotateZ(Math.PI/2);
                 }
             );
             this.controls.update();
@@ -732,34 +724,43 @@ export class SphericalVideoRenderer extends HTMLElement {
         constrainZ=false
     ) => {
         // Assuming the point we are tracking on the sphere's surface is initially at (0, 0, 1) before rotation
-        var initialDirection = new THREE.Vector3(0, 0, 1);
-        var sphereCenter = this.partialSphere.position; // Center of the sphere
-        var direction = initialDirection.clone().applyQuaternion(this.partialSphere.quaternion).normalize();
+        let initialDirection = new THREE.Vector3(0, 0, 1);
+        let sphereCenter = this.partialSphere.position; // Center of the sphere
+        let direction = initialDirection.clone().applyQuaternion(this.partialSphere.quaternion).normalize();
 
         // Now set the camera position to the center of the sphere
         this.camera.position.copy(sphereCenter);
 
+        if(constrainX) direction.x = 0;
+        if(constrainY) direction.y = 0;
+        if(constrainZ) direction.z = 0;
+
         // Calculate a point in space in the direction we want the camera to look
-        var lookAtPoint = new THREE.Vector3().addVectors(sphereCenter, direction);
+        let lookAtPoint = new THREE.Vector3().addVectors(sphereCenter, direction);
 
         // Make the camera look in the direction of the sphere's rotation
         this.camera.lookAt(lookAtPoint);
-        
-        // After lookAt, selectively reapply the original rotations based on constraints
-        let finalEuler = new THREE.Euler(
-            constrainX ? currentRotation.x : self.camera.rotation.x,
-            constrainY ? currentRotation.y : self.camera.rotation.y,
-            constrainZ ? currentRotation.z : self.camera.rotation.z,
-            'XYZ'
+
+        this.camera.quaternion.copy(this.partialSphere.quaternion);
+
+        // Create a quaternion representing a 180 degree rotation around the Y axis
+        let y180Rotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+
+        // Apply this rotation to the camera's current quaternion
+        this.camera.quaternion.multiply(y180Rotation);
+        this.camera.rotateZ(Math.PI);
+
+        let cameraEuler = new THREE.Euler().setFromQuaternion(
+            this.camera.quaternion, 'XYZ'
         );
+        this.partialSphere.rotation.z = cameraEuler.z;
 
-        self.camera.quaternion.setFromEuler(finalEuler);
-
-        if(this.startPos !== 'center') {
+        let startPos = this.startPos;
+        if(startPos && startPos !== 'center') {
             let fov = this.camera.fov;
             let vfov = this.sphereFOV;
             let diff = vfov - 0.75*fov;
-            if(this.startPos === 'left') {
+            if(startPos === 'left') {
                 this.camera.rotateY(diff*Math.PI/180);
             } else {
                 this.camera.rotateY(-diff*Math.PI/180);
@@ -895,13 +896,6 @@ export class SphericalVideoRenderer extends HTMLElement {
 
     resetFOV() {
 
-        if(this.controls) {
-            this.controls.screenOrientation = screen?.orientation?.angle || 0;
-            this.controls.portraitMode = screen?.orientation?.type || 'landscape-primary';
-            this.controls.alphaOffsetAngle = undefined;
-            this.controls.betaOffsetAngle = undefined;
-            this.controls.gammaOffsetAngle = undefined;
-        }
 
         this.camera.fov = this.startFOV;
         this.camera.position.z = 0;
