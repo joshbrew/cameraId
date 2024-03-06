@@ -32608,7 +32608,7 @@ var DeviceOrientationControls = class {
   initialQuaternion = new Quaternion();
   samples = [];
   //sample buffer
-  maxSamples = 100;
+  maxSamples = 30;
   //rolling buffer
   offset = { alpha: 0, beta: 0, gamma: 0 };
   //offset used for calibration

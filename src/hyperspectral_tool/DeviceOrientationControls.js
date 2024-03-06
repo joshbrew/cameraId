@@ -40,7 +40,7 @@ export class DeviceOrientationControls {
     canvas = null; // Assuming default value, adjust as necessary
     initialQuaternion = new THREE.Quaternion();
     samples = []; //sample buffer
-    maxSamples = 100; //rolling buffer
+    maxSamples = 30; //rolling buffer
 
 
     offset = {alpha:0, beta:0, gamma: 0}; //offset used for calibration
