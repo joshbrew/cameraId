@@ -14,7 +14,7 @@ import { BoundingBoxTool } from '../image_utils/boundingBoxTool'
 //specify number of divisions and then render that many threejs scenes to paint spectral images. We can paint mutliple images in one scene
 export function initPanoTool(parentElement=document.body) {
 
-    let BBTool; let PanoElm; let LensFOV = 77; let offscreen;
+    let BBTool; let PanoElm; let LensFOV = 30; let offscreen;
     let panos; let curElm; let curBB; let id;
 
     let container = document.createElement('div');
