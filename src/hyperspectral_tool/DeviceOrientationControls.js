@@ -33,7 +33,6 @@ export class DeviceOrientationControls {
     alpha = 0;
     beta = 0;
     gamma = 0;
-    initialQuaternion = new THREE.Quaternion();
     firstCall = true;
     offsetDeg = 0; // Assuming default value, adjust as necessary
     firstEvent = null; // Assuming default value, adjust as necessary

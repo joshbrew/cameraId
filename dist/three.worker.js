@@ -32596,7 +32596,6 @@ var DeviceOrientationControls = class {
   alpha = 0;
   beta = 0;
   gamma = 0;
-  initialQuaternion = new Quaternion();
   firstCall = true;
   offsetDeg = 0;
   // Assuming default value, adjust as necessary
