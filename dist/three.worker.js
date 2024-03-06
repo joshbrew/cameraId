@@ -32589,7 +32589,7 @@ var q1 = new Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
 var DeviceOrientationControls = class {
   object = null;
   enabled = true;
-  deviceOrientation = {};
+  deviceOrientation = void 0;
   screenOrientation = typeof screen !== "undefined" ? screen.orientation.angle || 0 : 0;
   portraitMode = typeof screen !== "undefined" ? screen.orientation.type : isMobile() ? "landscape-primary" : "";
   //|| 'landscape-primary' : 'landscape-primary';
@@ -32607,6 +32607,13 @@ var DeviceOrientationControls = class {
   canvas = null;
   // Assuming default value, adjust as necessary
   initialQuaternion = new Quaternion();
+  samples = [];
+  //sample buffer
+  maxSamples = 100;
+  //rolling buffer
+  offset = { alpha: 0, beta: 0, gamma: 0 };
+  //offset used for calibration
+  samplesSinceOffset = 0;
   constructor(object, offsetDeg, firstEvent, onEvent, canvas) {
     this.object = object;
     this.object.rotation.reorder("YXZ");
@@ -32637,15 +32644,42 @@ var DeviceOrientationControls = class {
     quaternion.multiply(q1);
     quaternion.multiply(q0.setFromAxisAngle(zee, -orient));
   };
+  calibrate = () => {
+    if (this.samples.length > 1) {
+      const rateOfChange = { alpha: 0, beta: 0, gamma: 0 };
+      let previousSample = this.samples[0];
+      const halfLen = Math.floor(this.samples.length * 0.5);
+      for (let i = 1; i < halfLen; i++) {
+        const currentValue = this.samples[i];
+        rateOfChange.alpha += currentValue.alpha - previousSample.alpha;
+        rateOfChange.beta += currentValue.beta - previousSample.beta;
+        rateOfChange.gamma += currentValue.gamma - previousSample.gamma;
+        previousSample = currentValue;
+      }
+      this.offset = {
+        alpha: rateOfChange.alpha / (halfLen - 1),
+        beta: rateOfChange.beta / (halfLen - 1),
+        gamma: rateOfChange.gamma / (halfLen - 1)
+      };
+      this.samplesSinceOffset = 0;
+    }
+  };
   update = () => {
-    if (!this.enabled)
+    if (!this.enabled || !this.deviceOrientation)
       return;
     const { alpha, beta, gamma } = this.deviceOrientation;
+    if ("alpha" in this.deviceOrientation)
+      this.samples.push({ alpha, beta, gamma });
+    else
+      return;
+    this.samplesSinceOffset++;
+    if (this.samples.length > this.maxSamples)
+      this.samples.shift();
     if (typeof alpha === "number") {
       const orient = MathUtils.degToRad(this.screenOrientation || 0);
-      const radAlpha = MathUtils.degToRad(alpha || 0);
-      const radBeta = MathUtils.degToRad(beta || 0);
-      const radGamma = MathUtils.degToRad(gamma || 0);
+      const radAlpha = MathUtils.degToRad(alpha - this.offset.alpha * this.samplesSinceOffset || 0);
+      const radBeta = MathUtils.degToRad(beta - this.offset.beta * this.samplesSinceOffset || 0);
+      const radGamma = MathUtils.degToRad(gamma - this.offset.gamma * this.samplesSinceOffset || 0);
       if (radAlpha === this.alpha && radBeta === this.beta && radGamma === this.gamma)
         return;
       this.alpha = radAlpha;
@@ -32660,6 +32694,7 @@ var DeviceOrientationControls = class {
         this.onEvent(this.object, this.deviceOrientation, this.screenOrientation, this.portraitMode);
       }
     }
+    this.deviceOrientation = void 0;
   };
   connect = () => {
     if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlobalScope) {

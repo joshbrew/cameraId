@@ -24,6 +24,8 @@ export function initPanoTool(parentElement=document.body) {
     Lens FOV: <input id="lensfov" value="${LensFOV}" min="1" max="179" type="number"/> Be sure this matches your camera lens for correct perspective<br/>
     Draw a box on the Picture-in-Picture to subdivide the image.
     <br/> 
+
+    <button id="calibrate">Calibrate Sensors</button>
     
     Multiple? 
     <input type="checkbox" id="multiple" checked/>
@@ -35,7 +37,10 @@ export function initPanoTool(parentElement=document.body) {
     `); //temp ux
 
     parentElement.appendChild(container);
-    
+
+    let calibrate = container.querySelector('#calibrate');
+
+
     let fovsetter = container.querySelector("#lensfov");
 
     fovsetter.onchange = (ev) => {
@@ -48,6 +53,16 @@ export function initPanoTool(parentElement=document.body) {
     let wrkrs = container.querySelector('#workers');
     
     let useWorkers = wrkrs?.checked || true; //todo: fix rendering bugs
+
+    calibrate.onclick = () => {
+        panos.forEach((pano) => {
+            if(pano.useWorkers) 
+                pano.renderThread.update({calibrate:true});
+            else 
+                pano.controls.calibrate();
+        });
+    }
+    
     
     const clearPanos = () => {
         if(PanoElm) {

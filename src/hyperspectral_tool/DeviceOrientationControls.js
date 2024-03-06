@@ -27,7 +27,7 @@ const q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/
 export class DeviceOrientationControls {
     object = null;
     enabled = true;
-    deviceOrientation = {};
+    deviceOrientation = undefined;
     screenOrientation = typeof screen !== 'undefined' ? screen.orientation.angle || 0 : 0;
     portraitMode = typeof screen !== 'undefined' ? screen.orientation.type : isMobile() ? 'landscape-primary' : '';//|| 'landscape-primary' : 'landscape-primary';
     alpha = 0;
@@ -40,6 +40,12 @@ export class DeviceOrientationControls {
     onEvent = null; // Assuming default value, adjust as necessary
     canvas = null; // Assuming default value, adjust as necessary
     initialQuaternion = new THREE.Quaternion();
+    samples = []; //sample buffer
+    maxSamples = 100; //rolling buffer
+
+
+    offset = {alpha:0, beta:0, gamma: 0}; //offset used for calibration
+    samplesSinceOffset = 0;
 
     constructor(object, offsetDeg, firstEvent, onEvent, canvas) {
         this.object = object;
@@ -86,15 +92,54 @@ export class DeviceOrientationControls {
 		//quaternion.premultiply(this.initialQuaternion); // Apply the initial orientation
 	};
 
+    calibrate = () => {
+        if (this.samples.length > 1) { // Ensure we have at least 2 samples to calculate rate of change
+            const rateOfChange = { alpha: 0, beta: 0, gamma: 0 };
+            let previousSample = this.samples[0];
+
+            // Use the first half of the buffer
+            const halfLen = Math.floor(this.samples.length * 0.5);
+            for (let i = 1; i < halfLen; i++) { // Start from 1 since we're comparing with the previous
+                const currentValue = this.samples[i];
+
+                // Calculate rate of change
+                rateOfChange.alpha += (currentValue.alpha - previousSample.alpha);
+                rateOfChange.beta += (currentValue.beta - previousSample.beta);
+                rateOfChange.gamma += (currentValue.gamma - previousSample.gamma);
+
+                previousSample = currentValue;
+            }
+
+            // Compute average rate of change per sample
+            this.offset = {
+                alpha: rateOfChange.alpha / (halfLen - 1),
+                beta: rateOfChange.beta / (halfLen - 1),
+                gamma: rateOfChange.gamma / (halfLen - 1),
+            };
+
+            this.samplesSinceOffset = 0;
+        }
+    }
+
     update = () => {
-        if (!this.enabled) return;
+        if (!this.enabled || !this.deviceOrientation) return;
 
         const { alpha, beta, gamma } = this.deviceOrientation;
+
+        if('alpha' in this.deviceOrientation) 
+            this.samples.push({alpha, beta, gamma});
+        else return; //no samples
+
+        this.samplesSinceOffset++;
+
+        if(this.samples.length > this.maxSamples) 
+            this.samples.shift();
+
         if (typeof alpha === 'number') {
             const orient = THREE.MathUtils.degToRad(this.screenOrientation || 0);
-            const radAlpha = THREE.MathUtils.degToRad(alpha || 0);
-            const radBeta = THREE.MathUtils.degToRad(beta || 0);
-            const radGamma = THREE.MathUtils.degToRad(gamma || 0);
+            const radAlpha = THREE.MathUtils.degToRad((alpha - (this.offset.alpha*this.samplesSinceOffset)) || 0);
+            const radBeta = THREE.MathUtils.degToRad((beta - (this.offset.beta*this.samplesSinceOffset)) || 0);
+            const radGamma = THREE.MathUtils.degToRad((gamma - (this.offset.gamma*this.samplesSinceOffset)) || 0);
 
             if (radAlpha === this.alpha && radBeta === this.beta && radGamma === this.gamma) return;
 
@@ -113,6 +158,9 @@ export class DeviceOrientationControls {
                 this.onEvent(this.object, this.deviceOrientation, this.screenOrientation, this.portraitMode);
             }
         }
+
+        
+        this.deviceOrientation = undefined;
     };
 
     connect = () => {

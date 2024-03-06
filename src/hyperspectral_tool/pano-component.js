@@ -414,6 +414,7 @@ export class SphericalVideoRenderer extends HTMLElement {
                     if(input.fov) self.updateFOV(input.fov);
                     if(input.resetRender) self.resetRender(); //do this last
                     if(input.autoAdjustFOV) self.autoAdjustFOV = input.autoAdjustFOV;
+                    if(input.calibrate && self.controls) self.controls.calibrate();
                 }
                 
                 
