@@ -41,7 +41,7 @@ export class MediaElementCreator {
     mediaOptions?: MediaStreamConstraints,
     autostart=true,
     includeAudio=false,
-    powerSave=isMobile()
+    powerSave=isMobile() //default to power save options on mobile 
   ) {
     this.parentElement = parentElement;
     this.mediaOptions = mediaOptions || {
@@ -56,9 +56,9 @@ export class MediaElementCreator {
     //limit resolution and framerate to save power
     if(powerSave && typeof this.mediaOptions.video === 'object') {
       if(typeof (this.mediaOptions.video?.width as any) === 'object') 
-        (this.mediaOptions.video?.width as any).ideal = 1920;
+        (this.mediaOptions.video?.width as any).ideal = 1280;
       if(typeof (this.mediaOptions.video?.height as any) === 'object') 
-        (this.mediaOptions.video?.height as any).ideal = 1080;
+        (this.mediaOptions.video?.height as any).ideal = 720;
 
       this.mediaOptions.video.frameRate = {min: 10, ideal: 30};
     }
