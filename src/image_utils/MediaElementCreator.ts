@@ -41,7 +41,7 @@ export class MediaElementCreator {
     mediaOptions?: MediaStreamConstraints,
     autostart=true,
     includeAudio=false,
-    powerSave=isMobile() //default to power save options on mobile 
+    powerSave=false//isMobile() //default to power save options on mobile 
   ) {
     this.parentElement = parentElement;
     this.mediaOptions = mediaOptions || {
