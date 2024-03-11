@@ -40,7 +40,7 @@ export const classifierSettings = {
         modelInpHeight:600,
         threadSettings:{
             decoderPool:4,
-            modelName:'pipeline_xgboost_spectrum.onnx',
+            modelName:'combined_fishazam-xgboost-classifier-spectrum.onnx',
             labelsName:'fish-labels.txt',
             inputName:'input',
             outputName:'probabilities',

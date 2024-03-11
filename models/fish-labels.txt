@@ -1,7 +1,5 @@
-alaskancod
-alaskanhalibut
-other
-pacificcod
-petralesole
-rockfish
+alaskan_cod
+baseline
+pacific_cod
+pacific_flounder
 tilapia
