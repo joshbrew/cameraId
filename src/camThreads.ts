@@ -444,11 +444,11 @@ export async function initVideoProcessingThreads(
                             i:this.Baseline.spectral.intensities[i].i - v.i
                         };
 
-                        //not reflective
-                        if(datapoint.r < 0) datapoint.r = 0;
-                        if(datapoint.g < 0) datapoint.g = 0;
-                        if(datapoint.b < 0) datapoint.b = 0;
-                        if(datapoint.i < 0) datapoint.i = 0;
+                        // can zero negatives but it's not really better
+                        // if(datapoint.r < 0) datapoint.r = 0;
+                        // if(datapoint.g < 0) datapoint.g = 0;
+                        // if(datapoint.b < 0) datapoint.b = 0;
+                        // if(datapoint.i < 0) datapoint.i = 0;
 
                         return datapoint;
                     });
