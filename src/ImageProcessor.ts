@@ -386,11 +386,12 @@ export class ImageProcessor {
             });
             
             const dummy = () => {} //reset
-            if(this.selectedInput === 'spectral') {
+            if(this.useAveraging) {
                 for(let i = 0; i < 9; i++) {
                     //console.log('awaiting');
                     await this.processBoundingBoxes(false, false);   
-                    await new Promise((res,rej)=>{
+                    
+                    if((this.Media.currentMediaElement as HTMLVideoElement).videoWidth) await new Promise((res,rej)=>{
                         this.onframe = (now) => {
                             this.onframe = dummy; //reset
                             //console.log("frame",now);

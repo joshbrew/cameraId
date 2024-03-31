@@ -129,7 +129,7 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
             let inp;
             
             if(data.image && data.input === 'image') {
-                inp = convertRGBAToRGBPlanarNormalized(data.image, outputWidth, outputHeight);//convertRGBAtoRGBFloat32(imageData.data); 
+                inp = convertRGBAtoRGBFloat32(data.image);//convertRGBAtoRGBFloat32(imageData.data); 
                 
                 tensor = new ort.Tensor('float32', inp, [1,3,outputWidth,outputHeight]);
         

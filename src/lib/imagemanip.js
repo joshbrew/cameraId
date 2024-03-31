@@ -102,7 +102,6 @@ export function convertRGBAtoRGBFloat32(rgbaData) {
 }
 
 
-//B
 export function convertRGBAToRGBPlanar(rgbaData, outputWidth, outputHeight) {
     // Initialize the number of pixels and the output array
     const numPixels = outputWidth * outputHeight;
