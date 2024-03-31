@@ -911,9 +911,10 @@ export class ImageProcessor {
                                     this.threads.classifierThread.id
                                 );
                             } else {
+                                const command = this.useAveraging ? 'getaveraged' : 'get';
                                 this.threads.poolingThread.run(
                                     {
-                                        command:'get',
+                                        command,
                                         name:crop.name,
                                         input:this.selectedInput
                                     },
@@ -925,7 +926,7 @@ export class ImageProcessor {
                         }
             
                         if(render) {
-                            const command1 = this.useAveraging ? 'getbmpaveraged' : 'getbmp';
+                            const command1 = 'getbmp';//this.useAveraging ? 'getbmpaveraged' : 'getbmp';
                             this.threads.poolingThread.run(
                                 {
                                     command:command1, //getbmpaveraged //this.useAutocor.checked ? 'getautocorbmp' : 

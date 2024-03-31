@@ -469,7 +469,7 @@ export async function initVideoProcessingThreads(
                 const captureCpy = Object.assign({},this.TempCaptures[input.name]);
                 if(!captureCpy?.image) return;
 
-                if(this.Baseline?.image) { //should be same size
+                if(input.command?.includes('averaged') && this.Baseline?.image) { //should be same size
                     const result = new Uint8ClampedArray(captureCpy.image.length);
 
                     for (let i = 0; i < captureCpy.image.length; i++) {
