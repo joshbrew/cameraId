@@ -463,7 +463,9 @@ export class MediaElementCreator {
     image.src = src;
     image.onload = () => {
       this.deinitMediaElement();
-      this.parentElement.appendChild(image);
+      const imageSpan = document.createElement('span');
+      imageSpan.appendChild(image);
+      this.parentElement.appendChild(imageSpan);
       this.currentMediaElement = image;
       if(this.ontargetchanged) this.ontargetchanged(src, image);
     };

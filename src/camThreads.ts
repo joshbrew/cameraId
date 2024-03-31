@@ -367,7 +367,7 @@ export async function initVideoProcessingThreads(
                 
                 //TODO: IMAGE SUBTRACTION ALPHA IS A LITTLE JANK, 
                 // WOULD BE BETTER TO DO DIRECT PIXEL VALUE AVERAGING AND SUBTRACTION BUT WE NEED A GPU IMPLEMENTATION FOR THAT
-                if(this.Baseline?.bmp) {
+                if(input.command?.includes('averaged') && this.Baseline?.bmp) {
                     this.SubtractionOffscreen.width = capture.width;
                     this.SubtractionOffscreen.height = capture.height;
                     (this.SubtractionOffscreenContext as CanvasRenderingContext2D).globalCompositeOperation = 'difference';
@@ -430,7 +430,7 @@ export async function initVideoProcessingThreads(
                 captureCpy.cropIndex = captureCpy.cropIndex;
                 captureCpy.input = input.input;
                 
-                if(this.Baseline?.spectral) { //correct for baseline
+                if(input.command?.includes('averaged') && this.Baseline?.spectral) { //correct for baseline
                     const result = captureCpy.spectral.intensities.map((v,i)=> {
 
                         //with the spectroscopy, the baseline should be the brighter image,

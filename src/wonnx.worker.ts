@@ -192,11 +192,12 @@ if(typeof WorkerGlobalScope !== 'undefined' && globalThis instanceof WorkerGloba
                     maxIndex = index;
                 }
             }
+            //console.log(probs);
             //console.log(maxProb)
 
             const avgFrameTime = inferenceTime / inferenceCount;
             const avgFrameRate = inferenceCount / (inferenceTime*0.001);
-
+            //console.log(maxIndex,labelsList)
             //report back to main thread
             return { 
                 probs, 

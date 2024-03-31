@@ -40,8 +40,8 @@ export const classifierSettings = {
         modelInpHeight:600,
         threadSettings:{
             decoderPool:4,
-            modelName:'combined_fishazam-xgboost-classifier-spectrum.onnx',
-            labelsName:'fish-labels.txt',
+            modelName:'arducam1_binary_fishazam-xgboost-classifier-spectrum.onnx',
+            labelsName:'fish-binary-labels.txt', //fish-binary-labels
             inputName:'input',
             outputName:'probabilities',
             input:'spectral'
@@ -211,7 +211,7 @@ export class ImageProcessor {
 
             setTimeout(()=>{
                 const textElm = (this.root.querySelector('#mediaDims') as HTMLElement);
-                textElm.innerText = `${element.videoWidth || element.naturalWidth || element.width}x${element.videoHeight || element.naturalHeight || element.height}`;
+                if(textElm) textElm.innerText = `${element.videoWidth || element.naturalWidth || element.width}x${element.videoHeight || element.naturalHeight || element.height}`;
             },300);
             console.log('Stream target changed with ID or URL:', id);
         };
@@ -635,7 +635,8 @@ export class ImageProcessor {
 
            
             let getSpectralCSV = async () => {
-                let result = await this.threads.poolingThread.run({command:'getspectral', name:crop.name}, undefined, true);
+                const command = this.useAveraging ? 'getspectralaveraged' : 'getspectral';
+                let result = await this.threads.poolingThread.run({command, name:crop.name}, undefined, true);
                 if(!result?.spectral) return {processed:'', csvName:''};
                 const spectralData = result.spectral;
                 let csvName = (resultElm.querySelector(`#name${crop.cropIndex}`) as HTMLInputElement).value || 'image_'+new Date().toISOString();
@@ -899,9 +900,10 @@ export class ImageProcessor {
                             this.getOrCreateResultElement(crop);
     
                             if(this.selectedInput === 'spectral') {
+                                const command = this.useAveraging ? 'getspectralaveraged' : 'getspectral';
                                 this.threads.poolingThread.run(
                                     {
-                                        command:'getspectral', 
+                                        command, 
                                         name:crop.name,
                                         input:this.selectedInput
                                     }, 
@@ -923,9 +925,10 @@ export class ImageProcessor {
                         }
             
                         if(render) {
+                            const command1 = this.useAveraging ? 'getbmpaveraged' : 'getbmp';
                             this.threads.poolingThread.run(
                                 {
-                                    command:'getbmp', //this.useAutocor.checked ? 'getautocorbmp' : 
+                                    command:command1, //getbmpaveraged //this.useAutocor.checked ? 'getautocorbmp' : 
                                     name:crop.name
                                 }, 
                                 undefined, 
@@ -933,9 +936,10 @@ export class ImageProcessor {
                             );
         
                             if(this.useSpectralAnalysis.checked) {
+                                const command2 = this.useAveraging ? 'getspectralaveraged' : 'getspectral';
                                 this.threads.poolingThread.run(
                                     {
-                                        command:'getspectral', 
+                                        command:command2, 
                                         name:crop.name
                                     }, 
                                     undefined, 
