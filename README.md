@@ -17,6 +17,22 @@ Copy of the official [onnxruntime-web](https://github.com/microsoft/onnxruntime)
 
 This is a bunch of tools we're building on top of to explore clientside machine learning applications, and our theme is spectroscopy/hyperspectral and image recognition for food identification and quality.
 
+## Spectroscopy Procedure:
+
+- Connect your spectrometer to the application, the camera selection is the same for either the USB camera or mobile camera.
+
+- Adjust color balance levels if needed, on mobile adjust zoom so the image is filled with the spectrum.
+
+- Turn on the flashlight on the spectrometer, use a neutral white surface like a sheet of printer paper to take your first averaged image.
+
+- Click the baseline button to save this image in memory for correcting your next samples.
+
+- Now image your substances - fish in our case - and save the raw image plus the corrected CSV. The raw image will be useful for reproducing results, while the CSVs are the digital absorbance spectrum. Results are normalized relative to the baseline.
+
+- Take several images of each substance, more images is more data. When making use of the classifiers built into the app, you can also average guesses to increase confidence in your results.
+
+- Store images in subfolders named for each class.
+
 ### Inference times:
 
 This is exciting for clientside applications:
